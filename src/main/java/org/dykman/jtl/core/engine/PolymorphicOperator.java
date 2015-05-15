@@ -37,12 +37,23 @@ public abstract class PolymorphicOperator {
 			}
 			break;
 		case BOOLEAN:
+			switch (r.getType()) {
+			case BOOLEAN:
+				return new JSONValue(null,op(eng,(Boolean)((JSONValue)l).get(),(Boolean)((JSONValue)r).get()));
+			case OBJECT:
+			case ARRAY:
+			case DOUBLE:
+			case LONG:
+			case NULL:
+			case STRING:
+			}
+			break;
 		case DOUBLE:
 		case LONG:
 		case NULL:
 		case STRING:
 		}
-		throw new JSONException("not imlemented yet");
+		throw new JSONException("not implemented yet");
 //		return new JSONValue(null);
 
 	}
