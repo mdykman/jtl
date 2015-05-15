@@ -5,5 +5,17 @@ public interface JSON {
 	public void setName(String s);
 	public JSON getParent();
 	public JSON setParent(JSON p);
+	public void lock();
+	public JSONType getType();
+	
+	public enum JSONType {
+		BOOLEAN,
+		LONG,
+		DOUBLE,
+		STRING,
+		OBJECT,
+		ARRAY,
+		NULL,
+	};
 
 }

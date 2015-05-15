@@ -2,6 +2,7 @@ package org.dykman.jtl.core.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public abstract class AbstractInstruction<T> implements Instruction<T> {
 
@@ -17,5 +18,8 @@ public abstract class AbstractInstruction<T> implements Instruction<T> {
 	}
 	public void addChild(AbstractInstruction<T> c) {
 		list.add(c);
+		
+		ConcurrentLinkedQueue<String> j = new ConcurrentLinkedQueue<>();
+//		j.
 	}
 }

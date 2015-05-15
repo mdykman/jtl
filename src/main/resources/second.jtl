@@ -1,0 +1,45 @@
+{
+	init: {
+	 [
+	 	module('http'),
+	 	module('jdbc',{
+	 	   user: "user",
+	 	   password: "password",
+	 	   url: "jdbc:mysql://localhost/mydb",
+	 	   driver:  "com.mysql.jdbc.Driver"
+	 ]
+	},
+	_: {
+		message:"Hello World",
+		function: g("data/people{first='John'}"),
+		smith : data/people/*/{last='Smith'}/map(person),
+		data: {
+	   		thing: [3,1,4,1,5,9,2,6,5,3,5],
+	   		name:["fred","sally",data/people/f()]
+		},	
+		g:g()
+	},
+	person {
+	   "First Name": first,
+	   "Last Name":last
+	   gender: switch(gender,{
+	        'm':'Male',
+	        'f':'Female'
+	   } 
+	},
+	f: map("last"),
+	g: {
+	        
+	        arg: $1,
+	        context: $_,
+			input: select("."),
+			output: select("./{first}"),
+			example: switch(/data/people/gender,{
+				int: "thing is int: ${.}",
+				double: {
+					msg:"a double"
+					value: .
+				}
+			})
+	}
+}

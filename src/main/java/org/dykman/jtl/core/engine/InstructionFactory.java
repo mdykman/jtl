@@ -6,6 +6,7 @@ import java.util.List;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.InstructionValue;
@@ -41,7 +42,7 @@ public class InstructionFactory {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t, null);
+				return new JSONValue(t);
 			}
 		};
 	}
@@ -66,7 +67,15 @@ public class InstructionFactory {
 		};
 	}
 	
-	public static Instruction<JSON> number(final Number num) {
+	public static Instruction<JSON> decimal(final Double num) {
+		return new AbstractInstruction<JSON>() {
+			@Override
+			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
+				return new JSONValue(t, num);
+			}
+		};
+	}
+	public static Instruction<JSON> integer(final long num) {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
@@ -79,7 +88,7 @@ public class InstructionFactory {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
-				JSONArray array=new JSONArray();
+				JSONArray array= JSONArray.create(null,eng);
 				array.setParent(t);
 				for(Instruction<JSON> c:ch) {
 					array.add(c.call(eng, array, null));
@@ -103,13 +112,18 @@ public class InstructionFactory {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
-				JSONObject object = (JSONObject)new JSONObject();
-				object.setParent(t);
-				for(InstructionValue<JSON> d : ll) {
-					object.put(d.ninst.first, 
-						d.ninst.second.call(eng, object, null));
+				try {
+					JSONObject object;
+					object = JSONObject.create(null, eng);
+					object.setParent(t);
+					for(InstructionValue<JSON> d : ll) {
+						object.put(d.ninst.first, 
+							d.ninst.second.call(eng, object, null));
+					}
+					return object;
+				} catch (JSONException e) {
+					return new JSONValue(null,"JSONException: " + e.getLocalizedMessage());
 				}
-				return object;
 			}
 		};
 	}

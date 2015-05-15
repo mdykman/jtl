@@ -174,10 +174,7 @@ string returns [String str]
 //       | '\'' t=S2CONTENT '\'' 
        ;
 
-      
 //////////////////%%
-    
-
 INTEGER
     :   '-'? INT                 // -3, 45
     |   '-'? INT EXP 

@@ -3,10 +3,13 @@ package org.dykman.jtl.core.engine;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.InstructionFutureValue;
@@ -36,7 +39,8 @@ public class InstructionFutureFactory {
 
 			@Override
 			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
-					ListenableFuture<JSON> t) {
+					ListenableFuture<JSON> t) 
+					throws JSONException {
 				List<ListenableFuture<JSON>> a = new ArrayList<>();
 				for (InstructionFuture<JSON> i : iargs) {
 					a.add(i.call(eng, t));
@@ -46,7 +50,75 @@ public class InstructionFutureFactory {
 		};
 	}
 
-	public static InstructionFuture<JSON> value(final Object val) {
+	public static InstructionFuture<JSON> value(final Boolean val) {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
+					ListenableFuture<JSON> t) {
+				return transform(t, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return immediateFuture(new JSONValue(input, val));
+					}
+				});
+			}
+		};
+	}
+	public static InstructionFuture<JSON> value() {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
+					ListenableFuture<JSON> t) {
+				return transform(t, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return immediateFuture(new JSONValue(input, (Long)null));
+					}
+				});
+			}
+		};
+	}
+	public static InstructionFuture<JSON> value(final Long val) {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
+					ListenableFuture<JSON> t) {
+				return transform(t, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return immediateFuture(new JSONValue(input, val));
+					}
+				});
+			}
+		};
+	}
+	public static InstructionFuture<JSON> value(final Double val) {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
+					ListenableFuture<JSON> t) {
+				return transform(t, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return immediateFuture(new JSONValue(input, val));
+					}
+				});
+			}
+		};
+	}
+	public static InstructionFuture<JSON> value(final String val) {
 		return new AbstractInstructionFuture<JSON>() {
 
 			@Override
@@ -64,8 +136,9 @@ public class InstructionFutureFactory {
 		};
 	}
 
+	
 	public static InstructionFuture<JSON> nil() {
-		return value(null);
+		return value();
 	}
 
 	public static InstructionFuture<JSON> bool(final Boolean b) {
@@ -77,7 +150,7 @@ public class InstructionFutureFactory {
 	}
 
 	public static InstructionFuture<JSON> number(final Number num) {
-		return value(num);
+		return value(num instanceof Long ? num.longValue() : num.doubleValue());
 	}
 
 	public static InstructionFuture<JSON> array(
@@ -85,7 +158,8 @@ public class InstructionFutureFactory {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override
 			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
-					ListenableFuture<JSON> t) {
+					ListenableFuture<JSON> t) 
+					throws JSONException {
 				List<ListenableFuture<JSON>> args = new ArrayList<>();
 				for (InstructionFuture<JSON> i : ch) {
 					args.add(i.call(eng, t));
@@ -95,7 +169,7 @@ public class InstructionFutureFactory {
 							@Override
 							public ListenableFuture<JSON> apply(List<JSON> input)
 									throws Exception {
-								JSONArray array = new JSONArray();
+								JSONArray array =  JSONArray.create(null, eng);
 								for (JSON j : input) {
 									j.setParent(array);
 									array.add(j);
@@ -116,13 +190,14 @@ public class InstructionFutureFactory {
 
 			@Override
 			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
-					ListenableFuture<JSON> parent) {
+					ListenableFuture<JSON> parent)
+					throws JSONException {
 				return transform(allAsList(left.call(eng, parent),right.call(eng, parent)), 
 						new KeyedAsyncFunction<List<JSON>, JSON, DyadicAsyncFunction<JSON>>(f) {
 
 							@Override
 							public ListenableFuture<JSON> apply(List<JSON> input)
-									throws Exception {
+									throws JSONException {
 								Iterator<JSON> it = input.iterator();
 								JSON l = it.next();
 								JSON r = it.next();
@@ -135,12 +210,16 @@ public class InstructionFutureFactory {
 	}
 
 	public static InstructionFuture<JSON> object(
-			final List<Duo<String, InstructionFuture<JSON>>> ll) {
-		return new AbstractInstructionFuture<JSON>() {
+			final List<Duo<String, InstructionFuture<JSON>>> ll) 
+			throws JSONException {
+		return new AbstractInstructionFuture<JSON>()  {
 			@Override
 			public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
-					ListenableFuture<JSON> t) {
-				JSONObject object = (JSONObject) new JSONObject();
+					ListenableFuture<JSON> t) 
+					throws JSONException {
+				JSONObject object;
+					object = (JSONObject) JSONObject.create((JSON)null,eng
+							);
 				List<ListenableFuture<JSON>> pp = new ArrayList<>();
 				for (Duo<String, InstructionFuture<JSON>> p : ll) {
 					ListenableFuture<JSON> vl = p.second.call(eng, t);

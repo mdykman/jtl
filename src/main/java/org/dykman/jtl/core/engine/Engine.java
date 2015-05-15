@@ -2,7 +2,7 @@ package org.dykman.jtl.core.engine;
 
 import java.util.List;
 
-public interface Engine<T> {
+public interface Engine<T> extends MapFactory<String, T>, CollectionFactory<T> {
 	public T execute(T c,Instruction<T> i);
 	
 	public void define(String n,Instruction<T> i);	

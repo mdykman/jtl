@@ -36,6 +36,7 @@ import main.antlr.jtlParser.VariableContext;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.engine.AbstractInstructionFuture;
 import org.dykman.jtl.core.engine.AsyncEngine;
@@ -43,6 +44,7 @@ import org.dykman.jtl.core.engine.DyadicAsyncFunction;
 import org.dykman.jtl.core.engine.InstructionFuture;
 import org.dykman.jtl.core.engine.InstructionFutureFactory;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends
@@ -69,8 +71,14 @@ public class InstructionFutureVisitor extends
 			ins.add(new Duo<String, InstructionFuture<JSON>>(pp.ninst.first,
 					pp.ninst.second));
 		}
-		return new InstructionFutureValue<JSON>(
-				InstructionFutureFactory.object(ins));
+
+		try {
+			return new InstructionFutureValue<JSON>(
+					InstructionFutureFactory.object(ins));
+		} catch (JSONException e) {
+			return new InstructionFutureValue<JSON>(
+					InstructionFutureFactory.value("JSONException during visitObject: " + e.getLocalizedMessage()));
+		}
 	}
 
 	@Override
@@ -82,7 +90,13 @@ public class InstructionFutureVisitor extends
 		} else {
 			k = visitString(ctx.string());
 		}
-		ListenableFuture<JSON> kj = k.inst.call(null, null);
+		ListenableFuture<JSON> kj;
+		try {
+			kj = k.inst.call(null, null);
+		} catch (JSONException e) {
+			return new InstructionFutureValue<JSON>(
+					InstructionFutureFactory.value("JSONException during visitPair: " + e.getLocalizedMessage()));
+		}
 		InstructionFutureValue<JSON> v = visitValue(ctx.value());
 		return new InstructionFutureValue<JSON>(kj.toString(), v.inst);
 	}
@@ -268,28 +282,6 @@ public class InstructionFutureVisitor extends
 		}
 	}
 
-	abstract class MathOp {
-//		Number l, r;
-
-		/*
-		MathOp(Number l, Number r) {
-			this.l = l;
-			this.r = r;
-		}
-		*/
-
-		public Number op(Number l,Number r) {
-			if (l instanceof Long && r instanceof Long) {
-				return op(l.longValue(), r.longValue());
-			}
-			return op(l.doubleValue(), r.doubleValue());
-		}
-
-		public abstract long op(long l, long r);
-
-		public abstract double op(double l, double r);
-	}
-
 	@Override
 	public InstructionFutureValue<JSON> visitAdd_expr(Add_exprContext ctx) {
 		InstructionFutureValue<JSON> a = visitMul_expr(ctx.mul_expr());
@@ -307,7 +299,7 @@ public class InstructionFutureVisitor extends
 									if (ln != null && rn != null) {
 										// TODO get real value when i have a
 										// generalized arithmetic pattern.
-										return new JSONValue(l, 0);
+										return new JSONValue(l, 0L);
 									}
 									return new JSONValue(null, eng
 											.compare(l, r) >= 0);
