@@ -33,6 +33,7 @@ buildscript {
     }
 }
 
+apply plugin: 'me.champeau.gradle.antlr4'
 //apply plugin: 'antlr4'
 
 // In this section you declare the dependencies for your production and test code
