@@ -1,5 +1,11 @@
 package org.dykman.jtl.core;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+
+import org.apache.commons.lang3.StringEscapeUtils;
+
 
 public class JSONValue extends AbstractJSON {
 	final Object o;
@@ -11,6 +17,29 @@ public class JSONValue extends AbstractJSON {
 		this.o = null;
 
 	}
+	@Override
+	public void write(Writer out, int indent) throws IOException {
+		write(out,indent,0);
+	}
+
+
+	@Override
+	public void write(Writer out,int n,int d) 
+		throws IOException {
+		if(o==null) {
+			out.write("null");
+		} else {
+			if(o instanceof Boolean) {
+				out.write(((Boolean)o) ? "true" : "false");
+			} else if(o instanceof String) {
+				out.write('"');
+				out.write(StringEscapeUtils.escapeJson(o.toString()));
+				out.write('"');
+			} else {
+				out.write(o.toString());
+			}
+		}
+	}
 
 	@Override
 	public JSONType getType() {
@@ -20,6 +49,19 @@ public class JSONValue extends AbstractJSON {
 	public JSONValue(JSON p, Long o) {
 		super(p);
 		type = JSONType.LONG;
+		this.o = o;
+	}
+	public JSONValue(JSON p, Number o) {
+		super(p);
+		if(o instanceof Long) {
+			type = JSONType.LONG;
+		} else if(o instanceof Integer) {
+			o = ((Integer)o).longValue();
+			type = JSONType.LONG;
+		} else {
+			type = JSONType.DOUBLE;
+			o = (Double) o.doubleValue();
+		}
 		this.o = o;
 	}
 	public JSONValue(JSON p, Double o) {
@@ -41,7 +83,7 @@ public class JSONValue extends AbstractJSON {
 		return o;
 	}
 	
-	public boolean isNull() {
+	public boolean isFalse() {
 		return o == null;
 	}
 	public Boolean booleanValue() {

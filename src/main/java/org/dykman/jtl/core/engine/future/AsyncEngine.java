@@ -1,23 +1,17 @@
-package org.dykman.jtl.core.engine;
+package org.dykman.jtl.core.engine.future;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
+
+import org.dykman.jtl.core.engine.CollectionFactory;
+import org.dykman.jtl.core.engine.MapFactory;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 public interface AsyncEngine<T> extends MapFactory<String,T>, CollectionFactory<T> {
 	public ListenableFuture<T> execute(T c,InstructionFuture<T> i);
 
-
-	// defined a named function
-	public void define(String n,InstructionFuture<T> i);
-	
-	// call a named function
-	public ListenableFuture<T> call(String name,List<ListenableFuture<T>> args,ListenableFuture<T> context);
-
-	public void set(String name,ListenableFuture<T> t);
-	public ListenableFuture<T> lookup(String name);
 
 	public boolean is_boolean(T t);
 	public Number number(T t);

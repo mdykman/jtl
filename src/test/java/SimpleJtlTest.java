@@ -6,7 +6,8 @@ import main.antlr.jtlParser.JtlContext;
 
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.dykman.jtl.core.parser.InstructionFutureVisitor;
+import org.dykman.jtl.core.engine.future.InstructionFutureVisitor;
+import org.dykman.jtl.core.parser.JSONBuilder;
 
 public class SimpleJtlTest {
 
@@ -16,7 +17,8 @@ public class SimpleJtlTest {
 			jtlLexer lexer = new jtlLexer(new ANTLRFileStream(args[0]));
 			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
 			JtlContext tree = parser.jtl();
-			InstructionFutureVisitor visitor = new InstructionFutureVisitor();
+			JSONBuilder builder = new JSONBuilder();
+			InstructionFutureVisitor visitor = new InstructionFutureVisitor(builder);
 			visitor.visit(tree);
 		} catch (Exception e) {
 			e.printStackTrace();

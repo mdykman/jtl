@@ -1,4 +1,4 @@
-package org.dykman.jtl.core.parser;
+package org.dykman.jtl.core.engine.future;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +38,7 @@ import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
-import org.dykman.jtl.core.engine.AbstractInstructionFuture;
-import org.dykman.jtl.core.engine.AsyncEngine;
-import org.dykman.jtl.core.engine.DyadicAsyncFunction;
-import org.dykman.jtl.core.engine.InstructionFuture;
-import org.dykman.jtl.core.engine.InstructionFutureFactory;
+import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,21 +46,26 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class InstructionFutureVisitor extends
 		jtlBaseVisitor<InstructionFutureValue<JSON>> {
 
+	JSONBuilder builder;
+	InstructionFutureFactory factory;
+	public InstructionFutureVisitor(JSONBuilder builder) {
+		this.builder = builder;
+		factory = new InstructionFutureFactory(builder);
+	}
 	@Override
 	public InstructionFutureValue<JSON> visitJtl(JtlContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitJtl(ctx);
+		JsonContext jc = ctx.json();
+		return visitJson(jc);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitJson(JsonContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitJson(ctx);
+		return visitValue(ctx.value());
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitObject(ObjectContext ctx) {
-		List<Duo<String, InstructionFuture<JSON>>> ins = new ArrayList<>();
+		List<Duo<String, InstructionFuture<JSON>>> ins = new ArrayList<>(ctx.getChildCount());
 		InstructionFutureValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
@@ -74,10 +75,10 @@ public class InstructionFutureVisitor extends
 
 		try {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.object(ins));
+					factory.object(ins));
 		} catch (JSONException e) {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.value("JSONException during visitObject: " + e.getLocalizedMessage()));
+					factory.value("JSONException during visitObject: " + e.getLocalizedMessage()));
 		}
 	}
 
@@ -92,10 +93,12 @@ public class InstructionFutureVisitor extends
 		}
 		ListenableFuture<JSON> kj;
 		try {
-			kj = k.inst.call(null, null);
+			// TODO:: WTF??!!
+			// what the hell am i doing here???
+			kj = k.inst.call(null,null);
 		} catch (JSONException e) {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.value("JSONException during visitPair: " + e.getLocalizedMessage()));
+					factory.value("JSONException during visitPair: " + e.getLocalizedMessage()));
 		}
 		InstructionFutureValue<JSON> v = visitValue(ctx.value());
 		return new InstructionFutureValue<JSON>(kj.toString(), v.inst);
@@ -103,37 +106,62 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitArray(ArrayContext ctx) {
-		List<InstructionFuture<JSON>> ins = new ArrayList<>();
+		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
 		for (ValueContext vc : ctx.value()) {
 			ins.add(visitValue(vc).inst);
 		}
 		return new InstructionFutureValue<JSON>(
-				InstructionFutureFactory.array(ins));
+				factory.array(ins));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitValue(ValueContext ctx) {
-		return super.visitValue(ctx);
+		ObjectContext oc = ctx.object();
+		if(oc!=null) {
+			return visitObject(oc);
+		}
+		ArrayContext ac = ctx.array();
+		if(ac!=null) {
+			return visitArray(ac);
+		}
+		JpathContext jc = ctx.jpath();
+		if(jc!=null) {
+			return visitJpath(jc);
+		}
+		throw new RuntimeException("unknown value type");
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitString(StringContext ctx) {
+		String t = ctx.STRING().getText();
+		final String s = t.substring(1, t.length()-1);
+		InstructionFuture<JSON> in = new InstructionFuture<JSON>() {
+			
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> parent) throws JSONException {
+				return Futures.immediateFuture(new JSONValue(null,s));
+			}
+		};
 		return super.visitString(ctx);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitS_expr(S_exprContext ctx) {
-		return super.visitS_expr(ctx);
+		JsonContext jc = ctx.json();
+		return visitJson(jc);
+//		return super.visitS_expr(ctx);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitFunc(FuncContext ctx) {
-		List<InstructionFuture<JSON>> ins = new ArrayList<>();
+		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
 		for (JsonContext jc : ctx.json()) {
 			ins.add(visitJson(jc).inst);
 		}
 		return new InstructionFutureValue<JSON>(
-				InstructionFutureFactory.function(ctx.getChild(0).getText(),
+				factory.function(ctx.getChild(0).getText(),
 						ins));
 	}
 
@@ -144,9 +172,10 @@ public class InstructionFutureVisitor extends
 				new AbstractInstructionFuture<JSON>() {
 
 					@Override
-					public ListenableFuture<JSON> call(AsyncEngine<JSON> eng,
+					public ListenableFuture<JSON> call(
+							AsyncExecutionContext<JSON> context,
 							ListenableFuture<JSON> parent) {
-						return eng.lookup(name);
+						return context.lookup(name);
 					}
 				});
 	}
@@ -154,13 +183,13 @@ public class InstructionFutureVisitor extends
 	@Override
 	public InstructionFutureValue<JSON> visitId(IdContext ctx) {
 		return new InstructionFutureValue<JSON>(
-				InstructionFutureFactory.string(ctx.getText()));
+				factory.string(ctx.getText()));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitNumber(NumberContext ctx) {
 		return new InstructionFutureValue<JSON>(
-				InstructionFutureFactory.number(ctx.num));
+				factory.number(ctx.num));
 	}
 
 	@Override
@@ -174,13 +203,13 @@ public class InstructionFutureVisitor extends
 		Or_exprContext c = ctx.or_expr();
 		if (c != null) {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.dyadic(a.inst,
+					factory.dyadic(a.inst,
 							visitOr_expr(c).inst,
 							new DyadicAsyncFunction<JSON>() {
 								@Override
-								public JSON invoke(AsyncEngine<JSON> eng,
+								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									return eng.bool(a) ? a : b;
+									return eng.engine().bool(a) ? a : b;
 								}
 							}));
 		} else {
@@ -194,14 +223,14 @@ public class InstructionFutureVisitor extends
 		And_exprContext c = ctx.and_expr();
 		if (c != null) {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.dyadic(a.inst,
+					factory.dyadic(a.inst,
 							visitAnd_expr(c).inst,
 							new DyadicAsyncFunction<JSON>() {
 								@Override
-								public JSON invoke(AsyncEngine<JSON> eng,
+								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									return new JSONValue(null, eng.bool(a)
-											&& eng.bool(b));
+									return new JSONValue(null, eng.engine().bool(a)
+											&& eng.engine().bool(b));
 								}
 							}));
 		} else {
@@ -217,13 +246,13 @@ public class InstructionFutureVisitor extends
 		if (c != null) {
 			boolean inv = ctx.getChild(1).getText().equals("!=");
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.dyadic(a.inst,
+					factory.dyadic(a.inst,
 							visitEq_expr(c).inst,
 							new DyadicAsyncFunction<JSON>() {
 								@Override
-								public JSON invoke(AsyncEngine<JSON> eng,
+								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									boolean e = eng.equals(a, b);
+									boolean e = eng.engine().equals(a, b);
 									return new JSONValue(null,
 											((inv || e) && !(inv && e)));
 								}
@@ -244,38 +273,38 @@ public class InstructionFutureVisitor extends
 			case "<":
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
-					public JSON invoke(AsyncEngine<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, eng.compare(l, r) < 0);
+					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
+						return new JSONValue(null, eng.engine().compare(l, r) < 0);
 					}
 				};
 				break;
 			case ">":
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
-					public JSON invoke(AsyncEngine<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, eng.compare(l, r) > 0);
+					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
+						return new JSONValue(null, eng.engine().compare(l, r) > 0);
 					}
 				};
 				break;
 			case "<=":
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
-					public JSON invoke(AsyncEngine<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, eng.compare(l, r) <= 0);
+					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
+						return new JSONValue(null, eng.engine().compare(l, r) <= 0);
 					}
 				};
 				break;
 			case ">=":
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
-					public JSON invoke(AsyncEngine<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, eng.compare(l, r) >= 0);
+					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
+						return new JSONValue(null, eng.engine().compare(l, r) >= 0);
 					}
 				};
 				break;
 			}
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.dyadic(a.inst,
+					factory.dyadic(a.inst,
 							visitRel_expr(c).inst, df));
 		} else {
 			return a;
@@ -288,20 +317,20 @@ public class InstructionFutureVisitor extends
 		Add_exprContext c = ctx.add_expr();
 		if (c != null) {
 			return new InstructionFutureValue<JSON>(
-					InstructionFutureFactory.dyadic(a.inst,
+					factory.dyadic(a.inst,
 							visitAdd_expr(c).inst,
 							new DyadicAsyncFunction<JSON>() {
 								@Override
-								public JSON invoke(AsyncEngine<JSON> eng,
+								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON l, JSON r) {
-									Number ln = eng.number(l);
-									Number rn = eng.number(r);
+									Number ln = eng.engine().number(l);
+									Number rn = eng.engine().number(r);
 									if (ln != null && rn != null) {
 										// TODO get real value when i have a
 										// generalized arithmetic pattern.
 										return new JSONValue(l, 0L);
 									}
-									return new JSONValue(null, eng
+									return new JSONValue(null, eng.engine()
 											.compare(l, r) >= 0);
 								}
 							}));

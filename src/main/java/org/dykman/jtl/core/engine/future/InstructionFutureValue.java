@@ -1,8 +1,7 @@
-package org.dykman.jtl.core.parser;
+package org.dykman.jtl.core.engine.future;
 
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.engine.Instruction;
-import org.dykman.jtl.core.engine.InstructionFuture;
 
 public class InstructionFutureValue<T> {
 	public InstructionFuture<T> inst;

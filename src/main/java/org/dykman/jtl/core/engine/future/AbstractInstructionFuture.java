@@ -1,9 +1,5 @@
-package org.dykman.jtl.core.engine;
+package org.dykman.jtl.core.engine.future;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class AbstractInstructionFuture<T> implements InstructionFuture<T> {
 

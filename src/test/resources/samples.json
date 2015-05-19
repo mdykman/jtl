@@ -1,0 +1,19 @@
+{
+ people: [ {
+ 		first: "John",
+ 		last: "Smith",
+ 		gender: "m",
+ 		salary: 60000
+    },{
+ 		first: "Mary",
+ 		last: "Klein",
+ 		gender: "f",
+ 		salary: 65000
+    }
+ ],
+ departments:["finance","marketing","technical"],
+ numbers: [
+ [0,17,23,55,17.2],
+ [0.5,17.4,23.0,55.1,17.2]
+  ]
+}
