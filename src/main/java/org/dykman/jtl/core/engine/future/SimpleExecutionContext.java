@@ -5,7 +5,9 @@ import static com.google.common.util.concurrent.Futures.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
@@ -14,12 +16,14 @@ import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
+public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON> {
 	
 	final AsyncExecutionContext<JSON> parent;
 	final AsyncEngine<JSON> engine;
 	//final JSON context;
-	Map<String,InstructionFuture<JSON>> functions = new HashMap<>();
+	Map<String,InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
+	Map<String,Duo<InstructionFuture<JSON>,ListenableFuture<JSON>>> deferred = new ConcurrentHashMap<>();
+	Map<String,ListenableFuture<JSON>> variables = new ConcurrentHashMap<>();
 	
 	public SimpleExecutionContext(AsyncEngine<JSON> engine) {
 		this.engine = engine;
@@ -44,17 +48,18 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	@Override
-	public ListenableFuture<JSON> call(final String name,
-			final List<ListenableFuture<JSON>> args, final ListenableFuture<JSON> input, final AsyncExecutionContext<JSON> ctx) 
+	public ListenableFuture<JSON> call(
+			final String name,
+			final List<ListenableFuture<JSON>> args, 
+			final ListenableFuture<JSON> input, 
+			final AsyncExecutionContext<JSON> ctx) 
 			throws JSONException {
 		InstructionFuture<JSON> i = functions.get(name);
 		if(i!=null) {
-			i.call(ctx, input);
+			return i.call(ctx, input);
 		} 
 		if(parent != null) return parent.call(name, args, input,ctx);
-		// TODO: function not found!!
 		return immediateFailedCheckedFuture(new ExecutionException("function " + name + " not found"));
-//		return immediateFuture(new JSONValue(null));
 	}
 
 	@Override
@@ -63,15 +68,33 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		
 	}
 
+//	@SuppressWarnings("unchecked")
 	@Override
-	public ListenableFuture<JSON> lookup(String name) {
-		if(parent!=null) parent.lookup(name);
-		return immediateFuture(new JSONValue(null));
+	public ListenableFuture<JSON> lookup(String name)
+		throws JSONException {
+		ListenableFuture<JSON> res = variables.get(name);
+		if(res == null && parent!=null) res = parent.lookup(name);
+		synchronized(deferred) {
+			res = variables.get(name);
+			if(res ==null) {
+				Duo<InstructionFuture<JSON>,ListenableFuture<JSON>> d = deferred.get(name);
+				
+				if(d != null) {
+					res = d.first.call(this,d.second);
+					variables.put(name, res);
+				}
+			}
+		}
+		if(res!=null) return res;
+		return immediateFuture((JSON)new JSONValue(null));
 	}
 	@Override
 	public AsyncExecutionContext<JSON> createChild() {
-		// TODO Auto-generated method stub
-		return null;
+		return new SimpleExecutionContext<>(this);
+	}
+	@Override
+	public void setDeferred(String name, InstructionFuture<JSON> ii,ListenableFuture<JSON> d) {
+		deferred.put(name, new Duo<InstructionFuture<JSON>, ListenableFuture<JSON>>(ii, d));		
 	}
 
 

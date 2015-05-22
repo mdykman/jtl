@@ -14,6 +14,7 @@ import org.dykman.jtl.core.parser.DataValue;
 import org.dykman.jtl.core.parser.DataVisitor;
 import org.dykman.jtl.core.parser.JSONBuilder;
 
+
 public abstract class JSONFactory {
 
 	protected JSONFactory() {
@@ -22,7 +23,15 @@ public abstract class JSONFactory {
 
 	public static JSON parse(InputStream in) 
 			throws IOException {
-			jtlLexer lexer = new jtlLexer(new ANTLRInputStream(in));
+			return parse( new jtlLexer(new ANTLRInputStream(in)));
+		}
+	public static JSON parse(String in) 
+			throws IOException {
+			return parse( new jtlLexer(new ANTLRInputStream(in)));
+		}
+
+	public static JSON parse(jtlLexer lexer) 
+			throws IOException {
 			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
 			JtlContext tree = parser.jtl();
 			DataVisitor visitor = new DataVisitor(new JSONBuilder());

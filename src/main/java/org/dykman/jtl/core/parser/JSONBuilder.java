@@ -26,55 +26,19 @@ public class JSONBuilder {
 
 	MapFactory<String, JSON> mf;
 	CollectionFactory<JSON> cf;
+	
 	public JSONBuilder(MapFactory<String,JSON> mf,CollectionFactory<JSON> cf ) {
 		this.mf = mf;
 		this.cf = cf;
 	}
-	public static JSON parse(String str) {
-		char[]cc = str.toCharArray();
-		CharStream cs = new ANTLRInputStream(cc, cc.length);
-		jtlLexer lexer = new jtlLexer(cs);
-		return parse(lexer);
-	}
-
-	static JSON parse(jtlLexer lexer) {
-		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
-		JtlContext tree = parser.jtl();
-		DataVisitor visitor = new DataVisitor(new JSONBuilder());
-		return visitor.visit(tree).value;		
-	}
-	public static JSON parse(InputStream in) 
-			throws IOException {
-			jtlLexer lexer = new jtlLexer(new ANTLRInputStream(in));
-			return parse(lexer);
-			
-		}
 
 	public JSONBuilder() {
 		mf = new MapFactory<String, JSON>() {
-
-			@Override
-			public Map<String, JSON> createMap() {
-				return new LinkedHashMap<>();
-			}
-			@Override
-			public Map<String, JSON> createMap(int cap) {
-				return new LinkedHashMap<>(cap);
-//				return new HashMap<>(cap);
-				//return new TreeMap<>();
-			}
-		};
-		cf = new CollectionFactory<JSON>() {
-
-			@Override
-			public Collection<JSON> createCollection() {
-				return new ArrayList<>();
-			}
-			@Override
-			public Collection<JSON> createCollection(int cap) {
-				return new ArrayList<>(cap);
-			}
-		};
+			@Override public Map<String, JSON> createMap() { return new LinkedHashMap<>(); }
+			@Override public Map<String, JSON> createMap(int cap) {	return new LinkedHashMap<>(cap); } };
+		cf = new CollectionFactory<JSON>() { 
+			@Override public Collection<JSON> createCollection() {return new ArrayList<>(); }
+			@Override public Collection<JSON> createCollection(int cap) { return new ArrayList<>(cap); } };
 	}
 	
 	public Map<String,JSON> map() {
@@ -104,4 +68,25 @@ public class JSONBuilder {
 	public JSONArray array(JSON parent,Collection<JSON> col) {
 		return new JSONArray(parent,col);
 	}
+	
+	public JSON parse(InputStream in) 
+			throws IOException {
+			return parse( new jtlLexer(new ANTLRInputStream(in)));
+		}
+	public JSON parse(String in) 
+			throws IOException {
+			return parse( new jtlLexer(new ANTLRInputStream(in)));
+		}
+
+	public JSON parse(jtlLexer lexer) 
+			throws IOException {
+			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
+			JtlContext tree = parser.jtl();
+			DataVisitor visitor = new DataVisitor(this);
+			DataValue<JSON> v = visitor.visit(tree);
+			return v.value;
+			
+		}
+
+	
 }

@@ -40,7 +40,7 @@ import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.JSONBuilder;
 
-import com.google.common.util.concurrent.Futures;
+import static com.google.common.util.concurrent.Futures.*;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends
@@ -141,7 +141,7 @@ public class InstructionFutureVisitor extends
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> parent) throws JSONException {
-				return Futures.immediateFuture(new JSONValue(null,s));
+				return immediateFuture(new JSONValue(null,s));
 			}
 		};
 		return super.visitString(ctx);
@@ -175,7 +175,11 @@ public class InstructionFutureVisitor extends
 					public ListenableFuture<JSON> call(
 							AsyncExecutionContext<JSON> context,
 							ListenableFuture<JSON> parent) {
+						try {
 						return context.lookup(name);
+						} catch(Exception e) {
+							return immediateFailedCheckedFuture(e);
+						}
 					}
 				});
 	}

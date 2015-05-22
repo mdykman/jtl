@@ -13,9 +13,11 @@ public interface AsyncExecutionContext<T> {
 			ListenableFuture<T> input,AsyncExecutionContext<T> ctx)
 			throws JSONException;
 	public void set(String name,ListenableFuture<T> t);
-	public ListenableFuture<T> lookup(String name);
+	public void setDeferred(String name, InstructionFuture<T> ii,ListenableFuture<T> d);
+
+	public ListenableFuture<T> lookup(String name)
+		throws JSONException;
 	public AsyncEngine<T> engine();
-//	public JSONBuilder builder();
 	
 	public AsyncExecutionContext<T> createChild();
 }

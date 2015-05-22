@@ -7,7 +7,7 @@ import java.io.Writer;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 
-public class JSONValue extends AbstractJSON {
+public class JSONValue extends AbstractJSON implements JSON {
 	final Object o;
 	final JSONType type;
 
@@ -16,34 +16,6 @@ public class JSONValue extends AbstractJSON {
 		type = JSONType.NULL;
 		this.o = null;
 
-	}
-	@Override
-	public void write(Writer out, int indent) throws IOException {
-		write(out,indent,0);
-	}
-
-
-	@Override
-	public void write(Writer out,int n,int d) 
-		throws IOException {
-		if(o==null) {
-			out.write("null");
-		} else {
-			if(o instanceof Boolean) {
-				out.write(((Boolean)o) ? "true" : "false");
-			} else if(o instanceof String) {
-				out.write('"');
-				out.write(StringEscapeUtils.escapeJson(o.toString()));
-				out.write('"');
-			} else {
-				out.write(o.toString());
-			}
-		}
-	}
-
-	@Override
-	public JSONType getType() {
-		return type;
 	}
 
 	public JSONValue(JSON p, Long o) {
@@ -79,6 +51,11 @@ public class JSONValue extends AbstractJSON {
 		type = JSONType.STRING;
 		this.o = o;
 	}
+	@Override
+	public JSONType getType() {
+		return type;
+	}
+
 	public Object get() {
 		return o;
 	}
@@ -121,4 +98,24 @@ public class JSONValue extends AbstractJSON {
 		} catch(NumberFormatException e) {}
 		return null;
 	}
+
+
+	@Override
+	public void write(Writer out,int n,int d) 
+		throws IOException {
+		if(o==null) {
+			out.write("null");
+		} else {
+			if(o instanceof Boolean) {
+				out.write(((Boolean)o) ? "true" : "false");
+			} else if(o instanceof String) {
+				out.write('"');
+				out.write(StringEscapeUtils.escapeJson(o.toString()));
+				out.write('"');
+			} else {
+				out.write(o.toString());
+			}
+		}
+	}
+
 }

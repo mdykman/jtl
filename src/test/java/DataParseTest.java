@@ -3,6 +3,7 @@ import java.io.PrintWriter;
 
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.engine.JSONFactory;
+import org.dykman.jtl.core.parser.JSONBuilder;
 
 public class DataParseTest {
 
@@ -22,7 +23,8 @@ public class DataParseTest {
 	}*/
 	public static void main(String[] args) {
 		try {
-			JSON json = JSONFactory.parse(new FileInputStream(args[0]));
+			JSONBuilder builder = new JSONBuilder();
+			JSON json = builder.parse(new FileInputStream(args[0]));
 			PrintWriter pw = new PrintWriter(System.out);
 			json.write(pw, 3);
 			pw.flush();
