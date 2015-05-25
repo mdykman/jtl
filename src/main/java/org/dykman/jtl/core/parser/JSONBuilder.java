@@ -50,29 +50,43 @@ public class JSONBuilder {
 	public Collection<JSON> collection() {
 		return cf.createCollection();
 	}
+	public Collection<JSON> collection(JSONArray arr) {
+		Collection<JSON> cc = cf.createCollection();
+		cc.addAll(arr.collection());
+		return cc;
+	}
 	public Collection<JSON> collection(int cap) {
 		return cf.createCollection(cap);
 	}
 	
 	public JSONObject object(JSON parent,Map<String, JSON> map) {
 
-		return new JSONObject(parent,map);
+		JSONObject r = new JSONObject(parent,map);
+		r.setBuilder(this);
+		return r;
 	}
 	public JSONObject object(JSON parent) {
-
-		return new JSONObject(parent,mf.createMap());
+		JSONObject r = new JSONObject(parent,mf.createMap());
+		r.setBuilder(this);
+		return r;
 	}
+	
 	public JSONArray array(JSON parent) {
-		return new JSONArray(parent,cf.createCollection());
+		JSONArray r = new JSONArray(parent,cf.createCollection());
+		r.setBuilder(this);
+		return r;
 	}
 	public JSONArray array(JSON parent,Collection<JSON> col) {
-		return new JSONArray(parent,col);
+		JSONArray r = new JSONArray(parent,col);
+		r.setBuilder(this);
+		return r;
 	}
 	
 	public JSON parse(InputStream in) 
 			throws IOException {
 			return parse( new jtlLexer(new ANTLRInputStream(in)));
 		}
+	
 	public JSON parse(String in) 
 			throws IOException {
 			return parse( new jtlLexer(new ANTLRInputStream(in)));
@@ -84,6 +98,7 @@ public class JSONBuilder {
 			JtlContext tree = parser.jtl();
 			DataVisitor visitor = new DataVisitor(this);
 			DataValue<JSON> v = visitor.visit(tree);
+			v.value.setBuilder(this);
 			return v.value;
 			
 		}

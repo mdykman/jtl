@@ -1,7 +1,9 @@
 package org.dykman.jtl.core.engine.future;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import main.antlr.jtlBaseVisitor;
 import main.antlr.jtlParser.Abs_pathContext;
@@ -37,10 +39,12 @@ import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONException;
+import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.JSONBuilder;
 
 import static com.google.common.util.concurrent.Futures.*;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends
@@ -136,7 +140,6 @@ public class InstructionFutureVisitor extends
 		String t = ctx.STRING().getText();
 		final String s = t.substring(1, t.length()-1);
 		InstructionFuture<JSON> in = new InstructionFuture<JSON>() {
-			
 			@Override
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
@@ -151,7 +154,6 @@ public class InstructionFutureVisitor extends
 	public InstructionFutureValue<JSON> visitS_expr(S_exprContext ctx) {
 		JsonContext jc = ctx.json();
 		return visitJson(jc);
-//		return super.visitS_expr(ctx);
 	}
 
 	@Override
@@ -213,7 +215,7 @@ public class InstructionFutureVisitor extends
 								@Override
 								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									return eng.engine().bool(a) ? a : b;
+									return a.isTrue() ? a : b;
 								}
 							}));
 		} else {
@@ -233,8 +235,8 @@ public class InstructionFutureVisitor extends
 								@Override
 								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									return new JSONValue(null, eng.engine().bool(a)
-											&& eng.engine().bool(b));
+									return new JSONValue(null, a.isTrue()
+											&& b.isTrue());
 								}
 							}));
 		} else {
@@ -248,7 +250,7 @@ public class InstructionFutureVisitor extends
 		Eq_exprContext c = ctx.eq_expr();
 
 		if (c != null) {
-			boolean inv = ctx.getChild(1).getText().equals("!=");
+			final boolean inv = ctx.getChild(1).getText().equals("!=");
 			return new InstructionFutureValue<JSON>(
 					factory.dyadic(a.inst,
 							visitEq_expr(c).inst,
@@ -256,9 +258,9 @@ public class InstructionFutureVisitor extends
 								@Override
 								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									boolean e = eng.engine().equals(a, b);
+									boolean e = a.equals(b);
 									return new JSONValue(null,
-											((inv || e) && !(inv && e)));
+											inv ^ e);
 								}
 							}));
 
@@ -320,29 +322,161 @@ public class InstructionFutureVisitor extends
 		InstructionFutureValue<JSON> a = visitMul_expr(ctx.mul_expr());
 		Add_exprContext c = ctx.add_expr();
 		if (c != null) {
+			String sop = ctx.getChild(1).getText();
+			switch(sop) {
+			case "+":			
 			return new InstructionFutureValue<JSON>(
 					factory.dyadic(a.inst,
 							visitAdd_expr(c).inst,
-							new DyadicAsyncFunction<JSON>() {
-								@Override
-								public JSON invoke(AsyncExecutionContext<JSON> eng,
-										JSON l, JSON r) {
-									Number ln = eng.engine().number(l);
-									Number rn = eng.engine().number(r);
-									if (ln != null && rn != null) {
-										// TODO get real value when i have a
-										// generalized arithmetic pattern.
-										return new JSONValue(l, 0L);
+							new DefaultPolymorphicOperator() {
+								@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l+r; }
+								@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l+r; }
+								@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {return l+r; }
+								@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+									Collection<JSON> cc = builder.collection();
+									JSONArray arr = builder.array(null, cc);
+									// this needs to be a deep clone for the internal referencing to hold.
+									int i = 0;
+									for(JSON j : l.collection()) {
+										j = j.cloneJSON();
+										j.setParent(arr);
+										j.setIndex(i++);
+										cc.add(j);
 									}
-									return new JSONValue(null, eng.engine()
-											.compare(l, r) >= 0);
+									for(JSON j : r.collection()) {
+										j = j.cloneJSON();
+										j.setParent(arr);
+										j.setIndex(i++);
+										cc.add(j);
+									}
+									return arr;
+								}
+								@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+									Collection<JSON> cc = builder.collection();
+									JSONArray arr = builder.array(null, cc);
+									// this needs to be a deep clone for the internal referencing to hold.
+									int i = 0;
+									for(JSON j : l.collection()) {
+										j = j.cloneJSON();
+										j.setParent(arr);
+										j.setIndex(i++);
+										j.lock();
+										cc.add(j);
+									}
+									r = r.cloneJSON();
+									r.setParent(arr);
+									r.setIndex(i++);
+									r.lock();
+									cc.add(r);
+									arr.lock();
+									return arr;
+								}
+								@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+									Map<String,JSON> m = builder.map();
+									JSONObject obj = builder.object(null,m);
+									for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
+										String k = ee.getKey();
+										JSON j = ee.getValue().cloneJSON();
+										j.setParent(obj);
+										j.setName(k);
+										j.lock();
+										m.put(k,j);
+									}
+									for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
+										String k = ee.getKey();
+										JSON j = ee.getValue().cloneJSON();
+										j.setParent(obj);
+										j.setName(k);
+										j.lock();
+										m.put(k,j);
+									}
+									obj.lock();
+									return obj;
+								}
+							}));
+			case "-":			
+			return new InstructionFutureValue<JSON>(
+					factory.dyadic(a.inst,
+							visitAdd_expr(c).inst,
+							new DefaultPolymorphicOperator() {
+								@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
+								@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l-r; }
+								@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+									int n = l.indexOf(r);
+									if(n!=-1) {
+										StringBuilder b = new StringBuilder(l.substring(0, n));
+										b.append(l.substring(n+r.length()));
+										return b.toString();
+									}
+									return r;
+								}
+								@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+									Collection<JSON> cc = builder.collection();
+									JSONArray arr = builder.array(null, cc);
+									// this needs to be a deep clone for the internal referencing to hold.
+									int i = 0;
+									for(JSON j : l.collection()) {
+										if(!r.contains(j)) {
+											j = j.cloneJSON();
+											j.setParent(arr);
+											j.setIndex(i++);
+											cc.add(j);
+										}
+									}
+									return arr;
+								}
+								@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+									Collection<JSON> cc = builder.collection();
+									JSONArray arr = builder.array(null, cc);
+									// this needs to be a deep clone for the internal referencing to hold.
+									int i = 0;
+									for(JSON j : l.collection()) {
+										if(!j.equals(r)) {
+											j = j.cloneJSON();
+											j.setParent(arr);
+											j.setIndex(i++);
+											j.lock();
+											cc.add(j);
+										}
+									}
+									r = r.cloneJSON();
+									r.setParent(arr);
+									r.setIndex(i++);
+									r.lock();
+									cc.add(r);
+									arr.lock();
+									return arr;
+								}
+								@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+									Map<String,JSON> m = builder.map();
+									JSONObject obj = builder.object(null,m);
+									for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
+										String k = ee.getKey();
+										JSON j = ee.getValue().cloneJSON();
+										j.setParent(obj);
+										j.setName(k);
+										j.lock();
+										m.put(k,j);
+									}
+									for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
+										String k = ee.getKey();
+										JSON j = ee.getValue().cloneJSON();
+										j.setParent(obj);
+										j.setName(k);
+										j.lock();
+										m.put(k,j);
+									}
+									obj.lock();
+									return obj;
 								}
 							}));
 
-		} else {
+			}
+		} 
 			return a;
-		}
-	}
+		
+		} 
+	
 
 	@Override
 	public InstructionFutureValue<JSON> visitMul_expr(Mul_exprContext ctx) {

@@ -26,9 +26,8 @@ public class DataParseTest {
 			JSONBuilder builder = new JSONBuilder();
 			JSON json = builder.parse(new FileInputStream(args[0]));
 			PrintWriter pw = new PrintWriter(System.out);
-			json.write(pw, 3);
+			json.write(pw, 1);
 			pw.flush();
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

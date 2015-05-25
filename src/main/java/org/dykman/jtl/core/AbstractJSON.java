@@ -5,38 +5,111 @@ import java.io.Writer;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.dykman.jtl.core.parser.JSONBuilder;
 
 public abstract class AbstractJSON implements JSON {
 	JSON parent;
 	String name;
 	boolean locked = false;
 	Integer index = null;
-	static final int charbuffer = 8192;
-	
+	JSONBuilder builder = null;
+	static final int charbuffer = 4096;
+
 	static final char[] SPACES = new char[charbuffer];
 	static {
 		Arrays.fill(SPACES, ' ');
 	}
 
-	public AbstractJSON(JSON parent) { this.parent = parent; }
+	public AbstractJSON(JSON parent) {
+		this.parent = parent;
+	}
+
+	public boolean equals(Object o) {
+		if(!(o instanceof JSON)) return false;
+		return equals((JSON)o);
+	}
+	public int compare(JSON r) {
+		JSONType rtype = r.getType();
+		switch(getType()) {
+		case OBJECT:
+			if(rtype != JSONType.OBJECT) return 1;
+			return ((JSONObject) this).deepCompare((JSONObject) r);
+		case ARRAY:
+			if(rtype != JSONType.ARRAY) return rtype == JSONType.OBJECT ? -1 : 1;
+			if(rtype != JSONType.OBJECT) return 1;
+			return ((JSONArray) this).deepCompare((JSONArray) r);
+		case BOOLEAN:
+			if(rtype == JSONType.NULL) return 1;
+			if(rtype != JSONType.BOOLEAN) return 1;
+			
+			break;
+		case DOUBLE:
+		case LONG:
+			if(rtype == JSONType.NULL || rtype == JSONType.BOOLEAN) return -1;
+			if(rtype == JSONType.LONG || rtype == JSONType.DOUBLE) {
+				double rd = ((JSONValue)this).doubleValue() - (((JSONValue)r).doubleValue());
+			} else {
+				return 1;
+			}
+		case NULL:
+			if(rtype == JSONType.NULL) return 0;
+			return -1;
+		case STRING:
+			// todo: string compare
+			break;		
+		}
+	}
 	public void raise(String msg) {
 		throw new RuntimeException(msg);
 	}
-	protected void writeAsString(Writer writer,String s) 
-		throws IOException {
+
+	protected void writeAsString(Writer writer, String s) throws IOException {
 		writer.write('"');
 		StringEscapeUtils.escapeJson(s);
 		writer.write('"');
 
 	}
-	protected void indent(Writer writer,int indent,int depth)
-		throws IOException {
+
+	protected void indent(Writer writer, int indent, int depth)
+			throws IOException {
 		int n = indent * depth;
-		writer.write(SPACES, 0, n);
+		while (n > SPACES.length) {
+			writer.write(SPACES, 0, SPACES.length);
+			n -= SPACES.length;
+		}
+		if (n > 0)
+			writer.write(SPACES, 0, n);
 	}
-	@Override public void lock() {
-		locked=true;
+
+	@Override
+	public void path(StringBuilder builder) {
+		if (parent != null)
+			parent.path(builder);
+		if (name != null) {
+			builder.append("/");
+			builder.append(name);
+		} else if (index != null) {
+			builder.append("[").append(index.toString()).append("]");
+		} else {
+			builder.append("/");
+//			builder.append("(undefined)");
+		}
 	}
+
+	@Override
+	public String path() {
+		StringBuilder builder = new StringBuilder();
+		return builder.toString();
+	}
+	
+	@Override
+	abstract public JSON cloneJSON();
+
+	@Override
+	public void lock() {
+		locked = true;
+	}
+
 	@Override
 	public String getName() {
 		return name;
@@ -44,7 +117,8 @@ public abstract class AbstractJSON implements JSON {
 
 	@Override
 	public void setName(String s) {
-		if(locked) raise("container is locked");
+		if (locked)
+			raise("container is locked");
 		name = s;
 	}
 
@@ -52,24 +126,35 @@ public abstract class AbstractJSON implements JSON {
 	public JSON getParent() {
 		return parent;
 	}
-	
-	
 
 	@Override
 	public JSON setParent(JSON p) {
-		if(locked) raise("container is locked");
+		if (locked)
+			raise("container is locked");
 		return parent = p;
 	}
+
 	@Override
 	public void write(Writer out, int indent) throws IOException {
-		write(out,indent,0);
+		write(out, indent, 0);
+		if (indent > 0) {
+			out.write("\n");
+		}
 	}
 
-	public abstract boolean isFalse();
 	public Integer getIndex() {
 		return index;
 	}
+
 	public void setIndex(Integer index) {
 		this.index = index;
+	}
+@Override
+	public JSONBuilder builder() {
+		return builder;
+	}
+
+	public void setBuilder(JSONBuilder builder) {
+		this.builder = builder;
 	}
 }

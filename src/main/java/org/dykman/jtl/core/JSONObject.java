@@ -2,12 +2,14 @@ package org.dykman.jtl.core;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.engine.MapFactory;
 
 public class JSONObject extends AbstractJSON implements
@@ -27,23 +29,40 @@ public class JSONObject extends AbstractJSON implements
 	public void setMap(Map<String, JSON> obj) {
 		this.obj = obj;
 	}
+	
+	public Map<String, JSON> map() {
+		return obj;
+	}
 	protected boolean isKeySafe(String k) {
 		int n = k.length();
 		for (int i = 0; i < n; ++i) {
 			Character cc = k.charAt(i);
+			if(i==0 && Character.isDigit(cc)) return false;
 			if (!(Character.isAlphabetic(cc) || Character.isDigit(cc) || cc
 					.equals('_'))) {
 				return false;
 			}
 		}
 		return true;
-
+	}
+	public boolean equals(JSON r) {
+		if(r == null) return false;
+		if(r.getType()!= JSONType.OBJECT) return false;
+		JSONObject rj = (JSONObject) r;
+		return 0 == deepCompare(rj);
+	}
+	public int deepCompare(JSONObject r) {
+		Map<String,JSON> rc = r.map();
+		if(obj.size() !=  rc.size()) return obj.size() - r.size();
+		for(Map.Entry<String, JSON> lj: obj.entrySet()) {
+			String k = lj.getKey();
+			JSON rvj = r.get(k);
+			int rr = lj.getValue().compare(rvj);
+			if(rr!=0) return rr;
+		}
+		return 0;
 	}
 
-	@Override
-	public void write(Writer out, int indent) throws IOException {
-		write(out, indent, 0);
-	}
 
 	@Override
 	public void write(Writer out, int n, int d) throws IOException {
@@ -86,8 +105,8 @@ public class JSONObject extends AbstractJSON implements
 	}
 
 	@Override
-	public boolean isFalse() {
-		return obj.size() == 0;
+	public boolean isTrue() {
+		return obj.size() > 0;
 	}
 
 	@Override
@@ -140,5 +159,19 @@ public class JSONObject extends AbstractJSON implements
 
 	public JSON get(String k) {
 		return obj.get(k);
+	}
+	public JSON cloneJSON() {
+		Map<String,JSON> m = builder.map();
+		JSONObject obj = builder.object(null, m);
+		for(Pair<String,JSON> ee :obj) {
+			String k = ee.f;
+			JSON j = ee.s.cloneJSON();
+			j.setParent(obj);
+			j.setName(k);
+			j.lock();
+			m.put(k, j);
+		}
+		obj.lock();
+		return obj;
 	}
 }

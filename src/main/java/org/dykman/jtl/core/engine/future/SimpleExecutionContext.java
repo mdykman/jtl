@@ -55,16 +55,14 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 			final AsyncExecutionContext<JSON> ctx) 
 			throws JSONException {
 		InstructionFuture<JSON> i = functions.get(name);
-		if(i!=null) {
-			return i.call(ctx, input);
-		} 
-		if(parent != null) return parent.call(name, args, input,ctx);
-		return immediateFailedCheckedFuture(new ExecutionException("function " + name + " not found"));
+		if(i!=null) return i.call(ctx, input);
+		if(parent!=null) return parent.call(name, args, input,ctx);
+		return immediateFailedCheckedFuture(new JSONException("function " + name + " not found"));
 	}
 
 	@Override
 	public void set(String name, ListenableFuture<JSON> t) {
-		// TODO Auto-generated method stub
+		variables.put(name, t);
 		
 	}
 
@@ -73,20 +71,19 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 	public ListenableFuture<JSON> lookup(String name)
 		throws JSONException {
 		ListenableFuture<JSON> res = variables.get(name);
-		if(res == null && parent!=null) res = parent.lookup(name);
 		synchronized(deferred) {
 			res = variables.get(name);
-			if(res ==null) {
+			if(res == null) {
 				Duo<InstructionFuture<JSON>,ListenableFuture<JSON>> d = deferred.get(name);
-				
 				if(d != null) {
 					res = d.first.call(this,d.second);
 					variables.put(name, res);
 				}
 			}
 		}
+		if(res == null && parent!=null) res = parent.lookup(name);
 		if(res!=null) return res;
-		return immediateFuture((JSON)new JSONValue(null));
+		return immediateFailedCheckedFuture(new JSONException("variable " + name + " not found"));
 	}
 	@Override
 	public AsyncExecutionContext<JSON> createChild() {

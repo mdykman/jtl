@@ -49,7 +49,9 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	@Override
 	public DataValue<JSON> visitJtl(JtlContext ctx) {
 		JsonContext c = ctx.json();
-		return visitJson(c);
+		DataValue<JSON> v = visitJson(c);
+		v.value.lock();
+		return v;
 	}
 	@Override
 	public DataValue<JSON> visitJson(JsonContext ctx) {
@@ -64,8 +66,11 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 		for(PairContext p: ctx.pair()) {
 			DataValue<JSON> v = visitPair(p);
 			v.pair.s.setParent(obj);
+			v.pair.s.setName(v.pair.f);
+			v.pair.s.lock();
 			map.put(v.pair.f,v.pair.s);
 		}
+		
 		return new DataValue<JSON>(obj);
 	}
 	@Override
@@ -94,6 +99,7 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 			DataValue<JSON> dv = visitValue(v);
 			dv.value.setParent(arr);
 			dv.value.setIndex(index++);
+			dv.value.lock();
 			c.add(dv.value);
 		}
 		return new DataValue<JSON>(arr);

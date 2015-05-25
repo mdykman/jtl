@@ -1,0 +1,23 @@
+{
+	db: module("jdbc",{
+		uri: "jdbc://mysql:host:port/db",
+		username: "user",
+		password: "password"
+	}),
+	http: module("httpclient", { proxy: "jdbc://mysql:host:port" }),
+	$base: "http://somewhere.com.context/",
+	
+	_: {
+		result: fetch("int"),
+		web: http.get($base + "status", {
+			cid:1234
+		})
+	},
+	fetch: {
+         db.query("select * from persons where type = ?",$1)/*/person()		
+	}
+	person: {
+		"First Name": first,
+		"Last Name": last
+	}
+}

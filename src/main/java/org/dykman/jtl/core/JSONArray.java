@@ -21,15 +21,47 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		arr = coll;
 	}
 
+	public boolean contains(JSON j) {
+		return arr.contains(j);
+	}
 	public void setCollection(Collection<JSON> arr) {
 		this.arr = arr;
 	}
-
-	@Override
-	public boolean isFalse() {
-		return arr.size() == 0;
+	public boolean equals(JSON r) {
+		if(r == null) return false;
+		if(r.getType()!= JSONType.ARRAY) return false;
+		JSONArray rj = (JSONArray) r;
+		return 0 == deepCompare(rj);
+	}
+	public int deepCompare(JSONArray r) {
+		if(arr.size()!= r.size()) return arr.size() - r.size();
+		Iterator<JSON> rit = r.iterator();
+		for(JSON j: this) {
+			JSON rj = rit.next();
+			int rc = j.compare(rj);
+			if(rc != 0) return rc;
+		}
+		return 0;
+	}
+	public JSON cloneJSON() {
+		Collection<JSON> cc = builder.collection();
+		JSONArray res = builder.array(null, cc);
+		int i = 0;
+		for(JSON j:arr) {
+			j = j.cloneJSON();
+			j.setParent(res);
+			j.setIndex(i++);
+			cc.add(j);
+		}
+		return res;
 	}
 
+	@Override
+	public boolean isTrue() {
+		return arr.size() > 0;
+	}
+
+	public Collection<JSON> collection() { return arr; }
 	public static JSONArray create(JSON parent, CollectionFactory<JSON> factory) {
 		return new JSONArray(parent, factory.createCollection());
 	}
