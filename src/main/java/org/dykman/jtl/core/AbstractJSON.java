@@ -41,13 +41,15 @@ public abstract class AbstractJSON implements JSON {
 		case BOOLEAN:
 			if(rtype == JSONType.NULL) return 1;
 			if(rtype != JSONType.BOOLEAN) return 1;
-			
-			break;
+			boolean lb =((JSONValue)this).booleanValue();
+			boolean rb =((JSONValue)r).booleanValue();
+			return lb == rb ? 0 : lb  ? 1 : 0;
 		case DOUBLE:
 		case LONG:
 			if(rtype == JSONType.NULL || rtype == JSONType.BOOLEAN) return -1;
 			if(rtype == JSONType.LONG || rtype == JSONType.DOUBLE) {
 				double rd = ((JSONValue)this).doubleValue() - (((JSONValue)r).doubleValue());
+				return rd> 0 ? 1 : rd < 0 ? -1 : 0;
 			} else {
 				return 1;
 			}
@@ -55,9 +57,12 @@ public abstract class AbstractJSON implements JSON {
 			if(rtype == JSONType.NULL) return 0;
 			return -1;
 		case STRING:
-			// todo: string compare
-			break;		
+			if(rtype == JSONType.ARRAY || rtype == JSONType.OBJECT) return -1;
+			if(rtype !=getType()) return 1;
+			return ((JSONValue)this).stringValue().compareTo(((JSONValue)r).stringValue());
 		}
+		// TODO:: should throw an exception here
+		return -1;
 	}
 	public void raise(String msg) {
 		throw new RuntimeException(msg);
