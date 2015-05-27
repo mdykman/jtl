@@ -106,9 +106,20 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	}
 	@Override
 	public DataValue<JSON> visitValue(ValueContext ctx) {
-		DataValue<JSON> v = super.visitValue(ctx);
+		ValueContext vc = ctx.value();
+		if(vc!=null) return visitValue(vc);
+		JpathContext jc = ctx.jpath();
+		if(jc!=null) return visitJpath(jc);
+		ObjectContext oc = ctx.object();
+		if(oc!=null) return visitObject(oc);
+		ArrayContext ac = ctx.array();
+		if(ac!=null) return visitArray(ac);
+//		DataValue<JSON> v = super.visitValue(ctx);
 // I should trap non-data nodes seen here and raise input exception
-		return v;
+//		return v;
+		
+		// TODO:: thrown not implemented expetion
+		return null;
 	}
 	@Override
 	public DataValue<JSON> visitS_expr(S_exprContext ctx) {
@@ -117,13 +128,12 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	}
 	@Override
 	public DataValue<JSON> visitJpath(JpathContext ctx) {
-		return visitOr_expr(ctx.or_expr());
-//		return super.visitJpath(ctx);
+		return visitTern_expr(ctx.tern_expr());
 	}
 	@Override
 	public DataValue<JSON> visitOr_expr(Or_exprContext ctx) {
 		return visitAnd_expr(ctx.and_expr());
-//		return super.visitOr_expr(ctx);
+//		return super.visitOr_expr(ctx);ctx.
 	}
 	@Override
 	public DataValue<JSON> visitAnd_expr(And_exprContext ctx) {

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
@@ -173,8 +174,8 @@ public class InstructionFutureFactory {
 		return value(str);
 	}
 
-	public InstructionFuture<JSON> number(final Number num) {
-		return value(num instanceof Long ? num.longValue() : num.doubleValue());
+	public InstructionFuture<JSON> number(TerminalNode i, TerminalNode d) {
+		return value(i!=null ? Long.parseLong(i.getText()) : Double.parseDouble(d.getText()));
 	}
 
 	public InstructionFuture<JSON> array(final List<InstructionFuture<JSON>> ch) {

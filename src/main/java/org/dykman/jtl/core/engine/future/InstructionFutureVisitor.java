@@ -2,6 +2,7 @@ package org.dykman.jtl.core.engine.future;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,7 @@ import org.dykman.jtl.core.parser.JSONBuilder;
 
 import static com.google.common.util.concurrent.Futures.*;
 
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends
@@ -195,7 +197,7 @@ public class InstructionFutureVisitor extends
 	@Override
 	public InstructionFutureValue<JSON> visitNumber(NumberContext ctx) {
 		return new InstructionFutureValue<JSON>(
-				factory.number(ctx.num));
+				factory.number(ctx.INTEGER(),ctx.FLOAT()));
 	}
 
 	@Override
@@ -389,7 +391,7 @@ public class InstructionFutureVisitor extends
 	}
 	
 	protected InstructionFuture<JSON> subInstruction(InstructionFutureValue<JSON> a,Add_exprContext c) {
-		return 					factory.dyadic(a.inst,
+		return factory.dyadic(a.inst,
 				visitAdd_expr(c).inst,
 				new DefaultPolymorphicOperator() {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
@@ -473,10 +475,10 @@ public class InstructionFutureVisitor extends
 			String sop = ctx.getChild(1).getText();
 			switch(sop) {
 			case "+":			
-			return new InstructionFutureValue<JSON>(
+			return new InstructionFutureValue<>(
 					addInstruction(a, c));
 			case "-":			
-			return new InstructionFutureValue<JSON>(
+			return new InstructionFutureValue<>(
 					subInstruction(a, c));
 			}
 		} 
@@ -486,18 +488,110 @@ public class InstructionFutureVisitor extends
 	protected InstructionFuture<JSON> mulInstruction(
 			InstructionFutureValue<JSON> a,
 			Mul_exprContext c) {
-		return null;
+		return factory.dyadic(a.inst,
+				visitMul_expr(c).inst,
+				new DefaultPolymorphicOperator() {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l*r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l*r; }
+					/*
+					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+						int n = l.indexOf(r);
+						if(n!=-1) {
+							StringBuilder b = new StringBuilder(l.substring(0, n));
+							b.append(l.substring(n+r.length()));
+							return b.toString();
+						}
+						return r;
+					}
+					@Override public JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+						if(r.size()!=l.size()) return new JSONValue(null);
+						Collection<JSON> cc = builder.collection();
+						JSONArray arr = builder.array(null, cc);
+						// this needs to be a deep clone for the internal referencing to hold.
+						Iterator<JSON> rit = r.iterator();
+						for(JSON j : l.collection()) {
+							JSON rj = rit.next();
+							if(j.isNumber() && r.isNumber()) {
+							
+							} else {
+								j = new JSONValue(arr);
+							}
+								j.setParent(arr);
+								j.setIndex(i++);
+								cc.add(j);
+						}
+						return arr;
+					}
+					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+						Collection<JSON> cc = builder.collection();
+						JSONArray arr = builder.array(null, cc);
+						// this needs to be a deep clone for the internal referencing to hold.
+						int i = 0;
+						for(JSON j : l.collection()) {
+							if(!j.equals(r)) {
+								j = j.cloneJSON();
+								j.setParent(arr);
+								j.setIndex(i++);
+								j.lock();
+								cc.add(j);
+							}
+						}
+						r = r.cloneJSON();
+						r.setParent(arr);
+						r.setIndex(i++);
+						r.lock();
+						cc.add(r);
+						arr.lock();
+						return arr;
+					}
+					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+						Map<String,JSON> m = builder.map();
+						JSONObject obj = builder.object(null,m);
+						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
+							String k = ee.getKey();
+							JSON j = ee.getValue().cloneJSON();
+							j.setParent(obj);
+							j.setName(k);
+							j.lock();
+							m.put(k,j);
+						}
+						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
+							String k = ee.getKey();
+							JSON j = ee.getValue().cloneJSON();
+							j.setParent(obj);
+							j.setName(k);
+							j.lock();
+							m.put(k,j);
+						}
+						obj.lock();
+						return obj;
+					}
+				});
+				*/
+		});
+	
 	}
 	protected InstructionFuture<JSON> divInstruction(
 			InstructionFutureValue<JSON> a,
 			Mul_exprContext c) {
-		return null;
+		return factory.dyadic(a.inst,
+				visitMul_expr(c).inst,
+				new DefaultPolymorphicOperator() {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l/r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l/r; }
+		});
+	
 	}
 	
 	protected InstructionFuture<JSON> modInstruction(
 			InstructionFutureValue<JSON> a,
 			Mul_exprContext c) {
-		return null;
+		return factory.dyadic(a.inst,
+				visitMul_expr(c).inst,
+				new DefaultPolymorphicOperator() {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l%r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l%r; }
+		});
 	}
 	@Override
 	public InstructionFutureValue<JSON> visitMul_expr(Mul_exprContext ctx) {
@@ -507,11 +601,14 @@ public class InstructionFutureVisitor extends
 			String sop = ctx.getChild(1).getText();
 			switch(sop) {
 			case "*":
-				return new InstructionFutureValue<>(mulInstruction(a, c));
+				return new InstructionFutureValue<>(
+						mulInstruction(a, c));
 			case "div":
-				return new InstructionFutureValue<>(divInstruction(a, c));
+				return new InstructionFutureValue<>(
+						divInstruction(a, c));
 			case"%":
-				return new InstructionFutureValue<>(modInstruction(a, c));
+				return new InstructionFutureValue<>(
+						modInstruction(a, c));
 			}
 		}
 		return a;
@@ -519,55 +616,98 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitUnary_expr(Unary_exprContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitUnary_expr(ctx);
+		InstructionFutureValue<JSON> a = visitUnion_expr(ctx.union_expr());
+		Unary_exprContext c = ctx.unary_expr();
+		if(c!=null) {
+			
+		}
+		return a;
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitUnion_expr(Union_exprContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitUnion_expr(ctx);
+		InstructionFutureValue<JSON> a = visitFilter_path(ctx.filter_path());
+		Union_exprContext c = ctx.union_expr();
+		if(c!=null) {
+			
+		}
+		return a;
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitFilter_path(Filter_pathContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitFilter_path(ctx);
+		InstructionFutureValue<JSON> a = visitPath(ctx.path());
+		Filter_pathContext c = ctx.filter_path();
+		if(c!=null) {
+			
+		}
+		return a;
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitPath(PathContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitPath(ctx);
+		return visitAbs_path(ctx.abs_path());
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitAbs_path(Abs_pathContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitAbs_path(ctx);
+		final InstructionFutureValue<JSON> a = visitRel_path(ctx.rel_path());
+		if(1 < ctx.getChildCount()) {
+			return new InstructionFutureValue<>(
+					new AbstractInstructionFuture<JSON>() {
+						@Override
+						public ListenableFuture<JSON> call(
+								AsyncExecutionContext<JSON> context,
+								ListenableFuture<JSON> data)
+								throws JSONException {
+							return transform(data, new AsyncFunction<JSON, JSON>() {
+								@Override
+								public ListenableFuture<JSON> apply(JSON input)
+										throws Exception {
+									JSON parent = input.getParent();
+									while(parent!=null) {
+										input = parent;
+										parent=input.getParent();
+									}
+									return immediateFuture(input);
+								}
+							});
+						}
+					});
+		}
+		return a;
 	}
-
+// TODO:: the hard work
 	@Override
 	public InstructionFutureValue<JSON> visitRel_path(Rel_pathContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitRel_path(ctx);
+		final InstructionFutureValue<JSON> a = visitPathelement(ctx.pathelement());
+		final InstructionFutureValue<JSON> c = visitRel_path(ctx.rel_path());
+		if(c!=null) {
+			return new InstructionFutureValue<JSON>(new AbstractInstructionFuture<JSON>() {
+
+				@Override
+				public ListenableFuture<JSON> call(
+						final AsyncExecutionContext<JSON> context,
+						final ListenableFuture<JSON> data) throws JSONException {
+					return a.inst.call(context, c.inst.call(context, data));
+				}				
+			});
+		}
+		return a;
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitPathelement(PathelementContext ctx) {
-		// TODO Auto-generated method stub
 		return super.visitPathelement(ctx);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitPathstep(PathstepContext ctx) {
-		// TODO Auto-generated method stub
 		return super.visitPathstep(ctx);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitRecurs(RecursContext ctx) {
-		// TODO Auto-generated method stub
 		return super.visitRecurs(ctx);
 	}
 

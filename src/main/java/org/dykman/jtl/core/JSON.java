@@ -17,6 +17,7 @@ public interface JSON {
 	public JSONType getType();
 	public boolean isTrue();
 
+	public boolean isNumber();
 	public JSON cloneJSON();
 	public boolean equals(JSON r);
 	public int compare(JSON r);

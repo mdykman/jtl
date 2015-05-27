@@ -102,6 +102,11 @@ public abstract class AbstractJSON implements JSON {
 	}
 
 	@Override
+	public boolean isNumber() {
+		JSONType type = getType();
+		return type == JSONType.LONG || type == JSONType.DOUBLE || type == JSONType.BOOLEAN);
+	}
+	@Override
 	public String path() {
 		StringBuilder builder = new StringBuilder();
 		return builder.toString();
