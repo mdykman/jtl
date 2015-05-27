@@ -65,10 +65,16 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	public static JSONArray create(JSON parent, CollectionFactory<JSON> factory) {
 		return new JSONArray(parent, factory.createCollection());
 	}
-
 	public void add(JSON j) {
+		add(j,false);
+	}
+	public void add(JSON j,boolean dontclone) {
 		if (locked)
 			raise("container is locked");
+		if(!dontclone) j = j.cloneJSON();
+		j.setParent(this);
+		j.setIndex(arr.size());
+		j.lock();
 		arr.add(j);
 	}
 

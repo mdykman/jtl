@@ -10,51 +10,54 @@ public class JSONValue extends AbstractJSON implements JSON {
 	final Object o;
 	final JSONType type;
 
-	public JSONValue(JSON p, JSONType type, Object o) {
+	protected JSONValue(JSON p, JSONType type, Object o) {
 		super(p);
 		this.type = type;
-		this.o = 0;
+		this.o = o;
 	}
 
+	public JSONValue(JSON p, Number io) {
+		super(p);
+		if(io == null) {
+			this.o = io;
+			type = JSONType.NULL;
+		} else if (io instanceof Long) {
+			this.o = io;
+			type = JSONType.LONG;
+		} else if (io instanceof Integer) {
+			this.o = ((Integer) io).longValue();
+			type = JSONType.LONG;
+		} else {
+			this.o = (Double) io.doubleValue();
+			type = JSONType.DOUBLE;
+		}
+	}
 
 	public JSONValue(JSON p) {
 		this(p,JSONType.NULL,null);
-//		super(p);
 	}
 
+	public JSONValue(JSON p, Long o) {
+		this(p,o == null ? JSONType.NULL : JSONType.LONG,o);
+	}
+
+	public JSONValue(JSON p, Double o) {
+		this(p,o == null ? JSONType.NULL : JSONType.DOUBLE,o);
+	}
+
+	public JSONValue(JSON p, Boolean o) {
+		this(p,o == null ? JSONType.NULL : JSONType.BOOLEAN,o);
+	}
+
+	public JSONValue(JSON p, String o) {
+		this(p,o == null ? JSONType.NULL : JSONType.STRING,o);
+	}
+
+	@Override
 	public JSON cloneJSON() {
 		return new JSONValue(null, type, o);
 	}
 
-	public JSONValue(JSON p, Long o) {
-		this(p,JSONType.LONG,o);
-	}
-
-	public JSONValue(JSON p, Number o) {
-		super(p);
-		if (o instanceof Long) {
-			type = JSONType.LONG;
-		} else if (o instanceof Integer) {
-			o = ((Integer) o).longValue();
-			type = JSONType.LONG;
-		} else {
-			type = JSONType.DOUBLE;
-			o = (Double) o.doubleValue();
-		}
-		this.o = o;
-	}
-
-	public JSONValue(JSON p, Double o) {
-		this(p,JSONType.DOUBLE,o);
-	}
-
-	public JSONValue(JSON p, Boolean o) {
-		this(p,JSONType.BOOLEAN,o);
-	}
-
-	public JSONValue(JSON p, String o) {
-		this(p,JSONType.STRING,o);
-	}
 
 	@Override
 	public JSONType getType() {

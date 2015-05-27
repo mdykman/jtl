@@ -80,7 +80,7 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return immediateFuture(new JSONValue(input, val));
+						return immediateFuture(builder.value(val));
 					}
 				});
 			}
@@ -99,7 +99,7 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return immediateFuture(new JSONValue(input, (Long) null));
+						return immediateFuture(builder.value());
 					}
 				});
 			}
@@ -118,7 +118,7 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return immediateFuture(new JSONValue(input, val));
+						return immediateFuture(builder.value(val));
 					}
 				});
 			}
@@ -136,7 +136,7 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return immediateFuture(new JSONValue(input, val));
+						return immediateFuture(builder.value(val));
 					}
 				});
 			}
@@ -155,7 +155,8 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return immediateFuture(new JSONValue(input, val));
+						builder.value(val);
+						return immediateFuture(builder.value(val));
 					}
 				});
 			}
@@ -294,7 +295,7 @@ public class InstructionFutureFactory {
 			}
 			if (init != null) {
 				// init does not get access to input data
-				ListenableFuture<JSON> inif = init.call(childContext,immediateFuture(new JSONValue(null)));
+				ListenableFuture<JSON> inif = init.call(childContext,immediateFuture(builder.value()));
 				childContext.set("init", inif);
 				return transform(inif,
 						new KeyedAsyncFunction<JSON, JSON, InstructionFuture<JSON>>(

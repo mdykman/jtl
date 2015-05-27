@@ -33,6 +33,9 @@ public class JSONObject extends AbstractJSON implements
 	public Map<String, JSON> map() {
 		return obj;
 	}
+	public boolean containsKey(String k) {
+		return obj.containsKey(k);
+	}
 	protected boolean isKeySafe(String k) {
 		int n = k.length();
 		for (int i = 0; i < n; ++i) {
@@ -118,10 +121,16 @@ public class JSONObject extends AbstractJSON implements
 			throws JSONException {
 		return new JSONObject(parent, factory.createMap());
 	}
-
 	public void put(String k, JSON v) {
+		put(k,v,false);
+	}
+	public void put(String k, JSON v, boolean dontclone) {
 		if (locked)
 			raise("container is locked");
+		if(!dontclone) v = v.cloneJSON();
+		v.setParent(this);
+		v.setName(k);
+		lock();
 		obj.put(k, v);
 	}
 

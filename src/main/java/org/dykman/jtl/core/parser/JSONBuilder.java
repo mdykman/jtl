@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONObject;
+import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.engine.CollectionFactory;
 import org.dykman.jtl.core.engine.MapFactory;
 
@@ -59,6 +60,29 @@ public class JSONBuilder {
 		return cf.createCollection(cap);
 	}
 	
+	
+	public JSONValue value() {
+		JSONValue v = new JSONValue(null);
+		v.setBuilder(this);
+		return v;
+	}
+	public JSONValue value(Number number) {
+		JSONValue v = new JSONValue(null,number);
+		v.setBuilder(this);
+		return v;
+	}
+	public JSONValue value(String string) {
+		JSONValue v = new JSONValue(null,string);
+		v.setBuilder(this);
+		return v;
+	}
+	public JSONValue value(Boolean b) {
+		JSONValue v = new JSONValue(null,b);
+		v.setBuilder(this);
+		return v;
+	}
+
+	
 	public JSONObject object(JSON parent,Map<String, JSON> map) {
 
 		JSONObject r = new JSONObject(parent,map);
@@ -70,9 +94,19 @@ public class JSONBuilder {
 		r.setBuilder(this);
 		return r;
 	}
+	public JSONObject object(JSON parent,int cap) {
+		JSONObject r = new JSONObject(parent,mf.createMap(cap));
+		r.setBuilder(this);
+		return r;
+	}
 	
 	public JSONArray array(JSON parent) {
 		JSONArray r = new JSONArray(parent,cf.createCollection());
+		r.setBuilder(this);
+		return r;
+	}
+	public JSONArray array(JSON parent,int cap) {
+		JSONArray r = new JSONArray(parent,cf.createCollection(cap));
 		r.setBuilder(this);
 		return r;
 	}

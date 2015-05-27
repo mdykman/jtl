@@ -40,7 +40,7 @@ public abstract class AbstractJSON implements JSON {
 			return ((JSONArray) this).deepCompare((JSONArray) r);
 		case BOOLEAN:
 			if(rtype == JSONType.NULL) return 1;
-			if(rtype != JSONType.BOOLEAN) return 1;
+			if(rtype != JSONType.BOOLEAN) return -1;
 			boolean lb =((JSONValue)this).booleanValue();
 			boolean rb =((JSONValue)r).booleanValue();
 			return lb == rb ? 0 : lb  ? 1 : 0;
@@ -104,11 +104,12 @@ public abstract class AbstractJSON implements JSON {
 	@Override
 	public boolean isNumber() {
 		JSONType type = getType();
-		return type == JSONType.LONG || type == JSONType.DOUBLE || type == JSONType.BOOLEAN);
+		return type == JSONType.LONG || type == JSONType.DOUBLE || type == JSONType.BOOLEAN;
 	}
 	@Override
 	public String path() {
 		StringBuilder builder = new StringBuilder();
+		path(builder);
 		return builder.toString();
 	}
 	

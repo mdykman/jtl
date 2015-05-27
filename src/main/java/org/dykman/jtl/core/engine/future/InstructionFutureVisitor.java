@@ -146,7 +146,7 @@ public class InstructionFutureVisitor extends
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> parent) throws JSONException {
-				return immediateFuture(new JSONValue(null,s));
+				return immediateFuture(builder.value(s));
 			}
 		};
 		return super.visitString(ctx);
@@ -237,7 +237,7 @@ public class InstructionFutureVisitor extends
 								@Override
 								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
-									return new JSONValue(null, a.isTrue()
+									return builder.value(a.isTrue()
 											&& b.isTrue());
 								}
 							}));
@@ -261,8 +261,7 @@ public class InstructionFutureVisitor extends
 								public JSON invoke(AsyncExecutionContext<JSON> eng,
 										JSON a, JSON b) {
 									boolean e = a.equals(b);
-									return new JSONValue(null,
-											inv ^ e);
+									return builder.value(inv ^ e);
 								}
 							}));
 
@@ -282,7 +281,7 @@ public class InstructionFutureVisitor extends
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, l.compare(r) < 0);
+						return builder.value(l.compare(r) < 0);
 					}
 				};
 				break;
@@ -290,7 +289,7 @@ public class InstructionFutureVisitor extends
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, l.compare(r) > 0);
+						return builder.value(l.compare(r) > 0);
 					}
 				};
 				break;
@@ -298,7 +297,7 @@ public class InstructionFutureVisitor extends
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, l.compare(r) <= 0);
+						return builder.value(l.compare(r) <= 0);
 					}
 				};
 				break;
@@ -306,7 +305,7 @@ public class InstructionFutureVisitor extends
 				df = new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-						return new JSONValue(null, l.compare(r) >= 0);
+						return builder.value(l.compare(r) >= 0);
 					}
 				};
 				break;
@@ -322,69 +321,45 @@ public class InstructionFutureVisitor extends
 	protected InstructionFuture<JSON> addInstruction(InstructionFutureValue<JSON> a,Add_exprContext c) {
 		return factory.dyadic(a.inst,
 				visitAdd_expr(c).inst,
-				new DefaultPolymorphicOperator() {
+				new DefaultPolymorphicOperator(builder) {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l+r; }
 					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l+r; }
 					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {return l+r; }
 					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
+//						Collection<JSON> cc = builder.collection();
+						JSONArray arr = builder.array(null);
 						// this needs to be a deep clone for the internal referencing to hold.
 						int i = 0;
 						for(JSON j : l.collection()) {
-							j = j.cloneJSON();
-							j.setParent(arr);
-							j.setIndex(i++);
-							cc.add(j);
+							arr.add(j);
 						}
 						for(JSON j : r.collection()) {
-							j = j.cloneJSON();
-							j.setParent(arr);
-							j.setIndex(i++);
-							cc.add(j);
+							arr.add(j);
 						}
 						return arr;
 					}
 					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
+						JSONArray arr = builder.array(null);
 						// this needs to be a deep clone for the internal referencing to hold.
 						int i = 0;
 						for(JSON j : l.collection()) {
-							j = j.cloneJSON();
-							j.setParent(arr);
-							j.setIndex(i++);
-							j.lock();
-							cc.add(j);
+							arr.add(j);
 						}
-						r = r.cloneJSON();
-						r.setParent(arr);
-						r.setIndex(i++);
-						r.lock();
-						cc.add(r);
-						arr.lock();
+						arr.add(r);
 						return arr;
 					}
 					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						Map<String,JSON> m = builder.map();
-						JSONObject obj = builder.object(null,m);
+						JSONObject obj = builder.object(null);
 						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
 							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
+							JSON j = ee.getValue();
+							obj.put(k, j);
 						}
 						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
 							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
+							JSON j = ee.getValue();
+							obj.put(k, j);
 						}
-						obj.lock();
 						return obj;
 					}
 				});
@@ -393,7 +368,7 @@ public class InstructionFutureVisitor extends
 	protected InstructionFuture<JSON> subInstruction(InstructionFutureValue<JSON> a,Add_exprContext c) {
 		return factory.dyadic(a.inst,
 				visitAdd_expr(c).inst,
-				new DefaultPolymorphicOperator() {
+				new DefaultPolymorphicOperator(builder) {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
 					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l-r; }
 					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
@@ -406,40 +381,25 @@ public class InstructionFutureVisitor extends
 						return r;
 					}
 					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
+						JSONArray arr = builder.array(null);
 						// this needs to be a deep clone for the internal referencing to hold.
 						int i = 0;
 						for(JSON j : l.collection()) {
 							if(!r.contains(j)) {
-								j = j.cloneJSON();
-								j.setParent(arr);
-								j.setIndex(i++);
-								cc.add(j);
+								arr.add(j);
 							}
 						}
 						return arr;
 					}
 					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
+						JSONArray arr = builder.array(null);
 						// this needs to be a deep clone for the internal referencing to hold.
 						int i = 0;
 						for(JSON j : l.collection()) {
 							if(!j.equals(r)) {
-								j = j.cloneJSON();
-								j.setParent(arr);
-								j.setIndex(i++);
-								j.lock();
-								cc.add(j);
+								arr.add(j);
 							}
 						}
-						r = r.cloneJSON();
-						r.setParent(arr);
-						r.setIndex(i++);
-						r.lock();
-						cc.add(r);
-						arr.lock();
 						return arr;
 					}
 					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
@@ -447,21 +407,9 @@ public class InstructionFutureVisitor extends
 						JSONObject obj = builder.object(null,m);
 						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
 							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
+							JSON j = ee.getValue();
+							if(!r.containsKey(k)) obj.put(k, j);
 						}
-						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
-						}
-						obj.lock();
 						return obj;
 					}
 				});
@@ -490,7 +438,7 @@ public class InstructionFutureVisitor extends
 			Mul_exprContext c) {
 		return factory.dyadic(a.inst,
 				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator() {
+				new DefaultPolymorphicOperator(builder) {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l*r; }
 					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l*r; }
 					/*
@@ -576,7 +524,7 @@ public class InstructionFutureVisitor extends
 			Mul_exprContext c) {
 		return factory.dyadic(a.inst,
 				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator() {
+				new DefaultPolymorphicOperator(builder) {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l/r; }
 					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l/r; }
 		});
@@ -588,7 +536,7 @@ public class InstructionFutureVisitor extends
 			Mul_exprContext c) {
 		return factory.dyadic(a.inst,
 				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator() {
+				new DefaultPolymorphicOperator(builder) {
 					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l%r; }
 					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l%r; }
 		});

@@ -10,9 +10,15 @@ import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.InstructionValue;
+import org.dykman.jtl.core.parser.JSONBuilder;
+
+import com.google.common.collect.ImmutableBiMap.Builder;
 
 public class InstructionFactory {
-	
+	JSONBuilder builder;
+	public InstructionFactory(JSONBuilder builder) {
+		this.builder = builder;
+	}
 	public static Instruction<JSON> variable(final String name) {
 		return new AbstractInstruction<JSON>() {
 			
@@ -37,22 +43,23 @@ public class InstructionFactory {
 		};
 	}
 
-	public static Instruction<JSON> nil() {
+	public Instruction<JSON> nil() {
 		return new AbstractInstruction<JSON>() {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t);
+				
+				return builder.value();
 			}
 		};
 	}
 
-	public static Instruction<JSON> bool(final Boolean b) {
+	public  Instruction<JSON> bool(final Boolean b) {
 		return new AbstractInstruction<JSON>() {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t, b);
+				return builder.value(b); 
 			}
 		};
 	}
@@ -67,19 +74,19 @@ public class InstructionFactory {
 		};
 	}
 	
-	public static Instruction<JSON> decimal(final Double num) {
+	public Instruction<JSON> decimal(final Double num) {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t, num);
+				return builder.value(num);
 			}
 		};
 	}
-	public static Instruction<JSON> integer(final long num) {
+	public Instruction<JSON> integer(final long num) {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t, num);
+				return builder.value(num);
 			}
 		};
 	}
@@ -108,7 +115,7 @@ public class InstructionFactory {
 		};
 	}
 
-	public static Instruction<JSON> object(final List<InstructionValue<JSON>> ll) {
+	public Instruction<JSON> object(final List<InstructionValue<JSON>> ll) {
 		return new AbstractInstruction<JSON>() {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
@@ -122,7 +129,8 @@ public class InstructionFactory {
 					}
 					return object;
 				} catch (JSONException e) {
-					return new JSONValue(null,"JSONException: " + e.getLocalizedMessage());
+					return builder.value("JSONException: " + e.getLocalizedMessage());
+//					return new JSONValue(null,"JSONException: " + e.getLocalizedMessage());
 				}
 			}
 		};

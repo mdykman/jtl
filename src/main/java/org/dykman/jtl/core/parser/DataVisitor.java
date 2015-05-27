@@ -61,18 +61,14 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	@Override
 	public DataValue<JSON> visitObject(ObjectContext ctx) {
 		int cap = ctx.getChildCount();
-		Map<String,JSON> map = builder.map(cap);
-		JSONObject obj = builder.object(null, map);
+		JSONObject obj = builder.object(null,cap);
 		for(PairContext p: ctx.pair()) {
 			DataValue<JSON> v = visitPair(p);
-			v.pair.s.setParent(obj);
-			v.pair.s.setName(v.pair.f);
-			v.pair.s.lock();
-			map.put(v.pair.f,v.pair.s);
+			obj.put(v.pair.f,v.pair.s);
 		}
-		
 		return new DataValue<JSON>(obj);
 	}
+	
 	@Override
 	public DataValue<JSON> visitPair(PairContext ctx) {
 		String k;
@@ -92,15 +88,11 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	@Override
 	public DataValue<JSON> visitArray(ArrayContext ctx) {
 		int cc = ctx.getChildCount();
-		Collection<JSON> c = builder.collection(cc);
-		JSONArray arr = builder.array(null, c);
-		int index = 0;
+//		Collection<JSON> c = builder.collection(cc);
+		JSONArray arr = builder.array(null);
 		for(ValueContext v: ctx.value()) {
 			DataValue<JSON> dv = visitValue(v);
-			dv.value.setParent(arr);
-			dv.value.setIndex(index++);
-			dv.value.lock();
-			c.add(dv.value);
+			arr.add(dv.value);
 		}
 		return new DataValue<JSON>(arr);
 	}
@@ -238,10 +230,10 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitNumber(NumberContext ctx) {
 		TerminalNode tn = ctx.INTEGER();
 		if(tn!=null) {
-			return new DataValue<JSON>(new JSONValue(null,Long.parseLong(tn.getText())));
+			return new DataValue<JSON>(builder.value(Long.parseLong(tn.getText())));
 		}
 		tn = ctx.FLOAT();
-		return new DataValue<JSON>(new JSONValue(null,Double.parseDouble(tn.getText())));
+		return new DataValue<JSON>(builder.value(Double.parseDouble(tn.getText())));
 	}
 	@Override
 	public DataValue<JSON> visitId(IdContext ctx) {
@@ -251,7 +243,7 @@ public class DataVisitor extends jtlBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitString(StringContext ctx) {
 		String k = ctx.STRING().getText();
 		k=k.substring(1,k.length()-1);
-		return new DataValue<JSON>(new JSONValue(null,k));
+		return new DataValue<JSON>(builder.value(k));
 //		return super.visitString(ctx);
 	}
 
