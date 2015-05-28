@@ -15,12 +15,12 @@ import org.dykman.jtl.core.parser.JSONBuilder;
 import com.google.common.collect.ImmutableBiMap.Builder;
 
 public class InstructionFactory {
-	JSONBuilder builder;
+	final JSONBuilder builder;
 	public InstructionFactory(JSONBuilder builder) {
 		this.builder = builder;
 	}
-	public static Instruction<JSON> variable(final String name) {
-		return new AbstractInstruction<JSON>() {
+	public  Instruction<JSON> variable(final String name) {
+		return new AbstractInstruction<JSON>(builder) {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
@@ -29,8 +29,8 @@ public class InstructionFactory {
 		};
 	}
 
-	public static Instruction<JSON> function(final String name,final List<Instruction<JSON>> iargs) {
-		return new AbstractInstruction<JSON>() {
+	public Instruction<JSON> function(final String name,final List<Instruction<JSON>> iargs) {
+		return new AbstractInstruction<JSON>(builder) {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
@@ -44,18 +44,17 @@ public class InstructionFactory {
 	}
 
 	public Instruction<JSON> nil() {
-		return new AbstractInstruction<JSON>() {
+		return new AbstractInstruction<JSON>(builder) {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				
 				return builder.value();
 			}
 		};
 	}
 
 	public  Instruction<JSON> bool(final Boolean b) {
-		return new AbstractInstruction<JSON>() {
+		return new AbstractInstruction<JSON>(builder) {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
@@ -64,18 +63,18 @@ public class InstructionFactory {
 		};
 	}
 	
-	public static Instruction<JSON> string(final String str) {
-		return new AbstractInstruction<JSON>() {
+	public Instruction<JSON> string(final String str) {
+		return new AbstractInstruction<JSON>(builder) {
 			
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
-				return new JSONValue(t, str);
+				return builder.value(str);
 			}
 		};
 	}
 	
 	public Instruction<JSON> decimal(final Double num) {
-		return new AbstractInstruction<JSON>() {
+		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
 				return builder.value(num);
@@ -83,7 +82,7 @@ public class InstructionFactory {
 		};
 	}
 	public Instruction<JSON> integer(final long num) {
-		return new AbstractInstruction<JSON>() {
+		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON>eng,JSON t, List<JSON> args) {
 				return builder.value(num);
@@ -91,8 +90,8 @@ public class InstructionFactory {
 		};
 	}
 	
-	public static Instruction<JSON> array(final List<Instruction<JSON>> ch) {
-		return new AbstractInstruction<JSON>() {
+	public Instruction<JSON> array(final List<Instruction<JSON>> ch) {
+		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
 				JSONArray array= JSONArray.create(null,eng);
@@ -105,8 +104,8 @@ public class InstructionFactory {
 		};
 	}
 
-	public static Instruction<JSON> pair(final JSONObject object,final Instruction<JSON>k,final Instruction<JSON>v) {
-		return new AbstractInstruction<JSON>() {
+	public Instruction<JSON> pair(final JSONObject object,final Instruction<JSON>k,final Instruction<JSON>v) {
+		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
 				object.put(k.call(eng, t, null).toString(), v.call(eng, t, null));
@@ -116,7 +115,7 @@ public class InstructionFactory {
 	}
 
 	public Instruction<JSON> object(final List<InstructionValue<JSON>> ll) {
-		return new AbstractInstruction<JSON>() {
+		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
 				try {

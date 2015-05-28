@@ -127,10 +127,9 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			case LONG:
 			case STRING:
 
-				return new JSONValue(null, op(eng,left,
+				return builder.value(op(eng,left,
 						((JSONValue) r).stringValue()));
 			case NULL:
-				return r;
 			case ARRAY:
 			case BOOLEAN:
 			case OBJECT:

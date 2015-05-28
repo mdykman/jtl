@@ -10,12 +10,6 @@ public class JSONValue extends AbstractJSON implements JSON {
 	final Object o;
 	final JSONType type;
 
-	protected JSONValue(JSON p, JSONType type, Object o) {
-		super(p);
-		this.type = type;
-		this.o = o;
-	}
-
 	public JSONValue(JSON p, Number io) {
 		super(p);
 		if(io == null) {
@@ -25,12 +19,19 @@ public class JSONValue extends AbstractJSON implements JSON {
 			this.o = io;
 			type = JSONType.LONG;
 		} else if (io instanceof Integer) {
-			this.o = ((Integer) io).longValue();
+			this.o = io.longValue();
 			type = JSONType.LONG;
 		} else {
-			this.o = (Double) io.doubleValue();
+			this.o = io.doubleValue();
 			type = JSONType.DOUBLE;
 		}
+	}
+
+	protected JSONValue(JSON p, JSONType type, Object o) {
+		super(p);
+		if(o == null) this.type = JSONType.NULL;
+		else this.type = type;
+		this.o = o;
 	}
 
 	public JSONValue(JSON p) {
@@ -38,19 +39,19 @@ public class JSONValue extends AbstractJSON implements JSON {
 	}
 
 	public JSONValue(JSON p, Long o) {
-		this(p,o == null ? JSONType.NULL : JSONType.LONG,o);
+		this(p,JSONType.LONG,o);
 	}
 
 	public JSONValue(JSON p, Double o) {
-		this(p,o == null ? JSONType.NULL : JSONType.DOUBLE,o);
+		this(p,JSONType.DOUBLE,o);
 	}
 
 	public JSONValue(JSON p, Boolean o) {
-		this(p,o == null ? JSONType.NULL : JSONType.BOOLEAN,o);
+		this(p,JSONType.BOOLEAN,o);
 	}
 
 	public JSONValue(JSON p, String o) {
-		this(p,o == null ? JSONType.NULL : JSONType.STRING,o);
+		this(p,JSONType.STRING,o);
 	}
 
 	@Override
