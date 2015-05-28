@@ -6,11 +6,11 @@ import java.util.List;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.InstructionValue;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.collect.ImmutableBiMap.Builder;
 

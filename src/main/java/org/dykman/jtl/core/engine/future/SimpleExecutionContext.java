@@ -9,10 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.engine.ExecutionException;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

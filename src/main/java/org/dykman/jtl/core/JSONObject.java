@@ -170,17 +170,10 @@ public class JSONObject extends AbstractJSON implements
 		return obj.get(k);
 	}
 	public JSON cloneJSON() {
-		Map<String,JSON> m = builder.map();
-		JSONObject obj = builder.object(null, m);
+		JSONObject obj = builder.object(null);
 		for(Pair<String,JSON> ee :obj) {
-			String k = ee.f;
-			JSON j = ee.s.cloneJSON();
-			j.setParent(obj);
-			j.setName(k);
-			j.lock();
-			m.put(k, j);
+			obj.put(ee.f, ee.s);
 		}
-		obj.lock();
 		return obj;
 	}
 }

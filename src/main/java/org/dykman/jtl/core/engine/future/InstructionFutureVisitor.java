@@ -39,10 +39,10 @@ import main.antlr.jtlParser.VariableContext;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 import static com.google.common.util.concurrent.Futures.*;
 
@@ -403,8 +403,7 @@ public class InstructionFutureVisitor extends
 						return arr;
 					}
 					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						Map<String,JSON> m = builder.map();
-						JSONObject obj = builder.object(null,m);
+						JSONObject obj = builder.object(null,l.size()+r.size());
 						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
 							String k = ee.getKey();
 							JSON j = ee.getValue();

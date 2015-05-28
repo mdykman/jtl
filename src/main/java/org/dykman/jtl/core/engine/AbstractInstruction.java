@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.dykman.jtl.core.parser.JSONBuilder;
+import org.dykman.jtl.core.JSONBuilder;
 
 public abstract class AbstractInstruction<T> implements Instruction<T> {
 

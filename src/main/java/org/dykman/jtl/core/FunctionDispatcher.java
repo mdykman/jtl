@@ -1,7 +1,5 @@
 package org.dykman.jtl.core;
 
-import org.dykman.jtl.core.parser.JSONBuilder;
-
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 

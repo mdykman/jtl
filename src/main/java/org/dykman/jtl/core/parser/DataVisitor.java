@@ -36,6 +36,7 @@ import main.antlr.jtlParser.VariableContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.Pair;

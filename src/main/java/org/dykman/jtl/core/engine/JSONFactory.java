@@ -10,9 +10,9 @@ import main.antlr.jtlParser.JtlContext;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.parser.DataValue;
 import org.dykman.jtl.core.parser.DataVisitor;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 
 public abstract class JSONFactory {
@@ -34,7 +34,7 @@ public abstract class JSONFactory {
 			throws IOException {
 			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
 			JtlContext tree = parser.jtl();
-			DataVisitor visitor = new DataVisitor(new JSONBuilder());
+			DataVisitor visitor = new DataVisitor(new JSONBuilderImpl());
 			DataValue<JSON> v = visitor.visit(tree);
 			return v.value;
 			

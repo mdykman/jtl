@@ -44,14 +44,10 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		return 0;
 	}
 	public JSON cloneJSON() {
-		Collection<JSON> cc = builder.collection();
-		JSONArray res = builder.array(null, cc);
+		JSONArray res = builder.array(null);
 		int i = 0;
 		for(JSON j:arr) {
-			j = j.cloneJSON();
-			j.setParent(res);
-			j.setIndex(i++);
-			cc.add(j);
+			res.add(j);
 		}
 		return res;
 	}

@@ -5,7 +5,6 @@ import java.io.Writer;
 import java.util.Arrays;
 
 import org.apache.commons.lang3.StringEscapeUtils;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 public abstract class AbstractJSON implements JSON {
 	JSON parent;

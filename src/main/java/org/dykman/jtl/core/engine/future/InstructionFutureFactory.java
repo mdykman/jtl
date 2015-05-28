@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
@@ -21,7 +22,6 @@ import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.ExecutionException;
 import org.dykman.jtl.core.parser.InstructionValue;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.AsyncFunction;
@@ -194,14 +194,10 @@ public class InstructionFutureFactory {
 							@Override
 							public ListenableFuture<JSON> apply(List<JSON> input)
 									throws Exception {
-								Collection<JSON> cc = builder.collection(input.size());
-								JSONArray arr = builder.array(null, cc);
+								JSONArray arr = builder.array(null, input.size());
 								int i = 0;
 								for (JSON j : input) {
-									j.setParent(arr);
-									j.setIndex(i++);
-									j.lock();
-									cc.add(j);
+									arr.add(j);
 								}
 								arr.lock();
 								return immediateFuture(arr);
@@ -321,7 +317,6 @@ public class InstructionFutureFactory {
 				final ListenableFuture<JSON> data) throws JSONException {
 			List<ListenableFuture<Duo<String, JSON>>> insts = new ArrayList<>(
 					ll.size());
-			final Map<String, JSON> m = builder.map(ll.size());
 			for (Duo<String, InstructionFuture<JSON>> ii : ll) {
 				final String kk = ii.first;
 				ListenableFuture<Duo<String, JSON>> lf = transform(
@@ -331,6 +326,7 @@ public class InstructionFutureFactory {
 							@Override
 							public ListenableFuture<Duo<String, JSON>> apply(
 									JSON input) throws Exception {
+								input.setName(kk);
 								return immediateFuture(new Duo(kk, input));
 							}
 						});
@@ -343,15 +339,10 @@ public class InstructionFutureFactory {
 						public ListenableFuture<JSON> apply(
 								List<Duo<String, JSON>> input)
 								throws Exception {
-							final Map<String, JSON> m = builder.map(input
-									.size());
-							JSONObject obj = builder.object(null,m);
+							JSONObject obj = builder.object(null,input.size());
 
 							for (Duo<String, JSON> d : input) {
-								d.second.setParent(obj);
-								d.second.setName(d.first);
-								d.second.lock();
-								m.put(d.first, d.second);
+								obj.put(d.first, d.second);
 							}
 							obj.lock();
 							return immediateFuture(obj);

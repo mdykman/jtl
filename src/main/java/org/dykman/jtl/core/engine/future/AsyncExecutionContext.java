@@ -2,8 +2,8 @@ package org.dykman.jtl.core.engine.future;
 
 import java.util.List;
 
+import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.JSONException;
-import org.dykman.jtl.core.parser.JSONBuilder;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

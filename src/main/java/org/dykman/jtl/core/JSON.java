@@ -3,8 +3,6 @@ package org.dykman.jtl.core;
 import java.io.IOException;
 import java.io.Writer;
 
-import org.dykman.jtl.core.parser.JSONBuilder;
-
 public interface JSON {
 	public String getName();
 	public void setName(String s);
