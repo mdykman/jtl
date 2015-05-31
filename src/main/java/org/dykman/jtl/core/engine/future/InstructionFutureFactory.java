@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import main.antlr.jtlParser.Add_exprContext;
+import main.antlr.jtlParser.Mul_exprContext;
+
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
@@ -385,8 +388,7 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> t) throws JSONException {
-				final JSONObject object = (JSONObject) JSONObject.create(
-						(JSON) null, context.engine());
+				final JSONObject object = builder.object(null);
 				List<ListenableFuture<JSON>> pp = new ArrayList<>(ll.size());
 				for (Duo<String, InstructionFuture<JSON>> p : ll) {
 					ListenableFuture<JSON> vl = p.second.call(context, t);
@@ -417,4 +419,126 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
+	
+	public InstructionFuture<JSON> deindex(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return null;
+	}
+	public InstructionFuture<JSON> addInstruction(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l+r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l+r; }
+					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {return l+r; }
+					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+//						Collection<JSON> cc = builder.collection();
+						JSONArray arr = builder.array(null);
+						// this needs to be a deep clone for the internal referencing to hold.
+						int i = 0;
+						for(JSON j : l.collection()) {
+							arr.add(j);
+						}
+						for(JSON j : r.collection()) {
+							arr.add(j);
+						}
+						return arr;
+					}
+					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+						JSONArray arr = builder.array(null);
+						// this needs to be a deep clone for the internal referencing to hold.
+						int i = 0;
+						for(JSON j : l.collection()) {
+							arr.add(j);
+						}
+						arr.add(r);
+						return arr;
+					}
+					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+						JSONObject obj = builder.object(null);
+						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
+							String k = ee.getKey();
+							JSON j = ee.getValue();
+							obj.put(k, j);
+						}
+						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
+							String k = ee.getKey();
+							JSON j = ee.getValue();
+							obj.put(k, j);
+						}
+						return obj;
+					}
+				});
+	}
+	
+	public InstructionFuture<JSON> subInstruction(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l-r; }
+					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+						int n = l.indexOf(r);
+						if(n!=-1) {
+							StringBuilder b = new StringBuilder(l.substring(0, n));
+							b.append(l.substring(n+r.length()));
+							return b.toString();
+						}
+						return r;
+					}
+					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+						JSONArray arr = builder.array(null);
+						// this needs to be a deep clone for the internal referencing to hold.
+						for(JSON j : l.collection()) {
+							if(!r.contains(j)) {
+								arr.add(j);
+							}
+						}
+						return arr;
+					}
+					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+						JSONArray arr = builder.array(null);
+						// this needs to be a deep clone for the internal referencing to hold.
+						for(JSON j : l.collection()) {
+							if(!j.equals(r)) {
+								arr.add(j);
+							}
+						}
+						return arr;
+					}
+					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+						JSONObject obj = builder.object(null,l.size()+r.size());
+						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
+							String k = ee.getKey();
+							JSON j = ee.getValue();
+							if(!r.containsKey(k)) obj.put(k, j);
+						}
+						return obj;
+					}
+				});
+	}
+
+	public InstructionFuture<JSON> mulInstruction(
+			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l*r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l*r; }
+
+		});
+	
+	}
+	public InstructionFuture<JSON> divInstruction(
+			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l/r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l/r; }
+		});
+	
+	}
+	
+	public InstructionFuture<JSON> modInstruction(
+			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
+					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l%r; }
+					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l%r; }
+		});
+	}
+
+	
+
 }

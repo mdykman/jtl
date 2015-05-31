@@ -8,6 +8,10 @@ public class InstructionFutureValue<T> {
 //	public Duo<Instruction<T>,Instruction<T>> duo;
 	public Duo<String,InstructionFuture<T>> ninst;
 	
+	public String string;
+	public InstructionFutureValue(String s) {
+		string = s;
+	}
 	public InstructionFutureValue(InstructionFuture<T> t) {
 		inst = t;
 	}

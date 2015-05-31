@@ -4,135 +4,113 @@
 
 grammar jtl;
 
-tokens {S1CONTENT, S2CONTENT}
+import json;
+
+
+//tokens {S1CONTENT, S2CONTENT}
 
 options {
     language = Java;
+    tokenVocab=jtllex;
 }
 
 @header {
-import java.util.*;
-import java.util.concurrent.*;
-import com.google.common.util.concurrent.*;
-import static com.google.common.util.concurrent.Futures.*;
-import org.dykman.jtl.core.*;
 }
 
-@body {
-	JSON getContext() { return null; }
-}
 
-jtl //returns [ ListenableFuture<JSON> jval ]
-      : json EOF 
+jtl 
+      : value EOF?
       ;
 
-json //returns [ ListenableFuture<JSON> jval ]
-    :   value 
-    ; 
-
-object// returns [ ListenableFuture<JSON> jval ]
-    : '{' pair  (',' pair )* '}' 
-    |   '{' '}' // empty object
-    ;
-    
-pair // returns [ListenableFuture<Duo<String,JSON>> pp]
-    : string ':' value
-    | id ':' value 
-    ; 
-    
-array // returns [ ListenableFuture<JSON> jval ]
-    :   '[' value (',' value)* ']' 
-    |   '[' ']' // empty array
-    ;
-
-value // returns // [ ListenableFuture<JSON> jval ]
+value
     : object 
     | array
     | jpath 
     | '(' value ')'
-/*
-    |   b=func 
-    |   c=variable 
-    |   ss=string  
-    |   n=number 
-    |   'true'  
-    |   'false' 
-    |   'null' 
-    
-    */
     ;
 
-   
-s_expr // returns [  ListenableFuture<JSON> jval  ]
-       : '$' '{' json '}' 
-       ;
 
-jpath //returns [ ListenableFuture<JSON> jval ]
-	:  tern_expr;
+jpath
+	:  tern_expr
+	;
 
 tern_expr 
 	: or_expr
-	| tern_expr '?' json ':' json; 
+	| tern_expr '?' value ':' value
+	; 
 	
-or_expr // returns [ ListenableFuture<JSON> jval ]
+or_expr 
     : and_expr
-    | or_expr 'or' and_expr;
+    | or_expr 'or' and_expr
+    ;
 
-and_expr // returns [ ListenableFuture<JSON> jval ]
+and_expr 
     : eq_expr 
-    | and_expr 'and' eq_expr;
+    | and_expr 'and' eq_expr
+    ;
 
-eq_expr // returns [ ListenableFuture<JSON> jval ]    
+eq_expr 
 	: rel_expr
     | eq_expr '=' rel_expr
-    | eq_expr '!=' rel_expr;
+    | eq_expr '!=' rel_expr
+    ;
         
-rel_expr // returns [ ListenableFuture<JSON> jval ]   
+rel_expr
 	: add_expr
     | rel_expr '<' add_expr
     | rel_expr '>' add_expr
     | rel_expr '<=' add_expr
-    | rel_expr '>=' add_expr;
+    | rel_expr '>=' add_expr
+    ;
 
-add_expr  // returns [ ListenableFuture<JSON> jval ]   
+add_expr   
 	: mul_expr
     | add_expr '+' mul_expr
-    | add_expr '-' mul_expr;
+    | add_expr '-' mul_expr
+    ;
             
-mul_expr  // returns [ ListenableFuture<JSON> jval ]
+mul_expr
 	: unary_expr
     | mul_expr '*' unary_expr
     | mul_expr 'div' unary_expr
-    | mul_expr '%' unary_expr;
+    | mul_expr '%' unary_expr
+    ;
             
-unary_expr // returns [ ListenableFuture<JSON> jval ]
+unary_expr
 	: union_expr
-    | '-' unary_expr; 
+    | '-' unary_expr
+    ; 
             
-union_expr // returns [ ListenableFuture<JSON> jval ]  
+union_expr  
 	: filter_path
-    | union_expr '|' filter_path;
+    | union_expr '|' filter_path
+    ;
 
-filter_path // returns [ ListenableFuture<JSON> jval ]
+filter_path
 	: path
-    | filter_path '{' jpath '}' ;
+    | filter_path '{' value '}' 
+    ;
 
-path // returns [ ListenableFuture<JSON> jval ]
-	: abs_path;
+path 
+	: abs_path
+	;
 
-abs_path // returns [ ListenableFuture<JSON> jval ]
+abs_path 
 	: '/' rel_path
-	| rel_path;
+	| rel_path
+	;
 			
-rel_path // returns [ ListenableFuture<JSON> jval ]
+rel_path 
 	: pathelement
-    | rel_path '/' pathelement ;
+    | rel_path '/' pathelement 
+    ;
                         
-pathelement // returns [ ListenableFuture<JSON> jval ]
+pathelement 
 	: pathstep
-    | pathelement '[' jpath ']' ;
-
-pathstep // returns [ ListenableFuture<JSON> jval ]    
+    | pathelement '[' value ']' 
+    ;
+    
+pathstep 
 	: '.'
 	| '..'
 	| '*'
@@ -144,62 +122,44 @@ pathstep // returns [ ListenableFuture<JSON> jval ]
 	| func
 	| variable
 	| number
-	| string;
+	| jstring
+	;
             
-recurs // returns [ ListenableFuture<JSON> jval ]
+recurs 
 	: '**'
-    | '...';
+    | '...'
+    ;
             
 
-func // returns [ ListenableFuture<JSON> jval ]
+func
      : ID '(' ')'
-     | ID '(' json (',' json )* ')' 
+     | ID '(' value (',' value )* ')' 
      ;
 
-variable // returns [ ListenableFuture<JSON> jval ]
+variable
       : '$' i=ID 
       | '$' i=INTEGER
+      | '!' i=ID 
       ;
 
-number //returns [ Number num]
+number
       : INTEGER 
       | FLOAT 
       ;
 
-
-id // returns [ String str ]
+id 
      : ID 
      ;
  
-    
-string // returns [String str]
-        : STRING
-  //     : '"' ss1=s1 '"'
-//       | '\'' t=S2CONTENT '\'' 
-       ;
+string
+	: STRING
+	;
 
-//////////////////%%
-INTEGER
-    :   '-'? INT                 // -3, 45
-    |   '-'? INT EXP 
-    ;
-
-FLOAT 
-    :   '-'? INT '.' [0-9]+ EXP? // 1.35, 1.35E-9, 0.3, -4.5
-    ;
-
-fragment INT :   '0' | [1-9] [0-9]* ; // no leading zeros
-fragment EXP :   [Ee] [+\-]? INT ; // \- since - means "range" inside [...]
-
-fragment ESC :   '\\' ([\\/bfnrt] | UNICODE) ;
-fragment UNICODE : 'u' HEX HEX HEX HEX ;
-fragment HEX : [0-9a-fA-F] ;
-
-//LQOUTE : '"' -> more,pushMode(STR);
-
-STRING : '"' (ESC | ~[\"\\]+)* '"';
-ID   : [a-zA-Z_][a-zA-Z0-9_]* ;        
-WS  :   [ \t\n\r]+ -> skip ;
-COMMENT : '/' '/' [^\n]* -> skip;
-
-//mode STR;
+jstring : SSTR strc ESTR
+     | string
+     ;
+     
+strc : SS
+	| START_BLOCK jtl END_BLOCK
+	| strc strc
+	; 

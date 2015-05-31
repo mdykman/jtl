@@ -14,22 +14,17 @@ import org.dykman.jtl.core.engine.MapFactory;
 
 public class JSONObject extends AbstractJSON implements
 		Iterable<Pair<String, JSON>> {
-	Map<String, JSON> obj;
-
-	public JSONObject(JSON parent) {
-		super(parent);
-		obj = new ConcurrentHashMap<>();
-	}
+	final Map<String, JSON> obj;
 
 	public JSONObject(JSON parent, Map<String, JSON> map) {
 		super(parent);
 		obj = map;
 	}
-
+/*
 	public void setMap(Map<String, JSON> obj) {
 		this.obj = obj;
 	}
-	
+*/
 	public Map<String, JSON> map() {
 		return obj;
 	}
@@ -116,11 +111,12 @@ public class JSONObject extends AbstractJSON implements
 	public JSONType getType() {
 		return JSONType.OBJECT;
 	}
-
+/*
 	public static JSONObject create(JSON parent, MapFactory factory)
 			throws JSONException {
 		return new JSONObject(parent, factory.createMap());
 	}
+*/
 	public void put(String k, JSON v) {
 		put(k,v,false);
 	}
@@ -130,13 +126,14 @@ public class JSONObject extends AbstractJSON implements
 		if(!dontclone) v = v.cloneJSON();
 		v.setParent(this);
 		v.setName(k);
-		lock();
+		v.lock();
 		obj.put(k, v);
 	}
 
 	public void putAll(JSONObject v) {
 		if (locked)
 			raise("container is locked");
+		
 		obj.putAll(v.obj);
 	}
 
@@ -171,8 +168,10 @@ public class JSONObject extends AbstractJSON implements
 	}
 	public JSON cloneJSON() {
 		JSONObject obj = builder.object(null);
-		for(Pair<String,JSON> ee :obj) {
-			obj.put(ee.f, ee.s);
+		Iterator<Map.Entry<String, JSON>> it = this.obj.entrySet().iterator();
+		while(it.hasNext()) {
+			Map.Entry<String,JSON> ee = it.next();
+			obj.put(ee.getKey(), ee.getValue());
 		}
 		return obj;
 	}

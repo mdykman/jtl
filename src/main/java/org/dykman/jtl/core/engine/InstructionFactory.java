@@ -118,19 +118,14 @@ public class InstructionFactory {
 		return new AbstractInstruction<JSON>(builder) {
 			@Override
 			public JSON call(Engine<JSON> eng, JSON t, List<JSON> args) {
-				try {
-					JSONObject object;
-					object = JSONObject.create(null, eng);
+				
+					JSONObject object = builder.object(null);
 					object.setParent(t);
 					for(InstructionValue<JSON> d : ll) {
 						object.put(d.ninst.first, 
 							d.ninst.second.call(eng, object, null));
 					}
 					return object;
-				} catch (JSONException e) {
-					return builder.value("JSONException: " + e.getLocalizedMessage());
-//					return new JSONValue(null,"JSONException: " + e.getLocalizedMessage());
-				}
 			}
 		};
 	}

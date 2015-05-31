@@ -26,9 +26,13 @@ public class DataParseTest {
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
 			JSON json = builder.parse(new FileInputStream(args[0]));
+			if(json == null) {
+				System.err.println("parser returned null");
+			} else {
 			PrintWriter pw = new PrintWriter(System.out);
 			json.write(pw, 1);
 			pw.flush();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

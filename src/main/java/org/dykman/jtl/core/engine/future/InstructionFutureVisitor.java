@@ -1,8 +1,10 @@
 package org.dykman.jtl.core.engine.future;
 
+import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static com.google.common.util.concurrent.Futures.transform;
+
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ import main.antlr.jtlParser.FuncContext;
 import main.antlr.jtlParser.IdContext;
 import main.antlr.jtlParser.JpathContext;
 import main.antlr.jtlParser.JsonContext;
+import main.antlr.jtlParser.JstringContext;
 import main.antlr.jtlParser.JtlContext;
 import main.antlr.jtlParser.Mul_exprContext;
 import main.antlr.jtlParser.NumberContext;
@@ -29,22 +32,21 @@ import main.antlr.jtlParser.PathstepContext;
 import main.antlr.jtlParser.RecursContext;
 import main.antlr.jtlParser.Rel_exprContext;
 import main.antlr.jtlParser.Rel_pathContext;
-import main.antlr.jtlParser.S_exprContext;
+import main.antlr.jtlParser.StrcContext;
 import main.antlr.jtlParser.StringContext;
+import main.antlr.jtlParser.Tern_exprContext;
 import main.antlr.jtlParser.Unary_exprContext;
 import main.antlr.jtlParser.Union_exprContext;
 import main.antlr.jtlParser.ValueContext;
 import main.antlr.jtlParser.VariableContext;
 
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.JSONValue;
-
-import static com.google.common.util.concurrent.Futures.*;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -60,8 +62,8 @@ public class InstructionFutureVisitor extends
 	}
 	@Override
 	public InstructionFutureValue<JSON> visitJtl(JtlContext ctx) {
-		JsonContext jc = ctx.json();
-		return visitJson(jc);
+		ValueContext jc = ctx.value();
+		return visitValue(jc);
 	}
 
 	@Override
@@ -97,17 +99,10 @@ public class InstructionFutureVisitor extends
 		} else {
 			k = visitString(ctx.string());
 		}
-		ListenableFuture<JSON> kj;
-		try {
-			// TODO:: WTF??!!
-			// what the hell am i doing here???
-			kj = k.inst.call(null,null);
-		} catch (JSONException e) {
-			return new InstructionFutureValue<JSON>(
-					factory.value("JSONException during visitPair: " + e.getLocalizedMessage()));
-		}
+		String ks = k.string;
+
 		InstructionFutureValue<JSON> v = visitValue(ctx.value());
-		return new InstructionFutureValue<JSON>(kj.toString(), v.inst);
+		return new InstructionFutureValue<JSON>(ks,v.inst);
 	}
 
 	@Override
@@ -139,30 +134,17 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitString(StringContext ctx) {
-		String t = ctx.STRING().getText();
-		final String s = t.substring(1, t.length()-1);
-		InstructionFuture<JSON> in = new InstructionFuture<JSON>() {
-			@Override
-			public ListenableFuture<JSON> call(
-					AsyncExecutionContext<JSON> context,
-					ListenableFuture<JSON> parent) throws JSONException {
-				return immediateFuture(builder.value(s));
-			}
-		};
-		return super.visitString(ctx);
-	}
-
-	@Override
-	public InstructionFutureValue<JSON> visitS_expr(S_exprContext ctx) {
-		JsonContext jc = ctx.json();
-		return visitJson(jc);
+		TerminalNode tn = ctx.STRING();
+		String s = tn.getText();
+		return new InstructionFutureValue<JSON>(
+			factory.string(s.substring(1, s.length()-1)));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitFunc(FuncContext ctx) {
 		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
-		for (JsonContext jc : ctx.json()) {
-			ins.add(visitJson(jc).inst);
+		for (ValueContext jc : ctx.value()) {
+			ins.add(visitValue(jc).inst);
 		}
 		return new InstructionFutureValue<JSON>(
 				factory.function(ctx.getChild(0).getText(),
@@ -190,8 +172,7 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitId(IdContext ctx) {
-		return new InstructionFutureValue<JSON>(
-				factory.string(ctx.getText()));
+		return new InstructionFutureValue<JSON>(ctx.getText());
 	}
 
 	@Override
@@ -318,244 +299,43 @@ public class InstructionFutureVisitor extends
 		}
 	}
 	
-	protected InstructionFuture<JSON> addInstruction(InstructionFutureValue<JSON> a,Add_exprContext c) {
-		return factory.dyadic(a.inst,
-				visitAdd_expr(c).inst,
-				new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l+r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l+r; }
-					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {return l+r; }
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-//						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							arr.add(j);
-						}
-						for(JSON j : r.collection()) {
-							arr.add(j);
-						}
-						return arr;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							arr.add(j);
-						}
-						arr.add(r);
-						return arr;
-					}
-					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						JSONObject obj = builder.object(null);
-						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							obj.put(k, j);
-						}
-						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							obj.put(k, j);
-						}
-						return obj;
-					}
-				});
-	}
-	
-	protected InstructionFuture<JSON> subInstruction(InstructionFutureValue<JSON> a,Add_exprContext c) {
-		return factory.dyadic(a.inst,
-				visitAdd_expr(c).inst,
-				new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l-r; }
-					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
-						int n = l.indexOf(r);
-						if(n!=-1) {
-							StringBuilder b = new StringBuilder(l.substring(0, n));
-							b.append(l.substring(n+r.length()));
-							return b.toString();
-						}
-						return r;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							if(!r.contains(j)) {
-								arr.add(j);
-							}
-						}
-						return arr;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							if(!j.equals(r)) {
-								arr.add(j);
-							}
-						}
-						return arr;
-					}
-					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						JSONObject obj = builder.object(null,l.size()+r.size());
-						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							if(!r.containsKey(k)) obj.put(k, j);
-						}
-						return obj;
-					}
-				});
-	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitAdd_expr(Add_exprContext ctx) {
 		InstructionFutureValue<JSON> a = visitMul_expr(ctx.mul_expr());
 		Add_exprContext c = ctx.add_expr();
+		InstructionFutureValue<JSON> bv = visitAdd_expr(c);
 		if (c != null) {
 			String sop = ctx.getChild(1).getText();
 			switch(sop) {
 			case "+":			
-			return new InstructionFutureValue<>(
-					addInstruction(a, c));
+			return new InstructionFutureValue<JSON>(
+					factory.addInstruction(a.inst, bv.inst));
 			case "-":			
 			return new InstructionFutureValue<>(
-					subInstruction(a, c));
+					factory.subInstruction(a.inst, bv.inst));
 			}
 		} 
 		return a;
 		
 		} 
-	protected InstructionFuture<JSON> mulInstruction(
-			InstructionFutureValue<JSON> a,
-			Mul_exprContext c) {
-		return factory.dyadic(a.inst,
-				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l*r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l*r; }
-					/*
-					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
-						int n = l.indexOf(r);
-						if(n!=-1) {
-							StringBuilder b = new StringBuilder(l.substring(0, n));
-							b.append(l.substring(n+r.length()));
-							return b.toString();
-						}
-						return r;
-					}
-					@Override public JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-						if(r.size()!=l.size()) return new JSONValue(null);
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
-						// this needs to be a deep clone for the internal referencing to hold.
-						Iterator<JSON> rit = r.iterator();
-						for(JSON j : l.collection()) {
-							JSON rj = rit.next();
-							if(j.isNumber() && r.isNumber()) {
-							
-							} else {
-								j = new JSONValue(arr);
-							}
-								j.setParent(arr);
-								j.setIndex(i++);
-								cc.add(j);
-						}
-						return arr;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null, cc);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							if(!j.equals(r)) {
-								j = j.cloneJSON();
-								j.setParent(arr);
-								j.setIndex(i++);
-								j.lock();
-								cc.add(j);
-							}
-						}
-						r = r.cloneJSON();
-						r.setParent(arr);
-						r.setIndex(i++);
-						r.lock();
-						cc.add(r);
-						arr.lock();
-						return arr;
-					}
-					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						Map<String,JSON> m = builder.map();
-						JSONObject obj = builder.object(null,m);
-						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
-						}
-						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue().cloneJSON();
-							j.setParent(obj);
-							j.setName(k);
-							j.lock();
-							m.put(k,j);
-						}
-						obj.lock();
-						return obj;
-					}
-				});
-				*/
-		});
-	
-	}
-	protected InstructionFuture<JSON> divInstruction(
-			InstructionFutureValue<JSON> a,
-			Mul_exprContext c) {
-		return factory.dyadic(a.inst,
-				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l/r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l/r; }
-		});
-	
-	}
-	
-	protected InstructionFuture<JSON> modInstruction(
-			InstructionFutureValue<JSON> a,
-			Mul_exprContext c) {
-		return factory.dyadic(a.inst,
-				visitMul_expr(c).inst,
-				new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l%r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l%r; }
-		});
-	}
 	@Override
 	public InstructionFutureValue<JSON> visitMul_expr(Mul_exprContext ctx) {
 		InstructionFutureValue<JSON> a = visitUnary_expr(ctx.unary_expr());
 		Mul_exprContext c = ctx.mul_expr();
+		InstructionFutureValue<JSON> bv = visitMul_expr(c);
 		if(c!=null) {
 			String sop = ctx.getChild(1).getText();
 			switch(sop) {
 			case "*":
 				return new InstructionFutureValue<>(
-						mulInstruction(a, c));
+						factory.mulInstruction(a.inst, bv.inst));
 			case "div":
 				return new InstructionFutureValue<>(
-						divInstruction(a, c));
+						factory.divInstruction(a.inst, bv.inst));
 			case"%":
 				return new InstructionFutureValue<>(
-						modInstruction(a, c));
+						factory.modInstruction(a.inst, bv.inst));
 			}
 		}
 		return a;
@@ -624,7 +404,6 @@ public class InstructionFutureVisitor extends
 		}
 		return a;
 	}
-// TODO:: the hard work
 	@Override
 	public InstructionFutureValue<JSON> visitRel_path(Rel_pathContext ctx) {
 		final InstructionFutureValue<JSON> a = visitPathelement(ctx.pathelement());
@@ -645,17 +424,48 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitPathelement(PathelementContext ctx) {
-		return super.visitPathelement(ctx);
+		PathstepContext psc = ctx.pathstep();
+		if(psc!= null) {
+			return visitPathstep(psc);
+		}
+		PathelementContext pc = ctx.pathelement();
+		InstructionFutureValue<JSON> pif = visitPathelement(pc); 
+		InstructionFutureValue<JSON> vif = visitValue(ctx.value());
+		return new InstructionFutureValue<JSON>(factory.deindex(pif.inst,vif.inst));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitPathstep(PathstepContext ctx) {
+		VariableContext vc = ctx.variable();
+		if(vc!=null) {
+			return visitVariable(vc);
+		}
+		FuncContext fc = ctx.func();
+		if(fc!=null) {
+			return visitFunc(fc);
+		}
+		
 		return super.visitPathstep(ctx);
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitRecurs(RecursContext ctx) {
 		return super.visitRecurs(ctx);
+	}
+	@Override
+	public InstructionFutureValue<JSON> visitTern_expr(Tern_exprContext ctx) {
+		// TODO Auto-generated method stub
+		return super.visitTern_expr(ctx);
+	}
+	@Override
+	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
+		// TODO Auto-generated method stub
+		return super.visitJstring(ctx);
+	}
+	@Override
+	public InstructionFutureValue<JSON> visitStrc(StrcContext ctx) {
+		// TODO Auto-generated method stub
+		return super.visitStrc(ctx);
 	}
 
 }

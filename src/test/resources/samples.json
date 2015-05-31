@@ -1,5 +1,5 @@
 {
- people: [ {
+  people : [ {
  		first: "John",
  		last: "Smith",
  		gender: "m",
