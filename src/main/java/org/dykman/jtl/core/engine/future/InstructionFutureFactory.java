@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javafx.scene.input.InputMethodHighlight;
 import main.antlr.jtlParser.Add_exprContext;
 import main.antlr.jtlParser.Mul_exprContext;
 
@@ -367,6 +368,155 @@ public class InstructionFutureFactory {
 
 	}
 
+	public InstructionFuture<JSON> stepParent() {
+		return new AbstractInstructionFuture<JSON>() {
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+						return transform(data,new AsyncFunction<JSON, JSON>() {
+							@Override
+							public ListenableFuture<JSON> apply(
+									JSON input) throws Exception {
+								JSON p = input.getParent();
+								JSON res = p == null ? input : p;
+								return immediateFuture(res);
+							}
+						} );
+					}
+		};
+	}
+
+	public InstructionFuture<JSON> stepSelf() {
+		return new AbstractInstructionFuture<JSON>() {
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+						return data;
+					}
+		};
+	}
+	public InstructionFuture<JSON> recursDown() {
+		return new AbstractInstructionFuture<JSON>() {
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					
+					protected void recurse(JSONArray unbound,JSON j) {
+						JSONType type = j.getType();
+						switch(type) {
+						case ARRAY: {
+							JSONArray a = (JSONArray) j;
+							for(JSON jj: a) {
+								unbound.add(jj);
+								recurse(unbound, jj);
+							}
+						} break;
+						case OBJECT:
+							JSONObject a = (JSONObject) j;
+							for(Pair<String,JSON> jj: a) {
+								unbound.add(jj.s);
+								recurse(unbound, jj.s);
+							}
+						}
+						
+					}
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						JSONArray unbound = builder.array(input,false);
+						unbound.add(input);
+						recurse(unbound,input);
+						return immediateFuture(unbound);
+					}
+				});
+			}
+		};
+	}
+
+	public InstructionFuture<JSON> ternary(
+			final InstructionFuture<JSON> c,
+			final InstructionFuture<JSON> a,
+			final InstructionFuture<JSON> b) {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+				return transform(c.call(context, data), new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return input.isTrue() ? a.call(context, data) :
+						 b.call(context, data);
+					}
+				});
+			}
+		};
+	}
+	public InstructionFuture<JSON> recursUp() {
+		return new AbstractInstructionFuture<JSON>() {
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					
+					protected void recurse(JSONArray unbound,JSON j) {
+						JSON p = j.getParent();
+						if(p!=null) {
+							unbound.add(p);
+							recurse(unbound,p);
+						}
+					}
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						JSONArray unbound = builder.array(input,false);
+						recurse(unbound,input);
+						return immediateFuture(unbound);
+					}
+				});
+			}
+		};
+	}
+	
+	public InstructionFuture<JSON> stepChildren() {
+		return new AbstractInstructionFuture<JSON>() {
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+						return transform(data,new AsyncFunction<JSON, JSON>() {
+							@Override
+							public ListenableFuture<JSON> apply(
+									JSON input) throws Exception {
+								JSONType type = input.getType();
+								if(type == JSONType.ARRAY) {
+									return immediateFuture(input);
+								} else if(type == JSONType.OBJECT) {
+									JSONArray unbound = builder.array(input,false);
+									JSONObject obj = (JSONObject) input;
+									for(Pair<String,JSON> ee: obj) {
+										unbound.add(ee.s);
+									}
+									return immediateFuture(unbound);
+								} else {
+									JSONArray unbound = builder.array(input,false);
+									return immediateFuture(unbound);
+								}
+							}
+						} );
+					}
+		};
+	}
+
+	
 	public InstructionFuture<JSON> object(
 			final List<Duo<String, InstructionFuture<JSON>>> ll)
 			throws JSONException {
@@ -419,6 +569,8 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
+//	public INstruc
+	
 	
 	public InstructionFuture<JSON> deindex(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
 		return null;

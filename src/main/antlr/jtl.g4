@@ -153,6 +153,7 @@ id
  
 string
 	: STRING
+	| SSTRING
 	;
 
 jstring : SSTR strc ESTR

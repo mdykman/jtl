@@ -5,6 +5,7 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static com.google.common.util.concurrent.Futures.transform;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -43,12 +44,16 @@ import main.antlr.jtlParser.VariableContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
+import org.dykman.jtl.core.JSONValue;
+import org.dykman.jtl.core.Pair;
 
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends
@@ -437,35 +442,165 @@ public class InstructionFutureVisitor extends
 	@Override
 	public InstructionFutureValue<JSON> visitPathstep(PathstepContext ctx) {
 		VariableContext vc = ctx.variable();
-		if(vc!=null) {
-			return visitVariable(vc);
-		}
+		if(vc!=null) return visitVariable(vc);
+
 		FuncContext fc = ctx.func();
-		if(fc!=null) {
-			return visitFunc(fc);
-		}
+		if(fc!=null) return visitFunc(fc);
 		
-		return super.visitPathstep(ctx);
+		NumberContext nc = ctx.number();
+		if(nc!=null) return visitNumber(nc);
+		
+		JstringContext jc = ctx.jstring();
+		if(jc!=null) visitJstring(jc);
+
+		RecursContext rc = ctx.recurs();
+		if(rc!=null) return visitRecurs(rc);
+		
+		IdContext ic = ctx.id();
+		if(ic!=null) return visitId(ic);
+		
+		String t  = ctx.getText(); {
+			switch(t) {
+			case "true" :
+				return new  InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
+					@Override
+					public ListenableFuture<JSON> call(
+							AsyncExecutionContext<JSON> context,
+							ListenableFuture<JSON> data) throws JSONException {
+								return immediateFuture(builder.value(true));
+							}
+				});
+			case "false" :
+				return new  InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
+					@Override
+					public ListenableFuture<JSON> call(
+							AsyncExecutionContext<JSON> context,
+							ListenableFuture<JSON> data) throws JSONException {
+								return immediateFuture(builder.value(false));
+							}
+				});
+				
+			case "null" :
+				return new  InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
+					@Override
+					public ListenableFuture<JSON> call(
+							AsyncExecutionContext<JSON> context,
+							ListenableFuture<JSON> data) throws JSONException {
+								return immediateFuture(builder.value());
+							}
+				});
+			case "*"	:
+				return new  InstructionFutureValue<>(factory.stepChildren());
+			case "."	:
+				return new  InstructionFutureValue<>(factory.stepSelf());
+			case ".."	:
+				return new  InstructionFutureValue<>(factory.stepParent());
+
+			}
+		}
+		throw new RuntimeException("token " + t + " is not implemented in pathstep");
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitRecurs(RecursContext ctx) {
-		return super.visitRecurs(ctx);
+		String t = ctx.getText();
+		switch(t){
+		case "**" :
+			return new  InstructionFutureValue<>(factory.recursDown());
+		case "...":
+			return new  InstructionFutureValue<>(factory.recursUp());
+		}
+		throw new RuntimeException("token " + t + " is not implemented in recurs");
 	}
+	
 	@Override
 	public InstructionFutureValue<JSON> visitTern_expr(Tern_exprContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitTern_expr(ctx);
-	}
-	@Override
-	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitJstring(ctx);
-	}
-	@Override
-	public InstructionFutureValue<JSON> visitStrc(StrcContext ctx) {
-		// TODO Auto-generated method stub
-		return super.visitStrc(ctx);
+		Or_exprContext oc = ctx.or_expr();
+		if(oc != null) return visitOr_expr(oc);
+		Tern_exprContext tc = ctx.tern_expr();
+		Iterator<ValueContext> vit = ctx.value().iterator();
+		ValueContext va = vit.next();
+		ValueContext vb = vit.next();
+		return new InstructionFutureValue<>(factory.ternary(
+				visitTern_expr(tc).inst, 
+				visitValue(va).inst, 
+				visitValue(vb).inst));
 	}
 
+	@Override
+	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
+		StringContext sc = ctx.string();
+		if(sc!=null) return visitString(sc);
+		StrcContext stc = ctx.strc();
+		return visitStrc(stc);
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitStrc(StrcContext ctx) {
+		JtlContext jtl = ctx.jtl();
+		if(jtl!=null) {
+			return new InstructionFutureValue<JSON>(
+					new AbstractInstructionFuture<JSON>() {
+
+						@Override
+						public ListenableFuture<JSON> call(
+								AsyncExecutionContext<JSON> context,
+								ListenableFuture<JSON> data)
+								throws JSONException {
+							return transform(data, new AsyncFunction<JSON, JSON>() {
+
+								@Override
+								public ListenableFuture<JSON> apply(JSON input)
+										throws Exception {
+									return immediateFuture(builder.value(input.toString()));
+								}
+							});
+						}
+					});
+		}
+		
+		List<StrcContext> strc = ctx.strc();
+		if(strc!=null && strc.size() > 0) {
+			Iterator<StrcContext> sit = strc.iterator();
+			StrcContext c1 = sit.next();
+			StrcContext c2 = sit.next();
+			final InstructionFutureValue<JSON> ci1 = visitStrc(c1);
+			final InstructionFutureValue<JSON> ci2 = visitStrc(c2);
+			return new InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
+
+				@Override
+				public ListenableFuture<JSON> call(
+						AsyncExecutionContext<JSON> context,
+						ListenableFuture<JSON> data) throws JSONException {
+					ListenableFuture<JSON> r1 = ci1.inst.call(context, data);
+					ListenableFuture<JSON> r2 = ci2.inst.call(context, data);
+					return transform(Futures.allAsList(r1,r2), new AsyncFunction<List<JSON>, JSON>() {
+
+						@Override
+						public ListenableFuture<JSON> apply(List<JSON> input)
+								throws Exception {
+							Iterator<JSON> jit = input.iterator();
+							JSONValue s1 = (JSONValue) jit.next();
+							JSONValue s2 = (JSONValue) jit.next();
+							String ss1 = s1.getType() == JSONType.NULL ? "" : s1.stringValue();
+							String ss2 = s2.getType() == JSONType.NULL ? "" : s2.stringValue();
+							return immediateFuture(builder.value(ss1+ss2));
+						}
+					});
+				}
+			});
+		}
+		final String t = ctx.getText();
+		return new InstructionFutureValue<JSON>(
+				new AbstractInstructionFuture<JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> call(
+							AsyncExecutionContext<JSON> context,
+							ListenableFuture<JSON> data)
+							throws JSONException {
+						return immediateFuture(builder.value(t));
+					}
+				});
+	}
 }

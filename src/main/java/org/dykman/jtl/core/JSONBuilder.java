@@ -17,6 +17,8 @@ public interface JSONBuilder {
 	public JSONObject object(JSON parent);
 	public JSONObject object(JSON parent, int cap);
 
+	public JSONArray array(JSON parent,boolean unbound);
+
 	public JSONArray array(JSON parent);
 	public JSONArray array(JSON parent, int cap);
 //	public JSONArray array(JSON parent, Collection<JSON> col);

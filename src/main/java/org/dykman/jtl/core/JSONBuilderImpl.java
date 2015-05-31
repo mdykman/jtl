@@ -28,6 +28,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 
 	final MapFactory<String, JSON> mf;
 	final CollectionFactory<JSON> cf;
+
 	
 	public JSONBuilderImpl(MapFactory<String,JSON> mf,CollectionFactory<JSON> cf ) {
 		this.mf = mf;
@@ -81,7 +82,13 @@ public class JSONBuilderImpl implements JSONBuilder {
 		JSONObject r = new JSONObject(parent,mf.createMap(cap));
 		return (JSONObject) sign(r);
 	}
-	
+
+	@Override
+	public JSONArray array(JSON parent,boolean bound) {
+		JSONArray r = new JSONArray(parent,cf.createCollection(),bound);
+		return (JSONArray) sign(r);
+	}
+
 	@Override
 	public JSONArray array(JSON parent) {
 		JSONArray r = new JSONArray(parent,cf.createCollection());

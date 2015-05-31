@@ -12,12 +12,13 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	private Collection<JSON> arr = new ArrayList<>();
 
 	private ArrayList<JSON> theList = null;
-
-	/*
-	 * public JSONArray(JSON parent) { super(parent); arr= new ArrayList<>(); }
-	 */
+	private boolean bound = true;
 	public JSONArray(JSON parent, Collection<JSON> coll) {
+		this(parent,coll,true);
+	}
+	public JSONArray(JSON parent, Collection<JSON> coll,boolean bound) {
 		super(parent);
+		this.bound = bound;
 		arr = coll;
 	}
 
@@ -67,18 +68,22 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	public void add(JSON j,boolean dontclone) {
 		if (locked)
 			raise("container is locked");
-		if(!dontclone) j = j.cloneJSON();
-		j.setParent(this);
-		j.setIndex(arr.size());
-		j.lock();
+		if(bound) {
+			if(!dontclone) j = j.cloneJSON();
+			j.setParent(this);
+			j.setIndex(arr.size());
+			j.lock();
+		}
 		arr.add(j);
 	}
 
-	public void addAll(Collection<JSON> j) {
+	public void addAll(JSONArray a) {
 		if (locked)
 			raise("container is locked");
 
-		arr.addAll(j);
+		for(JSON j : a) {
+			add(j);
+		}
 	}
 
 	public Boolean booleanValue() {
