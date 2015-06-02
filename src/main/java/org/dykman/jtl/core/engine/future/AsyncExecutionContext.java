@@ -9,12 +9,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public interface AsyncExecutionContext<T> {
 	public void define(String n,InstructionFuture<T> i);
-	public ListenableFuture<T> call(String name,List<ListenableFuture<T>> args,
-			ListenableFuture<T> input,AsyncExecutionContext<T> ctx)
+	public ListenableFuture<T> call(String name, ListenableFuture<T> input)
 			throws JSONException;
-	public void set(String name,ListenableFuture<T> t);
-	public void setDeferred(String name, InstructionFuture<T> ii,ListenableFuture<T> d);
+	
+	public void setDeferred(String name, DeferredCall def);
+	public DeferredCall getDeferred(String name);
 
+	public void set(String name,ListenableFuture<T> t);
 	public ListenableFuture<T> lookup(String name)
 		throws JSONException;
 	public AsyncEngine<T> engine();

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.core.Duo;
-import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONValue;
@@ -22,7 +21,7 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 	final AsyncEngine<JSON> engine;
 	//final JSON context;
 	Map<String,InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
-	Map<String,Duo<InstructionFuture<JSON>,ListenableFuture<JSON>>> deferred = new ConcurrentHashMap<>();
+	Map<String,DeferredCall> deferred = new ConcurrentHashMap<>();
 	Map<String,ListenableFuture<JSON>> variables = new ConcurrentHashMap<>();
 	
 	public SimpleExecutionContext(AsyncEngine<JSON> engine) {
@@ -46,18 +45,26 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 	public void define(String n, InstructionFuture<JSON> i) {
 		functions.put(n, i);
 	}
-
 	@Override
 	public ListenableFuture<JSON> call(
 			final String name,
-			final List<ListenableFuture<JSON>> args, 
-			final ListenableFuture<JSON> input, 
-			final AsyncExecutionContext<JSON> ctx) 
+			final ListenableFuture<JSON> input) 
 			throws JSONException {
+		ListenableFuture<JSON> r = variables.get(name);
+			if(r == null) {
+				synchronized (this) {
+					r = variables.get(name);
+					if(r == null) {
+						DeferredCall dc = deferred.get(name);
+						r = dc.inst.call(dc.context, dc.t);
+					}
+				}				
+			}
+	
 		InstructionFuture<JSON> i = functions.get(name);
-		if(i!=null) return i.call(ctx, input);
-		if(parent!=null) return parent.call(name, args, input,ctx);
-		return immediateFailedCheckedFuture(new JSONException("function " + name + " not found"));
+		if(i!=null) return i.call(this, input);
+		if(parent!=null) return parent.call(name, input);
+		return immediateFailedCheckedFuture(new ExecutionException("function " + name + " not found"));
 	}
 
 	@Override
@@ -74,9 +81,9 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 		synchronized(deferred) {
 			res = variables.get(name);
 			if(res == null) {
-				Duo<InstructionFuture<JSON>,ListenableFuture<JSON>> d = deferred.get(name);
+				DeferredCall d = deferred.get(name);
 				if(d != null) {
-					res = d.first.call(this,d.second);
+					res = d.inst.call(d.context,d.t);
 					variables.put(name, res);
 				}
 			}
@@ -90,8 +97,12 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 		return new SimpleExecutionContext<>(this);
 	}
 	@Override
-	public void setDeferred(String name, InstructionFuture<JSON> ii,ListenableFuture<JSON> d) {
-		deferred.put(name, new Duo<InstructionFuture<JSON>, ListenableFuture<JSON>>(ii, d));		
+	public void setDeferred(String name,DeferredCall d) {
+		deferred.put(name, d);		
+	}
+	@Override
+	public DeferredCall getDeferred(String name) {
+		return deferred.get(name);
 	}
 
 

@@ -35,6 +35,11 @@ import static com.google.common.util.concurrent.Futures.*;
 
 public class InstructionFutureFactory {
 
+	
+	static InstructionFuture<JSON> NULLINST = null;
+	static InstructionFuture<JSON> TRUEINST = null;
+	static InstructionFuture<JSON> FALSEINST = null;
+
 	final JSONBuilder builder;
 
 	InstructionFutureFactory(JSONBuilder builder) {
@@ -64,11 +69,17 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> t) throws JSONException {
-				List<ListenableFuture<JSON>> a = new ArrayList<>(iargs.size());
+				AsyncExecutionContext<JSON> childContext = context.createChild();
+				
+				List<DeferredCall> a = new ArrayList<>(iargs.size());
+				int cc = 0;
 				for (InstructionFuture<JSON> i : iargs) {
-					a.add(i.call(context, t));
+					DeferredCall dc = new DeferredCall(i,context,t);
+					childContext.setDeferred(Integer.toString(cc++), dc);
+					a.add(new DeferredCall(i,context,t));
 				}
-				return context.call(name, a, t, context);
+				return childContext.call(name, t);
+//				return context.call(name, a, t, context);
 			}
 		};
 	}
@@ -180,7 +191,8 @@ public class InstructionFutureFactory {
 	}
 
 	public InstructionFuture<JSON> number(TerminalNode i, TerminalNode d) {
-		return value(i!=null ? Long.parseLong(i.getText()) : Double.parseDouble(d.getText()));
+		return value(i != null ? Long.parseLong(i.getText()) : Double
+				.parseDouble(d.getText()));
 	}
 
 	public InstructionFuture<JSON> array(final List<InstructionFuture<JSON>> ch) {
@@ -198,7 +210,8 @@ public class InstructionFutureFactory {
 							@Override
 							public ListenableFuture<JSON> apply(List<JSON> input)
 									throws Exception {
-								JSONArray arr = builder.array(null, input.size());
+								JSONArray arr = builder.array(null,
+										input.size());
 								int i = 0;
 								for (JSON j : input) {
 									arr.add(j);
@@ -263,7 +276,8 @@ public class InstructionFutureFactory {
 				final AsyncExecutionContext<JSON> context,
 				final ListenableFuture<JSON> data) throws JSONException {
 
-			final AsyncExecutionContext<JSON> childContext = context.createChild();
+			final AsyncExecutionContext<JSON> childContext = context
+					.createChild();
 			InstructionFuture<JSON> defaultInstruction = null;
 			InstructionFuture<JSON> init = null;
 			for (Duo<String, InstructionFuture<JSON>> ii : ll) {
@@ -275,19 +289,11 @@ public class InstructionFutureFactory {
 					defaultInstruction = inst;
 				} else if (k.startsWith("!")) {
 					// variable, immediate evaluation
-					childContext.set(k,inst.call(childContext, data));
+					childContext.set(k, inst.call(childContext, data));
 				} else if (k.startsWith("$")) {
 					// variable, deferred evaluation
 					childContext.setDeferred(k.substring(1),
-							new InstructionFuture<JSON>() {
-								@Override
-								public ListenableFuture<JSON> call(
-										final AsyncExecutionContext<JSON> __context,
-										final ListenableFuture<JSON> data)
-										throws JSONException {
-									return inst.call(childContext, data);
-								}
-							}, data);
+						new DeferredCall(inst, childContext, data));
 				} else {
 					// define a function
 					childContext.define(k, inst);
@@ -295,20 +301,24 @@ public class InstructionFutureFactory {
 			}
 			if (init != null) {
 				// init does not get access to input data
-				ListenableFuture<JSON> inif = init.call(childContext,immediateFuture(builder.value()));
+				ListenableFuture<JSON> inif = init.call(childContext,
+						immediateFuture(builder.value()));
 				childContext.set("init", inif);
-				return transform(inif,
+				return transform(
+						inif,
 						new KeyedAsyncFunction<JSON, JSON, InstructionFuture<JSON>>(
 								defaultInstruction) {
 							@Override
 							public ListenableFuture<JSON> apply(JSON input)
 									throws Exception {
-								if(input.getType() == JSONType.OBJECT) {
-									for(Pair<String,JSON> it : (JSONObject) input) {
-										childContext.set(it.f, immediateFuture(it.s));
+								if (input.getType() == JSONType.OBJECT) {
+									for (Pair<String, JSON> it : (JSONObject) input) {
+										childContext.set(it.f,
+												immediateFuture(it.s));
 									}
 								}
-								// execute the default instruction after init has completed
+								// execute the default instruction after init
+								// has completed
 								return k.call(childContext, data);
 							}
 						});
@@ -316,6 +326,7 @@ public class InstructionFutureFactory {
 			// call default instruction if no init has been specified
 			return defaultInstruction.call(childContext, data);
 		}
+
 		protected ListenableFuture<JSON> dataObject(
 				final AsyncExecutionContext<JSON> context,
 				final ListenableFuture<JSON> data) throws JSONException {
@@ -341,9 +352,8 @@ public class InstructionFutureFactory {
 
 						@Override
 						public ListenableFuture<JSON> apply(
-								List<Duo<String, JSON>> input)
-								throws Exception {
-							JSONObject obj = builder.object(null,input.size());
+								List<Duo<String, JSON>> input) throws Exception {
+							JSONObject obj = builder.object(null, input.size());
 
 							for (Duo<String, JSON> d : input) {
 								obj.put(d.first, d.second);
@@ -353,6 +363,7 @@ public class InstructionFutureFactory {
 						}
 					});
 		}
+
 		@Override
 		public ListenableFuture<JSON> call(
 				final AsyncExecutionContext<JSON> context,
@@ -374,16 +385,16 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
-						return transform(data,new AsyncFunction<JSON, JSON>() {
-							@Override
-							public ListenableFuture<JSON> apply(
-									JSON input) throws Exception {
-								JSON p = input.getParent();
-								JSON res = p == null ? input : p;
-								return immediateFuture(res);
-							}
-						} );
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						JSON p = input.getParent();
+						JSON res = p == null ? input : p;
+						return immediateFuture(res);
 					}
+				});
+			}
 		};
 	}
 
@@ -393,10 +404,11 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
-						return data;
-					}
+				return data;
+			}
 		};
 	}
+
 	public InstructionFuture<JSON> recursDown() {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override
@@ -404,32 +416,34 @@ public class InstructionFutureFactory {
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
 				return transform(data, new AsyncFunction<JSON, JSON>() {
-					
-					protected void recurse(JSONArray unbound,JSON j) {
+
+					protected void recurse(JSONArray unbound, JSON j) {
 						JSONType type = j.getType();
-						switch(type) {
+						switch (type) {
 						case ARRAY: {
 							JSONArray a = (JSONArray) j;
-							for(JSON jj: a) {
+							for (JSON jj : a) {
 								unbound.add(jj);
 								recurse(unbound, jj);
 							}
-						} break;
+						}
+							break;
 						case OBJECT:
 							JSONObject a = (JSONObject) j;
-							for(Pair<String,JSON> jj: a) {
+							for (Pair<String, JSON> jj : a) {
 								unbound.add(jj.s);
 								recurse(unbound, jj.s);
 							}
 						}
-						
+
 					}
+
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						JSONArray unbound = builder.array(input,false);
+						JSONArray unbound = builder.array(input, false);
 						unbound.add(input);
-						recurse(unbound,input);
+						recurse(unbound, input);
 						return immediateFuture(unbound);
 					}
 				});
@@ -437,28 +451,56 @@ public class InstructionFutureFactory {
 		};
 	}
 
-	public InstructionFuture<JSON> ternary(
-			final InstructionFuture<JSON> c,
-			final InstructionFuture<JSON> a,
-			final InstructionFuture<JSON> b) {
+	public InstructionFuture<JSON> get(String label) {
 		return new AbstractInstructionFuture<JSON>() {
 
 			@Override
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
-				return transform(c.call(context, data), new AsyncFunction<JSON, JSON>() {
+				return transform(data,new AsyncFunction<JSON, JSON>() {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return input.isTrue() ? a.call(context, data) :
-						 b.call(context, data);
+						JSONType type = input.getType();
+						if(type == JSONType.OBJECT) {
+							JSONObject obj = (JSONObject) input;
+							JSON r = obj.get(label);
+							r = r == null ? builder.value() : r;
+							return immediateFuture(r);
+						}
+						return immediateFuture(builder.value());
 					}
 				});
 			}
 		};
 	}
+	
+
+	public InstructionFuture<JSON> ternary(final InstructionFuture<JSON> c,
+			final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
+		return new AbstractInstructionFuture<JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws JSONException {
+				return transform(c.call(context, data),
+						new AsyncFunction<JSON, JSON>() {
+
+							@Override
+							public ListenableFuture<JSON> apply(JSON input)
+									throws Exception {
+								return input.isTrue() ? a.call(context, data)
+										: b.call(context, data);
+							}
+						});
+			}
+		};
+	}
+
+	// cache
 	public InstructionFuture<JSON> recursUp() {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override
@@ -466,57 +508,58 @@ public class InstructionFutureFactory {
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
 				return transform(data, new AsyncFunction<JSON, JSON>() {
-					
-					protected void recurse(JSONArray unbound,JSON j) {
+
+					protected void recurse(JSONArray unbound, JSON j) {
 						JSON p = j.getParent();
-						if(p!=null) {
+						if (p != null) {
 							unbound.add(p);
-							recurse(unbound,p);
+							recurse(unbound, p);
 						}
 					}
+
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						JSONArray unbound = builder.array(input,false);
-						recurse(unbound,input);
+						JSONArray unbound = builder.array(input, false);
+						recurse(unbound, input);
 						return immediateFuture(unbound);
 					}
 				});
 			}
 		};
 	}
-	
+
+	// cache
 	public InstructionFuture<JSON> stepChildren() {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws JSONException {
-						return transform(data,new AsyncFunction<JSON, JSON>() {
-							@Override
-							public ListenableFuture<JSON> apply(
-									JSON input) throws Exception {
-								JSONType type = input.getType();
-								if(type == JSONType.ARRAY) {
-									return immediateFuture(input);
-								} else if(type == JSONType.OBJECT) {
-									JSONArray unbound = builder.array(input,false);
-									JSONObject obj = (JSONObject) input;
-									for(Pair<String,JSON> ee: obj) {
-										unbound.add(ee.s);
-									}
-									return immediateFuture(unbound);
-								} else {
-									JSONArray unbound = builder.array(input,false);
-									return immediateFuture(unbound);
-								}
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						JSONType type = input.getType();
+						if (type == JSONType.ARRAY) {
+							return immediateFuture(input);
+						} else if (type == JSONType.OBJECT) {
+							JSONArray unbound = builder.array(input, false);
+							JSONObject obj = (JSONObject) input;
+							for (Pair<String, JSON> ee : obj) {
+								unbound.add(ee.s);
 							}
-						} );
+							return immediateFuture(unbound);
+						} else {
+							JSONArray unbound = builder.array(input, false);
+							return immediateFuture(unbound);
+						}
 					}
+				});
+			}
 		};
 	}
 
-	
 	public InstructionFuture<JSON> object(
 			final List<Duo<String, InstructionFuture<JSON>>> ll)
 			throws JSONException {
@@ -569,128 +612,193 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
-//	public INstruc
-	
-	
-	public InstructionFuture<JSON> deindex(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
+
+	// public INstruc
+
+	public InstructionFuture<JSON> deindex(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
 		return null;
 	}
-	public InstructionFuture<JSON> addInstruction(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
-		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l+r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l+r; }
-					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {return l+r; }
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-//						Collection<JSON> cc = builder.collection();
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							arr.add(j);
-						}
-						for(JSON j : r.collection()) {
-							arr.add(j);
-						}
-						return arr;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						int i = 0;
-						for(JSON j : l.collection()) {
-							arr.add(j);
-						}
-						arr.add(r);
-						return arr;
-					}
-					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						JSONObject obj = builder.object(null);
-						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							obj.put(k, j);
-						}
-						for(Map.Entry<String, JSON> ee: l.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							obj.put(k, j);
-						}
-						return obj;
-					}
-				});
-	}
-	
-	public InstructionFuture<JSON> subInstruction(InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
-		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l-r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l-r; }
-					@Override public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
-						int n = l.indexOf(r);
-						if(n!=-1) {
-							StringBuilder b = new StringBuilder(l.substring(0, n));
-							b.append(l.substring(n+r.length()));
-							return b.toString();
-						}
-						return r;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						for(JSON j : l.collection()) {
-							if(!r.contains(j)) {
-								arr.add(j);
-							}
-						}
-						return arr;
-					}
-					@Override public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-						JSONArray arr = builder.array(null);
-						// this needs to be a deep clone for the internal referencing to hold.
-						for(JSON j : l.collection()) {
-							if(!j.equals(r)) {
-								arr.add(j);
-							}
-						}
-						return arr;
-					}
-					@Override public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
-						JSONObject obj = builder.object(null,l.size()+r.size());
-						for(Map.Entry<String, JSON> ee: r.map().entrySet()) {
-							String k = ee.getKey();
-							JSON j = ee.getValue();
-							if(!r.containsKey(k)) obj.put(k, j);
-						}
-						return obj;
-					}
-				});
-	}
 
-	public InstructionFuture<JSON> mulInstruction(
-			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
-		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l*r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l*r; }
+	public InstructionFuture<JSON> addInstruction(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
+		return dyadic(a, b, new DefaultPolymorphicOperator(builder) {
+			@Override
+			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
+				return l + r;
+			}
 
-		});
-	
-	}
-	public InstructionFuture<JSON> divInstruction(
-			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
-		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l/r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l/r; }
-		});
-	
-	}
-	
-	public InstructionFuture<JSON> modInstruction(
-			InstructionFuture<JSON> a,InstructionFuture<JSON> b) {
-		return dyadic(a,b,new DefaultPolymorphicOperator(builder) {
-					@Override public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {return l%r; }
-					@Override public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {return l%r; }
+			@Override
+			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+				return l + r;
+			}
+
+			@Override
+			public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+				return l + r;
+			}
+
+			@Override
+			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l,
+					JSONArray r) {
+				// Collection<JSON> cc = builder.collection();
+				JSONArray arr = builder.array(null);
+				// this needs to be a deep clone for the internal referencing to
+				// hold.
+				int i = 0;
+				for (JSON j : l.collection()) {
+					arr.add(j);
+				}
+				for (JSON j : r.collection()) {
+					arr.add(j);
+				}
+				return arr;
+			}
+
+			@Override
+			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l,
+					JSON r) {
+				JSONArray arr = builder.array(null);
+				// this needs to be a deep clone for the internal referencing to
+				// hold.
+				int i = 0;
+				for (JSON j : l.collection()) {
+					arr.add(j);
+				}
+				arr.add(r);
+				return arr;
+			}
+
+			@Override
+			public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l,
+					JSONObject r) {
+				JSONObject obj = builder.object(null);
+				for (Map.Entry<String, JSON> ee : r.map().entrySet()) {
+					String k = ee.getKey();
+					JSON j = ee.getValue();
+					obj.put(k, j);
+				}
+				for (Map.Entry<String, JSON> ee : l.map().entrySet()) {
+					String k = ee.getKey();
+					JSON j = ee.getValue();
+					obj.put(k, j);
+				}
+				return obj;
+			}
 		});
 	}
 
-	
+	public InstructionFuture<JSON> subInstruction(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
+		return dyadic(a, b, new DefaultPolymorphicOperator(builder) {
+			@Override
+			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
+				return l - r;
+			}
+
+			@Override
+			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+				return l - r;
+			}
+
+			@Override
+			public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+				int n = l.indexOf(r);
+				if (n != -1) {
+					StringBuilder b = new StringBuilder(l.substring(0, n));
+					b.append(l.substring(n + r.length()));
+					return b.toString();
+				}
+				return r;
+			}
+
+			@Override
+			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l,
+					JSONArray r) {
+				JSONArray arr = builder.array(null);
+				// this needs to be a deep clone for the internal referencing to
+				// hold.
+				for (JSON j : l.collection()) {
+					if (!r.contains(j)) {
+						arr.add(j);
+					}
+				}
+				return arr;
+			}
+
+			@Override
+			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l,
+					JSON r) {
+				JSONArray arr = builder.array(null);
+				// this needs to be a deep clone for the internal referencing to
+				// hold.
+				for (JSON j : l.collection()) {
+					if (!j.equals(r)) {
+						arr.add(j);
+					}
+				}
+				return arr;
+			}
+
+			@Override
+			public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l,
+					JSONObject r) {
+				JSONObject obj = builder.object(null, l.size() + r.size());
+				for (Map.Entry<String, JSON> ee : r.map().entrySet()) {
+					String k = ee.getKey();
+					JSON j = ee.getValue();
+					if (!r.containsKey(k))
+						obj.put(k, j);
+				}
+				return obj;
+			}
+		});
+	}
+
+	public InstructionFuture<JSON> mulInstruction(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
+		return dyadic(a, b, new DefaultPolymorphicOperator(builder) {
+			@Override
+			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
+				return l * r;
+			}
+
+			@Override
+			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+				return l * r;
+			}
+
+		});
+
+	}
+
+	public InstructionFuture<JSON> divInstruction(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
+		return dyadic(a, b, new DefaultPolymorphicOperator(builder) {
+			@Override
+			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) { return l / r; }
+
+			@Override
+			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+				return l / r;
+			}
+		});
+
+	}
+
+	public InstructionFuture<JSON> modInstruction(InstructionFuture<JSON> a,
+			InstructionFuture<JSON> b) {
+		return dyadic(a, b, new DefaultPolymorphicOperator(builder) {
+			@Override
+			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
+				return l % r;
+			}
+
+			@Override
+			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+				return l % r;
+			}
+		});
+	}
 
 }
