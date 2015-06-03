@@ -69,8 +69,7 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			case ARRAY:
 			case NULL:
 			case STRING:
-				return  builder.value(op(eng, left,
-						eng.engine().bool(r)));
+				return  builder.value(op(eng, left,r.isTrue()));
 			}
 			break;
 		}

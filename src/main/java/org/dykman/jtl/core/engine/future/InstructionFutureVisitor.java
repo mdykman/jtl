@@ -49,6 +49,7 @@ import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.Pair;
+import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -75,7 +76,7 @@ public class InstructionFutureVisitor extends
 					@Override
 					public ListenableFuture<JSON> call(
 							AsyncExecutionContext<JSON> context,
-							ListenableFuture<JSON> data) throws JSONException {
+							ListenableFuture<JSON> data) throws ExecutionException {
 						return transform(inst.call(context, data),
 								new AsyncFunction<JSON, JSON>() {
 									@Override
@@ -133,9 +134,9 @@ public class InstructionFutureVisitor extends
 
 		try {
 			return new InstructionFutureValue<JSON>(factory.object(ins));
-		} catch (JSONException e) {
+		} catch (ExecutionException e) {
 			return new InstructionFutureValue<JSON>(
-					factory.value("JSONException during visitObject: "
+					factory.value("ExecutionException during visitObject: "
 							+ e.getLocalizedMessage()));
 		}
 	}
@@ -210,7 +211,7 @@ public class InstructionFutureVisitor extends
 							AsyncExecutionContext<JSON> context,
 							ListenableFuture<JSON> parent) {
 						try {
-							return context.lookup(name);
+							return context.lookup(name,parent);
 						} catch (Exception e) {
 							return immediateFailedCheckedFuture(e);
 						}
@@ -430,7 +431,7 @@ public class InstructionFutureVisitor extends
 						public ListenableFuture<JSON> call(
 								AsyncExecutionContext<JSON> context,
 								ListenableFuture<JSON> data)
-								throws JSONException {
+								throws ExecutionException {
 							return transform(data,
 									new AsyncFunction<JSON, JSON>() {
 										@Override
@@ -463,7 +464,7 @@ public class InstructionFutureVisitor extends
 						public ListenableFuture<JSON> call(
 								final AsyncExecutionContext<JSON> context,
 								final ListenableFuture<JSON> data)
-								throws JSONException {
+								throws ExecutionException {
 							return a.inst.call(context,
 									c.inst.call(context, data));
 						}
@@ -582,7 +583,7 @@ public class InstructionFutureVisitor extends
 						public ListenableFuture<JSON> call(
 								AsyncExecutionContext<JSON> context,
 								ListenableFuture<JSON> data)
-								throws JSONException {
+								throws ExecutionException {
 							return transform(data,
 									new AsyncFunction<JSON, JSON>() {
 
@@ -611,7 +612,7 @@ public class InstructionFutureVisitor extends
 						public ListenableFuture<JSON> call(
 								AsyncExecutionContext<JSON> context,
 								ListenableFuture<JSON> data)
-								throws JSONException {
+								throws ExecutionException {
 							ListenableFuture<JSON> r1 = ci1.inst.call(context,
 									data);
 							ListenableFuture<JSON> r2 = ci2.inst.call(context,
@@ -647,7 +648,7 @@ public class InstructionFutureVisitor extends
 					@Override
 					public ListenableFuture<JSON> call(
 							AsyncExecutionContext<JSON> context,
-							ListenableFuture<JSON> data) throws JSONException {
+							ListenableFuture<JSON> data) throws ExecutionException {
 						return immediateFuture(builder.value(t));
 					}
 				});
