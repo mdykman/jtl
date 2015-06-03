@@ -2,20 +2,17 @@ package org.dykman.jtl.core.engine.future;
 
 import static com.google.common.util.concurrent.Futures.*;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.dykman.jtl.core.Duo;
-import org.dykman.jtl.core.JSONBuilderImpl;
+import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONException;
-import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
+//import org.dykman.jtl.core.Duo;
 
-public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON> {
+public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	
 	final AsyncExecutionContext<JSON> parent;
 	final AsyncEngine<JSON> engine;
@@ -94,7 +91,7 @@ public class SimpleExecutionContext<JSON> implements AsyncExecutionContext<JSON>
 	}
 	@Override
 	public AsyncExecutionContext<JSON> createChild() {
-		return new SimpleExecutionContext<>(this);
+		return new SimpleExecutionContext(this);
 	}
 	@Override
 	public void setDeferred(String name,DeferredCall d) {

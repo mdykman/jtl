@@ -31,7 +31,7 @@ buildscript {
     dependencies {
 //	classpath '/me/champeau/gradle/antlr4-gradle-plugin/0.1.1-SNAPSHOT/antlr4-gradle-plugin-0.1.1-20140828.124346-1.jar'
 //	classpath 'https://oss.jfrog.org/oss-snapshot-local/me/champeau/gradle/antlr4-gradle-plugin/0.1.1-SNAPSHOT/antlr4-gradle-plugin-0.1.1-20140828.124346-1.jar'
-        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1.1-SNAPSHOT'	
+//        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1.1-SNAPSHOT'	
     }
 }
 */
