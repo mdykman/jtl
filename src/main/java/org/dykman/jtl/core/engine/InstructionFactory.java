@@ -3,16 +3,11 @@ package org.dykman.jtl.core.engine;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
-import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.parser.InstructionValue;
-
-import com.google.common.collect.ImmutableBiMap.Builder;
 
 public class InstructionFactory {
 	final JSONBuilder builder;
@@ -122,8 +117,8 @@ public class InstructionFactory {
 					JSONObject object = builder.object(null);
 					object.setParent(t);
 					for(InstructionValue<JSON> d : ll) {
-						object.put(d.ninst.first, 
-							d.ninst.second.call(eng, object, null));
+						object.put(d.ninst.f, 
+							d.ninst.s.call(eng, object, null));
 					}
 					return object;
 			}

@@ -1,12 +1,11 @@
 package org.dykman.jtl.core.engine.future;
 
-import org.dykman.jtl.core.Duo;
-import org.dykman.jtl.core.engine.Instruction;
+import org.dykman.jtl.core.Pair;
 
 public class InstructionFutureValue<T> {
 	public InstructionFuture<T> inst;
 //	public Duo<Instruction<T>,Instruction<T>> duo;
-	public Duo<String,InstructionFuture<T>> ninst;
+	public Pair<String,InstructionFuture<T>> ninst;
 	
 	public String string;
 	public InstructionFutureValue(String s) {
@@ -21,6 +20,6 @@ public class InstructionFutureValue<T> {
 	}
 	*/
 	public InstructionFutureValue(String first,InstructionFuture<T> second) {
-		ninst = new Duo<>(first,second);
+		ninst = new Pair<>(first,second);
 	}
 }

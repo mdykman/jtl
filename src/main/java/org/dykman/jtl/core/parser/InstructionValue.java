@@ -1,12 +1,12 @@
 package org.dykman.jtl.core.parser;
 
-import org.dykman.jtl.core.Duo;
+import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.Instruction;
 
 public class InstructionValue<T> {
 	public Instruction<T> inst;
 //	public Duo<Instruction<T>,Instruction<T>> duo;
-	public Duo<String,Instruction<T>> ninst;
+	public Pair<String,Instruction<T>> ninst;
 	
 	public InstructionValue(Instruction<T> t) {
 		inst = t;
@@ -17,6 +17,6 @@ public class InstructionValue<T> {
 	}
 	*/
 	public InstructionValue(String first,Instruction<T> second) {
-		ninst = new Duo<>(first,second);
+		ninst = new Pair<>(first,second);
 	}
 }

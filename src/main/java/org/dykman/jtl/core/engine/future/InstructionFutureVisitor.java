@@ -41,7 +41,6 @@ import main.antlr.jtlParser.ValueContext;
 import main.antlr.jtlParser.VariableContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONArray;
@@ -123,13 +122,13 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitObject(ObjectContext ctx) {
-		List<Duo<String, InstructionFuture<JSON>>> ins = new ArrayList<>(
+		List<Pair<String, InstructionFuture<JSON>>> ins = new ArrayList<>(
 				ctx.getChildCount());
 		InstructionFutureValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
-			ins.add(new Duo<String, InstructionFuture<JSON>>(pp.ninst.first,
-					pp.ninst.second));
+			ins.add(new Pair<String, InstructionFuture<JSON>>(pp.ninst.f,
+					pp.ninst.s));
 		}
 
 		try {

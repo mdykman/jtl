@@ -1,37 +1,28 @@
 package org.dykman.jtl.core.engine.future;
 
+import static com.google.common.util.concurrent.Futures.allAsList;
+import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static com.google.common.util.concurrent.Futures.transform;
+
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javafx.scene.input.InputMethodHighlight;
-import main.antlr.jtlParser.Add_exprContext;
-import main.antlr.jtlParser.Mul_exprContext;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.dykman.jtl.core.Duo;
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONException;
 import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.JSONValue;
-import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.ExecutionException;
-import org.dykman.jtl.core.parser.InstructionValue;
 
-import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
-
-import static com.google.common.util.concurrent.Futures.*;
 
 public class InstructionFutureFactory {
 
@@ -261,11 +252,11 @@ public class InstructionFutureFactory {
 			AbstractInstructionFuture<JSON> {
 		// protected Set<String> keys = new HashSet<>();
 		final boolean isContextObject;
-		final List<Duo<String, InstructionFuture<JSON>>> ll;
+		final List<Pair<String, InstructionFuture<JSON>>> ll;
 		final JSONBuilder builder;
 
 		public ObjectInstructionFuture(
-				final List<Duo<String, InstructionFuture<JSON>>> ll,
+				final List<Pair<String, InstructionFuture<JSON>>> ll,
 				JSONBuilder builder, boolean isContextObject) {
 			this.isContextObject = isContextObject;
 			this.ll = ll;
@@ -280,9 +271,9 @@ public class InstructionFutureFactory {
 					.createChild();
 			InstructionFuture<JSON> defaultInstruction = null;
 			InstructionFuture<JSON> init = null;
-			for (Duo<String, InstructionFuture<JSON>> ii : ll) {
-				String k = ii.first;
-				final InstructionFuture<JSON> inst = ii.second;
+			for (Pair<String, InstructionFuture<JSON>> ii : ll) {
+				String k = ii.f;
+				final InstructionFuture<JSON> inst = ii.s;
 				if (k.equals("init")) {
 					init = inst;
 				} else if (k.equals("_")) {
@@ -330,33 +321,33 @@ public class InstructionFutureFactory {
 		protected ListenableFuture<JSON> dataObject(
 				final AsyncExecutionContext<JSON> context,
 				final ListenableFuture<JSON> data) throws JSONException {
-			List<ListenableFuture<Duo<String, JSON>>> insts = new ArrayList<>(
+			List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(
 					ll.size());
-			for (Duo<String, InstructionFuture<JSON>> ii : ll) {
-				final String kk = ii.first;
-				ListenableFuture<Duo<String, JSON>> lf = transform(
-						ii.second.call(context, data),
-						new AsyncFunction<JSON, Duo<String, JSON>>() {
+			for (Pair<String, InstructionFuture<JSON>> ii : ll) {
+				final String kk = ii.f;
+				ListenableFuture<Pair<String, JSON>> lf = transform(
+						ii.s.call(context, data),
+						new AsyncFunction<JSON, Pair<String, JSON>>() {
 
 							@Override
-							public ListenableFuture<Duo<String, JSON>> apply(
+							public ListenableFuture<Pair<String, JSON>> apply(
 									JSON input) throws Exception {
 								input.setName(kk);
-								return immediateFuture(new Duo(kk, input));
+								return immediateFuture(new Pair(kk, input));
 							}
 						});
 				insts.add(lf);
 			}
 			return transform(allAsList(insts),
-					new AsyncFunction<List<Duo<String, JSON>>, JSON>() {
+					new AsyncFunction<List<Pair<String, JSON>>, JSON>() {
 
 						@Override
 						public ListenableFuture<JSON> apply(
-								List<Duo<String, JSON>> input) throws Exception {
+								List<Pair<String, JSON>> input) throws Exception {
 							JSONObject obj = builder.object(null, input.size());
 
-							for (Duo<String, JSON> d : input) {
-								obj.put(d.first, d.second);
+							for (Pair<String, JSON> d : input) {
+								obj.put(d.f, d.s);
 							}
 							obj.lock();
 							return immediateFuture(obj);
@@ -561,59 +552,17 @@ public class InstructionFutureFactory {
 	}
 
 	public InstructionFuture<JSON> object(
-			final List<Duo<String, InstructionFuture<JSON>>> ll)
+			final List<Pair<String, InstructionFuture<JSON>>> ll)
 			throws JSONException {
 		boolean isContext = false;
-		for (Duo<String, InstructionFuture<JSON>> ii : ll) {
-			if ("_".equals(ii.first)) {
+		for (Pair<String, InstructionFuture<JSON>> ii : ll) {
+			if ("_".equals(ii.f)) {
 				isContext = true;
 				break;
 			}
 		}
 		return new ObjectInstructionFuture(ll, builder, isContext);
 	}
-
-	public InstructionFuture<JSON> __object(
-			final List<Duo<String, InstructionFuture<JSON>>> ll)
-			throws JSONException {
-		return new AbstractInstructionFuture<JSON>() {
-			@Override
-			public ListenableFuture<JSON> call(
-					final AsyncExecutionContext<JSON> context,
-					final ListenableFuture<JSON> t) throws JSONException {
-				final JSONObject object = builder.object(null);
-				List<ListenableFuture<JSON>> pp = new ArrayList<>(ll.size());
-				for (Duo<String, InstructionFuture<JSON>> p : ll) {
-					ListenableFuture<JSON> vl = p.second.call(context, t);
-					pp.add(transform(
-							vl,
-							new KeyedPayloadAsyncFunction<JSON, JSON, String, JSONObject>(
-									p.first, object) {
-								@Override
-								public ListenableFuture<JSON> apply(JSON input)
-										throws Exception {
-									input.setParent(object);
-									p.put(k, input);
-									return immediateFuture(input);
-								}
-							}));
-				}
-				return transform(allAsList(pp),
-						new KeyedAsyncFunction<List<JSON>, JSON, JSONObject>(
-								object) {
-
-							@Override
-							public ListenableFuture<JSON> apply(List<JSON> input)
-									throws Exception {
-								return immediateFuture(k);
-							}
-
-						});
-			}
-		};
-	}
-
-	// public INstruc
 
 	public InstructionFuture<JSON> deindex(InstructionFuture<JSON> a,
 			InstructionFuture<JSON> b) {
