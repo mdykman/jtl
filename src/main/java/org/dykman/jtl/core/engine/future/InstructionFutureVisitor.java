@@ -518,11 +518,11 @@ public class InstructionFutureVisitor extends
 		{
 			switch (t) {
 			case "true":
-				return new InstructionFutureValue<>(factory.bool(true));
+				return new InstructionFutureValue<>(factory.value(true));
 			case "false":
-				return new InstructionFutureValue<>(factory.bool(false));
+				return new InstructionFutureValue<>(factory.value(false));
 			case "null":
-				return new InstructionFutureValue<>(factory.nil());
+				return new InstructionFutureValue<>(factory.value());
 			case "*":
 				return new InstructionFutureValue<>(factory.stepChildren());
 			case ".":
