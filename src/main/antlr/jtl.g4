@@ -107,9 +107,24 @@ rel_path
                         
 pathelement 
 	: pathstep
-    | pathelement '[' value ']' 
+    | pathelement pathindex 
     ;
     
+pathindex
+	: '[' indexlist ']'
+	;
+	
+indexlist
+	: indexl
+	| indexlist ',' indexl
+	;
+
+indexl
+	: value
+	| value '..' value
+	;
+	
+	
 pathstep 
 	: '.'
 	| '..'
@@ -130,16 +145,15 @@ recurs
     | '...'
     ;
             
-
 func
      : ID '(' ')'
      | ID '(' value (',' value )* ')' 
      ;
 
 variable
-      : '$' i=ID 
-      | '$' i=INTEGER
-      | '!' i=ID 
+      : '$' ID 
+      | '$' INTEGER
+      | '!' ID 
       ;
 
 number

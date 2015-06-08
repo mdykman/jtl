@@ -23,13 +23,12 @@ SSM  : ~["\\$]+
 	| '"'
 	;
 
-
 START_BLOCKM : '${' ->pushMode(DEFAULT_MODE);
 
 
 mode MSTR;
 
-EMSTR : '"' -> popMode;
+ESTR : '"' -> popMode;
 SS  : ~["\\$\n]+ 
 	| ESC
 	;

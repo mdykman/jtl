@@ -17,6 +17,8 @@ import main.antlr.jtlParser.Eq_exprContext;
 import main.antlr.jtlParser.Filter_pathContext;
 import main.antlr.jtlParser.FuncContext;
 import main.antlr.jtlParser.IdContext;
+import main.antlr.jtlParser.IndexlContext;
+import main.antlr.jtlParser.IndexlistContext;
 import main.antlr.jtlParser.JpathContext;
 import main.antlr.jtlParser.JsonContext;
 import main.antlr.jtlParser.JstringContext;
@@ -28,6 +30,7 @@ import main.antlr.jtlParser.Or_exprContext;
 import main.antlr.jtlParser.PairContext;
 import main.antlr.jtlParser.PathContext;
 import main.antlr.jtlParser.PathelementContext;
+import main.antlr.jtlParser.PathindexContext;
 import main.antlr.jtlParser.PathstepContext;
 import main.antlr.jtlParser.RecursContext;
 import main.antlr.jtlParser.Rel_exprContext;
@@ -202,7 +205,7 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitVariable(VariableContext ctx) {
-		final String name = ctx.i.getText();
+		final String name = ctx.getText();
 		return new InstructionFutureValue<JSON>(
 				new AbstractInstructionFuture<JSON>() {
 
@@ -481,7 +484,8 @@ public class InstructionFutureVisitor extends
 		}
 		PathelementContext pc = ctx.pathelement();
 		InstructionFutureValue<JSON> pif = visitPathelement(pc);
-		InstructionFutureValue<JSON> vif = visitValue(ctx.value());
+		InstructionFutureValue<JSON> vif = visitPathindex(ctx.pathindex());
+		
 		return new InstructionFutureValue<JSON>(factory.dereference(pif.inst,
 				vif.inst));
 	}
@@ -652,5 +656,51 @@ public class InstructionFutureVisitor extends
 						return immediateFuture(builder.value(t));
 					}
 				});
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitPathindex(PathindexContext ctx) {
+		return visitIndexlist(ctx.indexlist());
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitIndexlist(IndexlistContext ctx) {
+		InstructionFutureValue<JSON> a = visitIndexl(ctx.indexl());
+		IndexlistContext b = ctx.indexlist();
+		if(b!=null) {
+			InstructionFutureValue<JSON> bi = visitIndexlist(b);
+			return new InstructionFutureValue<JSON>(factory.dereference(a.inst, bi.inst));
+		}
+		return a;
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitIndexl(IndexlContext ctx) {
+		List<ValueContext> cl = ctx.value();
+		final InstructionFuture<JSON> a = visitValue(cl.get(0)).inst;
+		if(cl.size() > 0) {
+			final InstructionFuture<JSON> b = visitValue(cl.get(1)).inst;
+			return new InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
+				@Override
+				public ListenableFuture<JSON> call(
+						AsyncExecutionContext<JSON> context,
+						ListenableFuture<JSON> data) throws ExecutionException {
+					return transform(Futures.allAsList(a.call(context, data),b.call(context, data)),
+							new AsyncFunction<List<JSON>, JSON>() {
+
+								@Override
+								public ListenableFuture<JSON> apply(
+										List<JSON> input) throws Exception {
+									JSONArray arr = builder.array(null);
+									Iterator<JSON> it = input.iterator();
+									arr.add(it.next());
+									arr.add(it.next());
+									return immediateFuture(arr);
+								}
+							});
+				}
+			});
+		}
+		return new InstructionFutureValue<>(a);
 	}
 }

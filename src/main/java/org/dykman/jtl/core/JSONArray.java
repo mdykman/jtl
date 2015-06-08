@@ -101,6 +101,8 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		if (theList == null) {
 			theList = asList();
 		}
+		// let negatives reference from the end
+		i=(i+theList.size()) % theList.size(); 
 		return theList.get(i);
 	}
 

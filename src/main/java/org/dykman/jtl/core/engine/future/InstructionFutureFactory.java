@@ -585,6 +585,36 @@ public class InstructionFutureFactory {
 				: new ObjectInstructionFuture(this, ll, builder);
 	}
 
+	static Long longValue(JSON j) {
+		Long l = null;
+		switch(j.getType()) {
+		case LONG:
+		case DOUBLE:
+		case STRING:
+			return ((JSONValue)j).longValue();
+		}
+		return null;
+	}
+	static Double doubleValue(JSON j) {
+		Long l = null;
+		switch(j.getType()) {
+		case LONG:
+		case DOUBLE:
+		case STRING:
+			return ((JSONValue)j).doubleValue();
+		}
+		return null;
+	}
+	static String stringValue(JSON j) {
+		Long l = null;
+		switch(j.getType()) {
+		case LONG:
+		case DOUBLE:
+		case STRING:
+			return ((JSONValue)j).stringValue();
+		}
+		return null;
+	}
 	public InstructionFuture<JSON> dereference(InstructionFuture<JSON> a,
 			InstructionFuture<JSON> b) {
 		return new AbstractInstructionFuture<JSON>() {
@@ -610,19 +640,37 @@ public class InstructionFutureFactory {
 								JSONArray unbound = btype == JSONType.ARRAY ? builder
 										.array(null) : null;
 								switch (ra.getType()) {
-								case ARRAY:
+								case ARRAY: {
 									JSONArray larr = (JSONArray) ra;
 									if (unbound != null) {
 										JSONArray rarr = (JSONArray) rb;
 										for (JSON j : rarr) {
 											JSONType jtype = j.getType();
-											switch (jtype) {
-											case LONG:
-											case DOUBLE:
-												long l = ((JSONValue) rb)
-														.longValue();
-												unbound.add(larr.get((int) l));
-											default:
+											Long l = longValue(rb);
+											if(l!=null) {
+												unbound.add(larr.get(l.intValue()));												
+											}
+											else if(JSONType.ARRAY == jtype) {
+												JSONArray jva = (JSONArray) rb;
+												if(jva.size() == 2) {
+													JSON aa = jva.get(0);
+													JSON bb = jva.get(1);
+													if(aa.getType() == JSONType.LONG &&
+															bb.getType() == JSONType.LONG ) {
+														long la = ((JSONValue)aa).longValue();
+														long lb = ((JSONValue)bb).longValue();
+														if(la<=lb) {
+															for(;la<=lb;++la) {
+																unbound.add(larr.get((int)la));												
+															}
+														} else {
+															for(;lb>=la;--lb) {
+																unbound.add(larr.get((int)lb));												
+															}
+														}
+													}
+												}
+											} else {
 												unbound.add(builder.value());
 											}
 										}
@@ -630,6 +678,7 @@ public class InstructionFutureFactory {
 									} else {
 										return immediateFuture(builder.value());
 									}
+								}
 								case OBJECT: {
 									JSONObject obj = (JSONObject) rb;
 									if (unbound != null) {
