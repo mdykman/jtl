@@ -647,6 +647,8 @@ public class InstructionFutureFactory {
 											}
 										}
 										return immediateFuture(unbound);
+									} else {
+										return immediateFuture(builder.value());
 									}
 								}
 								default:
