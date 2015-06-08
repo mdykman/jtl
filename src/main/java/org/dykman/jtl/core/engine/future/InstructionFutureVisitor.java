@@ -482,7 +482,7 @@ public class InstructionFutureVisitor extends
 		PathelementContext pc = ctx.pathelement();
 		InstructionFutureValue<JSON> pif = visitPathelement(pc);
 		InstructionFutureValue<JSON> vif = visitValue(ctx.value());
-		return new InstructionFutureValue<JSON>(factory.deindex(pif.inst,
+		return new InstructionFutureValue<JSON>(factory.dereference(pif.inst,
 				vif.inst));
 	}
 
