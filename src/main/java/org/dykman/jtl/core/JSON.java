@@ -13,6 +13,7 @@ public interface JSON {
 	public JSON setParent(JSON p);
 	public void lock();
 	public JSONType getType();
+	boolean isValue();
 	public boolean isTrue();
 
 	public boolean isNumber();

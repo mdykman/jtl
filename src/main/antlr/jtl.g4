@@ -31,9 +31,14 @@ value
 
 
 jpath
-	:  tern_expr
+	:  re_expr
 	;
 
+re_expr
+	: tern_expr
+	| re_expr '=~' tern_expr
+	;
+	
 tern_expr 
 	: or_expr
 	| tern_expr '?' value ':' value

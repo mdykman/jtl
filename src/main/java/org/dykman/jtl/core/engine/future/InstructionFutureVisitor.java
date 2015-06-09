@@ -32,6 +32,7 @@ import main.antlr.jtlParser.PathContext;
 import main.antlr.jtlParser.PathelementContext;
 import main.antlr.jtlParser.PathindexContext;
 import main.antlr.jtlParser.PathstepContext;
+import main.antlr.jtlParser.Re_exprContext;
 import main.antlr.jtlParser.RecursContext;
 import main.antlr.jtlParser.Rel_exprContext;
 import main.antlr.jtlParser.Rel_pathContext;
@@ -235,7 +236,33 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitJpath(JpathContext ctx) {
-		return super.visitJpath(ctx);
+		return visitRe_expr(ctx.re_expr());
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitRe_expr(Re_exprContext ctx) {
+		
+		InstructionFutureValue<JSON> a = visitTern_expr(ctx.tern_expr());
+		Re_exprContext rc = ctx.re_expr();
+		if(rc!=null) {
+			InstructionFutureValue<JSON> b  = visitRe_expr(rc);
+			return new InstructionFutureValue<>(factory.reMatch(a.inst,b.inst));
+		}
+		return a;
+	}
+
+	@Override
+	public InstructionFutureValue<JSON> visitTern_expr(Tern_exprContext ctx) {
+		Or_exprContext oc = ctx.or_expr();
+		if (oc != null)
+			return visitOr_expr(oc);
+		Tern_exprContext tc = ctx.tern_expr();
+		Iterator<ValueContext> vit = ctx.value().iterator();
+		ValueContext va = vit.next();
+		ValueContext vb = vit.next();
+		return new InstructionFutureValue<>(factory.ternary(
+				visitTern_expr(tc).inst, visitValue(va).inst,
+				visitValue(vb).inst));
 	}
 
 	@Override
@@ -554,20 +581,6 @@ public class InstructionFutureVisitor extends
 	}
 
 	@Override
-	public InstructionFutureValue<JSON> visitTern_expr(Tern_exprContext ctx) {
-		Or_exprContext oc = ctx.or_expr();
-		if (oc != null)
-			return visitOr_expr(oc);
-		Tern_exprContext tc = ctx.tern_expr();
-		Iterator<ValueContext> vit = ctx.value().iterator();
-		ValueContext va = vit.next();
-		ValueContext vb = vit.next();
-		return new InstructionFutureValue<>(factory.ternary(
-				visitTern_expr(tc).inst, visitValue(va).inst,
-				visitValue(vb).inst));
-	}
-
-	@Override
 	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
 		StringContext sc = ctx.string();
 		if (sc != null)
@@ -703,4 +716,5 @@ public class InstructionFutureVisitor extends
 		}
 		return new InstructionFutureValue<>(a);
 	}
+
 }

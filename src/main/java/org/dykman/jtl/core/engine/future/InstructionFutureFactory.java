@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.core.JSON;
@@ -58,7 +62,72 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
+	public InstructionFuture<JSON> reMatch(final InstructionFuture<JSON> pattern,final InstructionFuture<JSON> d) {
+		return new AbstractInstructionFuture<JSON>() {
 
+			@Override
+			public ListenableFuture<JSON> call(
+					AsyncExecutionContext<JSON> context,
+					ListenableFuture<JSON> data) throws ExecutionException {
+				return transform(allAsList(pattern.call(context, data),d.call(context, data)), 
+						new AsyncFunction<List<JSON>, JSON>() {
+
+							@Override
+							public ListenableFuture<JSON> apply(List<JSON> input)
+									throws Exception {
+								Iterator<JSON> it = input.iterator();
+								JSON a = it.next();
+								JSON b = it.next();
+								if(a.isValue()) {
+									final String p = ((JSONValue)a).stringValue();
+									final Pattern pattern = PatternCache.get(p, new Callable<Pattern>() {
+										@Override
+										public Pattern call() throws Exception {
+											return Pattern.compile(p);
+										}
+									});
+									
+									Function<JSON, JSON> f = new Function<JSON,JSON>() {
+										public JSON apply(JSON in) {
+											if(in.isValue()) {
+												String ins=((JSONValue)b).stringValue();
+												Matcher m = pattern.matcher(ins);
+												if(m.find()) {
+													JSONArray unbound = builder.array(null);
+													int n = m.groupCount();
+													for(int i = 0; i <=n; ++i) {
+														unbound.add(builder.value(m.group(i)));
+													}
+													return unbound;
+												} 
+											}
+											if(in.getType() == JSONType.ARRAY) {
+												JSONArray unbound = builder.array(null);
+												JSONArray inarr = (JSONArray)in;
+												for(JSON j : inarr) {
+													unbound.add(this.apply(j));
+												}
+												return unbound;
+											}
+											if(in.getType() == JSONType.OBJECT) {
+												JSONObject unbound = builder.object(null);
+												JSONObject inarr = (JSONObject)in;
+												for(Pair<String,JSON> jj : inarr) {
+													unbound.put(jj.f,this.apply(jj.s));
+												}
+												return unbound;
+											}
+											return builder.value();											
+										}
+									};
+									return immediateFuture(f.apply(b));
+								}
+								return immediateFuture(builder.value());
+							}
+						});
+			}
+		};
+	}
 	public InstructionFuture<JSON> variable(final String name) {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override

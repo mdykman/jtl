@@ -2,8 +2,8 @@
 	people: people{ first =~ "Jo.*" },
 	mapped: people{ first =~ "Jo.*" }/{
 		"First Name": first,
-		Gender: gender == 'm' ? 'Male' : 'Female'
+		Gender: gender = 'm' ? 'Male' : 'Female'
 	},
- 	pattern: first =~ "Jo.*"
+ 	matcher: people/first =~ "Jo.*"
 
 }

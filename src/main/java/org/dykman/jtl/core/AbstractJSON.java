@@ -23,6 +23,10 @@ public abstract class AbstractJSON implements JSON {
 		this.parent = parent;
 	}
 
+	@Override
+	public boolean isValue() {
+		return false;
+	}
 	public boolean equals(Object o) {
 		if(!(o instanceof JSON)) return false;
 		return equals((JSON)o);

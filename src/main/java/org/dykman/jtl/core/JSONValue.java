@@ -27,6 +27,10 @@ public class JSONValue extends AbstractJSON implements JSON {
 		}
 	}
 
+	@Override
+	public boolean isValue() {
+		return true;
+	}
 	protected JSONValue(JSON p, JSONType type, Object o) {
 		super(p);
 		if(o == null) this.type = JSONType.NULL;
