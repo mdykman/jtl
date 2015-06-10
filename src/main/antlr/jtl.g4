@@ -36,7 +36,7 @@ jpath
 
 re_expr
 	: tern_expr
-	| re_expr '=~' tern_expr
+	| re_expr '=~' string
 	;
 	
 tern_expr 
@@ -166,8 +166,13 @@ number
       | FLOAT 
       ;
 
+ident 
+	: ID
+	;
+	
 id 
-     : ID 
+     : ident
+     | id '.' ident
      ;
  
 string

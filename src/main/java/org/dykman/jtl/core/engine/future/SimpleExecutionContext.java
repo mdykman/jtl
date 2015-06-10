@@ -16,10 +16,26 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final boolean functionContext;
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 
+	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
+
 	public SimpleExecutionContext(boolean fc) {
 		this(null, fc);
 	}
 
+	@Override
+	public AsyncExecutionContext<JSON> getNamedContext(String label) {
+		AsyncExecutionContext<JSON> c = namedContexts.get(label);
+		if(c== null) {
+			synchronized (this) {
+				c = namedContexts.get(label);
+				if(c==null) {
+					c = new SimpleExecutionContext(false);
+					namedContexts.put(label, c);
+				}
+			}
+		}
+		return c;
+	}
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;

@@ -17,6 +17,7 @@ import main.antlr.jtlParser.Eq_exprContext;
 import main.antlr.jtlParser.Filter_pathContext;
 import main.antlr.jtlParser.FuncContext;
 import main.antlr.jtlParser.IdContext;
+import main.antlr.jtlParser.IdentContext;
 import main.antlr.jtlParser.IndexlContext;
 import main.antlr.jtlParser.IndexlistContext;
 import main.antlr.jtlParser.JpathContext;
@@ -225,6 +226,19 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitId(IdContext ctx) {
+		String c = visitIdent(ctx.ident()).string;
+		IdContext ic = ctx.id();
+		if(ic!=null) {
+			String a =visitId(ic).string;
+			StringBuilder builder= new StringBuilder(a).append('.').append(c);
+			return new InstructionFutureValue<>(builder.toString());
+		}
+		return new InstructionFutureValue<>(c);
+	}
+
+
+	@Override
+	public InstructionFutureValue<JSON> visitIdent(IdentContext ctx) {
 		return new InstructionFutureValue<JSON>(ctx.getText());
 	}
 
@@ -242,13 +256,11 @@ public class InstructionFutureVisitor extends
 	@Override
 	public InstructionFutureValue<JSON> visitRe_expr(Re_exprContext ctx) {
 		
-		InstructionFutureValue<JSON> a = visitTern_expr(ctx.tern_expr());
-		Re_exprContext rc = ctx.re_expr();
-		if(rc!=null) {
-			InstructionFutureValue<JSON> b  = visitRe_expr(rc);
-			return new InstructionFutureValue<>(factory.reMatch(a.inst,b.inst));
-		}
-		return a;
+		Tern_exprContext tc = ctx.tern_expr();
+		if(tc!=null) return visitTern_expr(tc);
+		InstructionFutureValue<JSON> a = visitRe_expr(ctx.re_expr());
+		String s = visitString(ctx.string()).string;
+		return new InstructionFutureValue<>(factory.reMatch(s,a.inst));
 	}
 
 	@Override
@@ -261,7 +273,8 @@ public class InstructionFutureVisitor extends
 		ValueContext va = vit.next();
 		ValueContext vb = vit.next();
 		return new InstructionFutureValue<>(factory.ternary(
-				visitTern_expr(tc).inst, visitValue(va).inst,
+				visitTern_expr(tc).inst, 
+				visitValue(va).inst,
 				visitValue(vb).inst));
 	}
 

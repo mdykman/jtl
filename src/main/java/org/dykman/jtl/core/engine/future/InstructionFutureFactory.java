@@ -62,72 +62,68 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
-	public InstructionFuture<JSON> reMatch(final InstructionFuture<JSON> pattern,final InstructionFuture<JSON> d) {
-		return new AbstractInstructionFuture<JSON>() {
 
+	private JSON applyRegex(Pattern p, JSON j) {
+		if (j.isValue()) {
+			String ins = ((JSONValue) j).stringValue();
+			if (ins != null) {
+				Matcher m = p.matcher(ins);
+				if (m.find()) {
+					JSONArray unbound = builder.array(null);
+					int n = m.groupCount();
+					for (int i = 0; i <= n; ++i) {
+						JSON r = builder.value(m.group(i));
+						unbound.add(r);
+					}
+					return unbound;
+				}
+			}
+		}
+		if (j.getType() == JSONType.ARRAY) {
+			JSONArray unbound = builder.array(null);
+			JSONArray inarr = (JSONArray) j;
+			boolean any = false;
+			for (JSON k : inarr) {
+				JSON r = applyRegex(p, k);
+				any |= r.isTrue();
+				unbound.add(r);
+			}
+			return any ? unbound : builder.array(null);
+		}
+		if (j.getType() == JSONType.OBJECT) {
+			JSONObject unbound = builder.object(null);
+			JSONObject inarr = (JSONObject) j;
+			for (Pair<String, JSON> jj : inarr) {
+				JSON r = applyRegex(p, jj.s);
+				if (r.isTrue())
+					unbound.put(jj.f, r);
+			}
+			return unbound;
+		}
+		return builder.value();
+		
+	}
+	public InstructionFuture<JSON> reMatch(final String p,
+			final InstructionFuture<JSON> d) {
+		final Pattern pattern = Pattern.compile(p);
+		return new AbstractInstructionFuture<JSON>() {
 			@Override
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws ExecutionException {
-				return transform(allAsList(pattern.call(context, data),d.call(context, data)), 
-						new AsyncFunction<List<JSON>, JSON>() {
+				return transform(d.call(context, data),
+						new AsyncFunction<JSON, JSON>() {
 
 							@Override
-							public ListenableFuture<JSON> apply(List<JSON> input)
+							public ListenableFuture<JSON> apply(JSON input)
 									throws Exception {
-								Iterator<JSON> it = input.iterator();
-								JSON a = it.next();
-								JSON b = it.next();
-								if(a.isValue()) {
-									final String p = ((JSONValue)a).stringValue();
-									final Pattern pattern = PatternCache.get(p, new Callable<Pattern>() {
-										@Override
-										public Pattern call() throws Exception {
-											return Pattern.compile(p);
-										}
-									});
-									
-									Function<JSON, JSON> f = new Function<JSON,JSON>() {
-										public JSON apply(JSON in) {
-											if(in.isValue()) {
-												String ins=((JSONValue)b).stringValue();
-												Matcher m = pattern.matcher(ins);
-												if(m.find()) {
-													JSONArray unbound = builder.array(null);
-													int n = m.groupCount();
-													for(int i = 0; i <=n; ++i) {
-														unbound.add(builder.value(m.group(i)));
-													}
-													return unbound;
-												} 
-											}
-											if(in.getType() == JSONType.ARRAY) {
-												JSONArray unbound = builder.array(null);
-												JSONArray inarr = (JSONArray)in;
-												for(JSON j : inarr) {
-													unbound.add(this.apply(j));
-												}
-												return unbound;
-											}
-											if(in.getType() == JSONType.OBJECT) {
-												JSONObject unbound = builder.object(null);
-												JSONObject inarr = (JSONObject)in;
-												for(Pair<String,JSON> jj : inarr) {
-													unbound.put(jj.f,this.apply(jj.s));
-												}
-												return unbound;
-											}
-											return builder.value();											
-										}
-									};
-									return immediateFuture(f.apply(b));
-								}
-								return immediateFuture(builder.value());
+								return immediateFuture(applyRegex(pattern,input));
 							}
 						});
 			}
 		};
 	}
+
 	public InstructionFuture<JSON> variable(final String name) {
 		return new AbstractInstructionFuture<JSON>() {
 			@Override
@@ -169,7 +165,8 @@ public class InstructionFutureFactory {
 						.createChild(true);
 
 				List<InstructionFuture<JSON>> a = new ArrayList<>(iargs.size());
-				int cc = 0;
+				int cc = 1;
+				childContext.define("0", value(name));
 				for (InstructionFuture<JSON> i : iargs) {
 					InstructionFuture<JSON> inst = deferred(i, context, t);
 					childContext.define(Integer.toString(cc++), inst);
@@ -656,34 +653,37 @@ public class InstructionFutureFactory {
 
 	static Long longValue(JSON j) {
 		Long l = null;
-		switch(j.getType()) {
+		switch (j.getType()) {
 		case LONG:
 		case DOUBLE:
 		case STRING:
-			return ((JSONValue)j).longValue();
+			return ((JSONValue) j).longValue();
 		}
 		return null;
 	}
+
 	static Double doubleValue(JSON j) {
 		Long l = null;
-		switch(j.getType()) {
+		switch (j.getType()) {
 		case LONG:
 		case DOUBLE:
 		case STRING:
-			return ((JSONValue)j).doubleValue();
+			return ((JSONValue) j).doubleValue();
 		}
 		return null;
 	}
+
 	static String stringValue(JSON j) {
 		Long l = null;
-		switch(j.getType()) {
+		switch (j.getType()) {
 		case LONG:
 		case DOUBLE:
 		case STRING:
-			return ((JSONValue)j).stringValue();
+			return ((JSONValue) j).stringValue();
 		}
 		return null;
 	}
+
 	public InstructionFuture<JSON> dereference(InstructionFuture<JSON> a,
 			InstructionFuture<JSON> b) {
 		return new AbstractInstructionFuture<JSON>() {
@@ -716,25 +716,29 @@ public class InstructionFutureFactory {
 										for (JSON j : rarr) {
 											JSONType jtype = j.getType();
 											Long l = longValue(rb);
-											if(l!=null) {
-												unbound.add(larr.get(l.intValue()));												
-											}
-											else if(JSONType.ARRAY == jtype) {
+											if (l != null) {
+												unbound.add(larr.get(l
+														.intValue()));
+											} else if (JSONType.ARRAY == jtype) {
 												JSONArray jva = (JSONArray) rb;
-												if(jva.size() == 2) {
+												if (jva.size() == 2) {
 													JSON aa = jva.get(0);
 													JSON bb = jva.get(1);
-													if(aa.getType() == JSONType.LONG &&
-															bb.getType() == JSONType.LONG ) {
-														long la = ((JSONValue)aa).longValue();
-														long lb = ((JSONValue)bb).longValue();
-														if(la<=lb) {
-															for(;la<=lb;++la) {
-																unbound.add(larr.get((int)la));												
+													if (aa.getType() == JSONType.LONG
+															&& bb.getType() == JSONType.LONG) {
+														long la = ((JSONValue) aa)
+																.longValue();
+														long lb = ((JSONValue) bb)
+																.longValue();
+														if (la <= lb) {
+															for (; la <= lb; ++la) {
+																unbound.add(larr
+																		.get((int) la));
 															}
 														} else {
-															for(;lb>=la;--lb) {
-																unbound.add(larr.get((int)lb));												
+															for (; lb >= la; --lb) {
+																unbound.add(larr
+																		.get((int) lb));
 															}
 														}
 													}

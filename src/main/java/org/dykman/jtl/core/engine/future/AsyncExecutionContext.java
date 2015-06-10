@@ -1,5 +1,6 @@
 package org.dykman.jtl.core.engine.future;
 
+import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -18,6 +19,7 @@ public interface AsyncExecutionContext<T> {
 	public ListenableFuture<T> lookup(String name,ListenableFuture<T> t)
 		throws ExecutionException;
 	
+	public AsyncExecutionContext<T> getNamedContext(String label);
 //	public AsyncEngine<T> engine();
 	
 	public AsyncExecutionContext<T> createChild(boolean fc);

@@ -1,0 +1,16 @@
+{
+	!init: {
+		uri: /jdbc/uri
+	},
+	db: core.module("jdbc" ,{
+		uri:init/uri
+	}),
+	curl: core.module("http-client", {
+		proxy:true,
+		proxyserver:null
+	}),
+	_:{
+		query: db.query("select * from users"),
+		external: curl.get("http://www.jsontest.org/")
+	}
+}
