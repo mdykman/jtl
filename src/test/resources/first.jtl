@@ -1,15 +1,17 @@
 {
 	_: {
 		message:"Hello World",
-		function: data/people{first = "John"},
+		function: data/people,
 		data: {
 	   		thing: [3,1,4,1,5,9,2,6,5,3,5],
 	   		name:["fred","sally",data/people/f(),g(17)]
 		}	
 	},
-	f: map("last"),
+	f: gender,
 	g: {
+			arg: $1,
 			input: .,
-			output: .{first}
+			output: .{first},
+			depts: **/department
 	}
 }

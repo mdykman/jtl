@@ -1,5 +1,7 @@
 package org.dykman.jtl.core;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -104,6 +106,11 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public JSON parse(InputStream in) 
 			throws IOException {
 			return parse( new jsonLexer(new ANTLRInputStream(in)));
+		}
+	@Override
+	public JSON parse(File in) 
+			throws IOException {
+			return parse( new FileInputStream(in));
 		}
 	
 	@Override

@@ -1,6 +1,8 @@
 //import org.antlr.v4.runtime.CommonTokenStream;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.PrintWriter;
 
 import main.antlr.jtlLexer;
 import main.antlr.jtlParser;
@@ -14,6 +16,10 @@ import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JtlCompiler;
 import org.dykman.jtl.core.engine.future.InstructionFuture;
 import org.dykman.jtl.core.engine.future.InstructionFutureVisitor;
+import org.dykman.jtl.core.engine.future.SimpleExecutionContext;
+
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public class SimpleJtlTest {
 
@@ -23,8 +29,22 @@ public class SimpleJtlTest {
 			JSONBuilder builder = new JSONBuilderImpl();
 			JtlCompiler compiler = new JtlCompiler(builder);
 			FileInputStream fin = new FileInputStream(args[0]);
-			InstructionFuture<JSON> inst =compiler.parse(fin);
-			
+			InstructionFuture<JSON> inst = compiler.parse(fin);
+			System.out.println("made it through the compiler");
+			if(inst == null) {
+				System.out.println("no program");
+				System.exit(1);
+			} else {
+				System.out.println("obtained " + inst.getClass().getName());
+			}
+			JSON data = builder.parse(new File(args[1]));
+			System.out.println("acquired data");
+			SimpleExecutionContext context = new SimpleExecutionContext();
+			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
+			PrintWriter pw =new PrintWriter(System.out);
+			j.get().write(pw, 3);
+			pw.flush();
+//			System.out.println(j.get().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

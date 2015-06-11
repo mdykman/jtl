@@ -87,7 +87,7 @@ public class InstructionFutureVisitor extends
 									@Override
 									public ListenableFuture<JSON> apply(
 											JSON input) throws Exception {
-										sealResult(input);
+//										sealResult(input);
 										input.lock();
 										return immediateFuture(input);
 									}
@@ -95,6 +95,7 @@ public class InstructionFutureVisitor extends
 					}
 				});
 	}
+
 
 	protected void sealResult(JSON j) {
 		JSONType type = j.getType();
@@ -207,16 +208,20 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitVariable(VariableContext ctx) {
-		final String name = ctx.getText();
+		String name = ctx.getText();
+		char c = name.charAt(0);
+		if(c == '!' || c == '$') name = name.substring(1);
+		final String nm = name;
 		return new InstructionFutureValue<JSON>(
 				new AbstractInstructionFuture<JSON>() {
 
 					@Override
 					public ListenableFuture<JSON> call(
 							AsyncExecutionContext<JSON> context,
-							ListenableFuture<JSON> parent) {
+							ListenableFuture<JSON> t) {
 						try {
-							return context.lookup(name,parent);
+							System.out.println("func name: " + nm);
+							return context.lookup(nm,t);
 						} catch (Exception e) {
 							return immediateFailedCheckedFuture(e);
 						}
@@ -391,8 +396,8 @@ public class InstructionFutureVisitor extends
 	public InstructionFutureValue<JSON> visitAdd_expr(Add_exprContext ctx) {
 		InstructionFutureValue<JSON> a = visitMul_expr(ctx.mul_expr());
 		Add_exprContext c = ctx.add_expr();
-		InstructionFutureValue<JSON> bv = visitAdd_expr(c);
 		if (c != null) {
+			InstructionFutureValue<JSON> bv = visitAdd_expr(c);
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 			case "+":
@@ -411,8 +416,8 @@ public class InstructionFutureVisitor extends
 	public InstructionFutureValue<JSON> visitMul_expr(Mul_exprContext ctx) {
 		InstructionFutureValue<JSON> a = visitUnary_expr(ctx.unary_expr());
 		Mul_exprContext c = ctx.mul_expr();
-		InstructionFutureValue<JSON> bv = visitMul_expr(c);
 		if (c != null) {
+			InstructionFutureValue<JSON> bv = visitMul_expr(c);
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 			case "*":
@@ -431,37 +436,63 @@ public class InstructionFutureVisitor extends
 
 	@Override
 	public InstructionFutureValue<JSON> visitUnary_expr(Unary_exprContext ctx) {
-		InstructionFutureValue<JSON> a = visitUnion_expr(ctx.union_expr());
-		Unary_exprContext c = ctx.unary_expr();
-		if (c != null) {
-
-		}
-		return a;
+		Union_exprContext uc = ctx.union_expr();
+		if(uc!=null) return visitUnion_expr(uc);
+		InstructionFutureValue<JSON> a = visitUnary_expr(ctx.unary_expr());
+		return new InstructionFutureValue<JSON>(factory.negate(a.inst));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitUnion_expr(Union_exprContext ctx) {
-		InstructionFutureValue<JSON> a = visitFilter_path(ctx.filter_path());
-		Union_exprContext c = ctx.union_expr();
-		if (c != null) {
+		List<Filter_pathContext> fps = ctx.filter_path();
+		if(fps.size() == 1) {
+			return visitFilter_path(fps.get(0));
+		} else {
+			final List<InstructionFuture<JSON>> seq = new ArrayList<>();
+			for(Filter_pathContext fp: fps) {
+				seq.add(visitFilter_path(fp).inst);
+			}
+			return new InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
 
+				@Override
+				public ListenableFuture<JSON> call(
+						AsyncExecutionContext<JSON> context,
+						ListenableFuture<JSON> data) throws ExecutionException {
+					final List<ListenableFuture<JSON>> fut = new ArrayList<>();
+					for(InstructionFuture<JSON> ii : seq) {
+						fut.add(ii.call(context, data));
+					}
+					return transform(Futures.allAsList(fut),new AsyncFunction<List<JSON>, JSON>() {
+
+						@Override
+						public ListenableFuture<JSON> apply(List<JSON> input)
+								throws Exception {
+							JSONArray unbound = builder.array(null, true);
+							for(JSON j: input) {
+								unbound.add(j);
+							}
+							return immediateFuture(unbound);
+						}
+						
+					});
+				}
+			});
 		}
-		return a;
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitFilter_path(Filter_pathContext ctx) {
-		InstructionFutureValue<JSON> a = visitPath(ctx.path());
-		Filter_pathContext c = ctx.filter_path();
-		if (c != null) {
-
-		}
-		return a;
+		PathContext pc = ctx.path();
+		if(pc!=null) return visitPath(pc);
+		InstructionFutureValue<JSON> a = visitFilter_path(ctx.filter_path());
+		InstructionFutureValue<JSON> b = visitValue(ctx.value());
+		return new InstructionFutureValue<>(factory.dereference(a.inst, b.inst));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitPath(PathContext ctx) {
-		return visitAbs_path(ctx.abs_path());
+		Abs_pathContext ac  = ctx.abs_path();
+		return visitAbs_path(ac);
 	}
 
 	@Override
@@ -498,8 +529,9 @@ public class InstructionFutureVisitor extends
 	public InstructionFutureValue<JSON> visitRel_path(Rel_pathContext ctx) {
 		final InstructionFutureValue<JSON> a = visitPathelement(ctx
 				.pathelement());
-		final InstructionFutureValue<JSON> c = visitRel_path(ctx.rel_path());
-		if (c != null) {
+		Rel_pathContext rp = ctx.rel_path();
+		if (rp != null) {
+			final InstructionFutureValue<JSON> c = visitRel_path(rp);
 			return new InstructionFutureValue<JSON>(
 					new AbstractInstructionFuture<JSON>() {
 
@@ -546,7 +578,7 @@ public class InstructionFutureVisitor extends
 
 		JstringContext jc = ctx.jstring();
 		if (jc != null)
-			visitJstring(jc);
+			return visitJstring(jc);
 
 		RecursContext rc = ctx.recurs();
 		if (rc != null)

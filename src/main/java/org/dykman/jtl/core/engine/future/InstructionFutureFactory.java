@@ -123,6 +123,10 @@ public class InstructionFutureFactory {
 			}
 		};
 	}
+	
+	public InstructionFuture<JSON> negate(InstructionFuture<JSON>  ii) {
+		return ii;
+	}
 
 	public InstructionFuture<JSON> variable(final String name) {
 		return new AbstractInstructionFuture<JSON>() {
@@ -133,6 +137,7 @@ public class InstructionFutureFactory {
 				try {
 					if (t == null)
 						return immediateFuture(builder.value());
+					System.out.println("variable: " + name);
 					return context.lookup(name, t);
 				} catch (Exception e) {
 					return immediateFailedCheckedFuture(new ExecutionException(
@@ -300,8 +305,7 @@ public class InstructionFutureFactory {
 		protected ListenableFuture<JSON> dataObject(
 				final AsyncExecutionContext<JSON> context,
 				final ListenableFuture<JSON> data) throws ExecutionException {
-			List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(
-					ll.size());
+			List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(ll.size());
 			for (Pair<String, InstructionFuture<JSON>> ii : ll) {
 				final String kk = ii.f;
 				ListenableFuture<Pair<String, JSON>> lf = transform(
@@ -436,7 +440,7 @@ public class InstructionFutureFactory {
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
 						JSON p = input.getParent();
-						JSON res = p == null ? builder.value() : p;
+						JSON res = p == null ? builder.value() : p.cloneJSON();
 						return immediateFuture(res);
 					}
 				});
@@ -450,7 +454,14 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws ExecutionException {
-				return data;
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input)
+							throws Exception {
+						return immediateFuture(input.cloneJSON());
+					}
+				});
 			}
 		};
 	}

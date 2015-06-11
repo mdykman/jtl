@@ -109,7 +109,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	public Iterator<JSON> iterator() {
 		return arr.iterator();
 	}
-
+/*
 	public String toString() {
 		StringBuilder builder = new StringBuilder("[");
 		boolean first = true;
@@ -123,7 +123,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		builder.append("]");
 		return builder.toString();
 	}
-
+*/
 	public int size() {
 		return arr.size();
 	}

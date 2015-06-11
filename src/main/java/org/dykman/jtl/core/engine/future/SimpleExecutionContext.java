@@ -1,6 +1,6 @@
 package org.dykman.jtl.core.engine.future;
 
-import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static com.google.common.util.concurrent.Futures.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,24 +18,37 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext(boolean fc) {
-		this(null, fc);
+	public SimpleExecutionContext() {
+		this(null, false);
 	}
 
 	@Override
 	public AsyncExecutionContext<JSON> getNamedContext(String label) {
+		return getNamedContext(label, true);
+	}
+
+	public AsyncExecutionContext<JSON> getNamedContext(String label,
+			boolean create) {
 		AsyncExecutionContext<JSON> c = namedContexts.get(label);
-		if(c== null) {
+		if (c == null) {
 			synchronized (this) {
 				c = namedContexts.get(label);
-				if(c==null) {
-					c = new SimpleExecutionContext(false);
-					namedContexts.put(label, c);
+				if (c == null) {
+					if (parent != null) {
+						c = parent.getNamedContext(label, false);
+						if (c != null)
+							return c;
+					}
+					if (create) {
+						c = this.createChild(false);
+						namedContexts.put(label, c);
+					}
 				}
 			}
 		}
 		return c;
 	}
+
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
@@ -58,10 +71,25 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public InstructionFuture<JSON> getdef(String name) {
-		InstructionFuture<JSON> r = functions.get(name);
-		if (r == null && !(functionContext && Character.isDigit(name.charAt(0)))) {
-			r = parent.getdef(name);
+		InstructionFuture<JSON> r = null;
+		String[] parts = name.split("[.]");
+		if (parts.length > 1) {
+			AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
+			int c = 1;
+			while(named!=null && (c < (parts.length - 2))) {
+				named = named.getNamedContext(parts[c++]);
+			}
+			if(named!=null) {
+				return named.getdef(name);
+			}
+			
+		} else {
+			r = functions.get(name);
+			if (parent!=null && r == null
+					&& !(functionContext && Character.isDigit(name.charAt(0)))) {
+				r = parent.getdef(name);
 
+			}
 		}
 		return r;
 	}
@@ -73,8 +101,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		if (inst != null) {
 			return inst.call(this, t);
 		}
-		System.err.println("lookup failed: " + name);
-		return immediateFuture(null);
+//		System.err.println("lookup failed: " + name);
+		return immediateFailedCheckedFuture(new ExecutionException("lookup failed: " + name));
 	}
 
 }

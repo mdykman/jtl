@@ -20,6 +20,7 @@ public interface AsyncExecutionContext<T> {
 		throws ExecutionException;
 	
 	public AsyncExecutionContext<T> getNamedContext(String label);
+	public AsyncExecutionContext<T> getNamedContext(String label,boolean create);
 //	public AsyncEngine<T> engine();
 	
 	public AsyncExecutionContext<T> createChild(boolean fc);

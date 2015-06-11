@@ -87,8 +87,7 @@ unary_expr
     ; 
             
 union_expr  
-	: filter_path
-    | union_expr '|' filter_path
+	: filter_path ('|' filter_path )*
     ;
 
 filter_path
@@ -128,7 +127,6 @@ indexl
 	: value
 	| value '..' value
 	;
-	
 	
 pathstep 
 	: '.'

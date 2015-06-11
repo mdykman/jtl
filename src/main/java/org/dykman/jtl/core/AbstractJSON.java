@@ -1,6 +1,7 @@
 package org.dykman.jtl.core;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 
@@ -131,8 +132,8 @@ public abstract class AbstractJSON implements JSON {
 
 	@Override
 	public void setName(String s) {
-		if (locked)
-			raise("container is locked");
+//		if (locked)
+//			raise("container is locked");
 		name = s;
 	}
 
@@ -170,5 +171,15 @@ public abstract class AbstractJSON implements JSON {
 
 	public void setBuilder(JSONBuilder builder) {
 		this.builder = builder;
+	}
+	@Override
+	public final String toString() {
+		StringWriter writer = new StringWriter();
+		try {
+			write(writer,0);
+		} catch(IOException e) {
+			throw new RuntimeException("error while rendering");
+		}
+		return writer.toString();
 	}
 }

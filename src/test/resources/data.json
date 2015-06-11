@@ -1,0 +1,24 @@
+{
+	data: {
+		people: [
+			{
+				first:"John",
+				last:"Smith",
+				gender:'m',
+				department: "shipping",
+				salary: 75000,
+				startdate : "Jan 01 2008",
+				dob: "Apr 06 1972"
+			}, {
+				first:"Maggie",
+				last:"Jones",
+				gender:'f',
+				department: "finance",
+				salary: 77000,
+				startdate : "March 15 2010",
+				dob: "Jun 06 1972"
+			}
+			
+		]
+	}
+}

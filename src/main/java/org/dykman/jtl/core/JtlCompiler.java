@@ -1,5 +1,7 @@
 package org.dykman.jtl.core;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -24,6 +26,10 @@ public class JtlCompiler {
 			return parse( new jtlLexer(new ANTLRInputStream(in)));
 		}
 	
+	public InstructionFuture<JSON> parse(File in) 
+			throws IOException {
+		return parse(new FileInputStream(in));
+		}
 	
 	public InstructionFuture<JSON> parse(String in) 
 			throws IOException {
@@ -33,8 +39,8 @@ public class JtlCompiler {
 			throws IOException {
 	//	lexer.
 			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
-			parser.setTrace(true);
-			parser.setProfile(true);
+//			parser.setTrace(true);
+//			parser.setProfile(true);
 //			parser.getCurrentToken();
 			JtlContext tree = parser.jtl();
 			InstructionFutureVisitor visitor = new InstructionFutureVisitor(jsonBuilder);
