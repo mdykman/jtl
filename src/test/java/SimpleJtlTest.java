@@ -30,15 +30,15 @@ public class SimpleJtlTest {
 			JtlCompiler compiler = new JtlCompiler(builder);
 			FileInputStream fin = new FileInputStream(args[0]);
 			InstructionFuture<JSON> inst = compiler.parse(fin);
-			System.out.println("made it through the compiler");
+			System.err.println("made it through the compiler");
 			if(inst == null) {
-				System.out.println("no program");
+				System.err.println("no program");
 				System.exit(1);
 			} else {
-				System.out.println("obtained " + inst.getClass().getName());
+				System.err.println("obtained " + inst.getClass().getName());
 			}
 			JSON data = builder.parse(new File(args[1]));
-			System.out.println("acquired data");
+			System.err.println("acquired data");
 			SimpleExecutionContext context = new SimpleExecutionContext();
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);

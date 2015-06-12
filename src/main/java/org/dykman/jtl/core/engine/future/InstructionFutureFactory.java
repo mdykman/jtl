@@ -137,7 +137,7 @@ public class InstructionFutureFactory {
 				try {
 					if (t == null)
 						return immediateFuture(builder.value());
-					System.out.println("variable: " + name);
+					System.err.println("variable: " + name);
 					return context.lookup(name, t);
 				} catch (Exception e) {
 					return immediateFailedCheckedFuture(new ExecutionException(
@@ -159,6 +159,7 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> call(
 					final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> t) throws ExecutionException {
+//				System.err.println("calling function '" + name + "'.");
 				InstructionFuture<JSON> func = context.getdef(name);
 				if (func == null) {
 					System.err.println("function '" + name + "' not found.");
@@ -592,7 +593,7 @@ public class InstructionFutureFactory {
 		};
 	}
 
-	public InstructionFuture<JSON> get(String label) {
+	public InstructionFuture<JSON> get(final String label) {
 		return new AbstractInstructionFuture<JSON>() {
 
 			@Override
@@ -604,14 +605,31 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						if (input == null)
-							return immediateFuture(null);
-						JSONType type = input.getType();
-						if (type == JSONType.OBJECT) {
+//						System.err.println("getting '" + label +"'");
+//						if (input == null)
+//							return immediateFuture(null);
+						switch(input.getType()) {
+						case OBJECT: {
 							JSONObject obj = (JSONObject) input;
 							JSON r = obj.get(label);
 							r = r == null ? builder.value() : r;
 							return immediateFuture(r);
+						}
+						case ARRAY: {
+							JSONArray unbound = builder.array(null,false);
+							JSONArray arr = (JSONArray) input;
+							for(JSON j: arr) {
+								if(j.getType() == JSONType.OBJECT) {
+									JSONObject obj = (JSONObject) j;
+									JSON r = obj.get(label);
+									if(r!=null)  {
+										unbound.add(r);
+									}
+//									r = r == null ? builder.value() : r;
+								}
+							}
+							return immediateFuture(unbound);
+						}
 						}
 						return immediateFuture(builder.value());
 					}

@@ -220,7 +220,7 @@ public class InstructionFutureVisitor extends
 							AsyncExecutionContext<JSON> context,
 							ListenableFuture<JSON> t) {
 						try {
-							System.out.println("func name: " + nm);
+//							System.out.println("func name: " + nm);
 							return context.lookup(nm,t);
 						} catch (Exception e) {
 							return immediateFailedCheckedFuture(e);
@@ -737,7 +737,7 @@ public class InstructionFutureVisitor extends
 		List<ValueContext> cl = ctx.value();
 		final InstructionFuture<JSON> a = visitValue(cl.get(0)).inst;
 		if(cl.size() > 0) {
-			final InstructionFuture<JSON> b = visitValue(cl.get(1)).inst;
+			final InstructionFuture<JSON> b = visitValue(cl.get(0)).inst;
 			return new InstructionFutureValue<>(new AbstractInstructionFuture<JSON>() {
 				@Override
 				public ListenableFuture<JSON> call(
