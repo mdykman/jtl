@@ -1,16 +1,16 @@
 package org.dykman.jtl.core.parser;
 
-import main.antlr.jsonBaseVisitor;
-import main.antlr.jsonParser.ArrayContext;
-import main.antlr.jsonParser.IdContext;
-import main.antlr.jsonParser.NumberContext;
-import main.antlr.jsonParser.ObjectContext;
-import main.antlr.jsonParser.PairContext;
-import main.antlr.jsonParser.StringContext;
-import main.antlr.jsonParser.ValueContext;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.dykman.jtl.jsonBaseVisitor;
+import org.dykman.jtl.jsonParser.ArrayContext;
+import org.dykman.jtl.jsonParser.IdContext;
+import org.dykman.jtl.jsonParser.JsonContext;
+import org.dykman.jtl.jsonParser.NumberContext;
+import org.dykman.jtl.jsonParser.ObjectContext;
+import org.dykman.jtl.jsonParser.PairContext;
+import org.dykman.jtl.jsonParser.StringContext;
+import org.dykman.jtl.jsonParser.ValueContext;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
@@ -24,7 +24,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		this.builder = builder;
 	}
 	@Override
-	public DataValue<JSON> visitJson(main.antlr.jsonParser.JsonContext ctx) {
+	public DataValue<JSON> visitJson(JsonContext ctx) {
 		return visitValue(ctx.value());
 	}
 	@Override

@@ -9,12 +9,14 @@ import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	final AsyncExecutionContext<JSON> parent;
 	final boolean functionContext;
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
+	ListeningExecutorService executorService = null;
 
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
@@ -70,22 +72,32 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	@Override
+	public ListenableFuture<JSON> execute(InstructionFuture<JSON> inst,
+			ListenableFuture<JSON> data) {
+		try {
+			return inst.call(this, data);
+		} catch (ExecutionException e) {
+			return immediateFailedCheckedFuture(e);
+		}
+	}
+
+	@Override
 	public InstructionFuture<JSON> getdef(String name) {
 		InstructionFuture<JSON> r = null;
 		String[] parts = name.split("[.]");
 		if (parts.length > 1) {
 			AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
 			int c = 1;
-			while(named!=null && (c < (parts.length - 2))) {
+			while (named != null && (c < (parts.length - 2))) {
 				named = named.getNamedContext(parts[c++]);
 			}
-			if(named!=null) {
+			if (named != null) {
 				return named.getdef(name);
 			}
-			
+
 		} else {
 			r = functions.get(name);
-			if (parent!=null && r == null
+			if (parent != null && r == null
 					&& !(functionContext && Character.isDigit(name.charAt(0)))) {
 				r = parent.getdef(name);
 
@@ -101,8 +113,22 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		if (inst != null) {
 			return inst.call(this, t);
 		}
-//		System.err.println("lookup failed: " + name);
-		return immediateFailedCheckedFuture(new ExecutionException("lookup failed: " + name));
+		// System.err.println("lookup failed: " + name);
+		return immediateFailedCheckedFuture(new ExecutionException(
+				"lookup failed: " + name));
+	}
+
+	public void setExecutionService(ListeningExecutorService s) {
+		executorService = s;
+	}
+
+	@Override
+	public ListeningExecutorService executor() {
+		if (executorService != null)
+			return executorService;
+		if (parent != null)
+			return parent.executor();
+		return null;
 	}
 
 }

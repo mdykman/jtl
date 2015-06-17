@@ -26,6 +26,7 @@ SSM  : ~["\\$]+
 START_BLOCKM : '${' ->pushMode(DEFAULT_MODE);
 
 
+
 mode MSTR;
 
 ESTR : '"' -> popMode;

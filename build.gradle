@@ -7,19 +7,13 @@
  * user guide available at http://gradle.org/docs/2.3/userguide/tutorial_java_projects.html
  */
 
-// Apply the java plugin to add support for Java
-apply plugin: 'java'
-apply plugin: 'eclipse'
-
 
 // In this section you declare where to find the dependencies of your project
 repositories {
-    // Use 'jcenter' for resolving your dependencies.
-    // You can declare any Maven/Ivy/file repository here.
     jcenter()
 }
 
-/*
+
 buildscript {
     repositories {
         maven {
@@ -29,19 +23,25 @@ buildscript {
     }
 
     dependencies {
-//	classpath '/me/champeau/gradle/antlr4-gradle-plugin/0.1.1-SNAPSHOT/antlr4-gradle-plugin-0.1.1-20140828.124346-1.jar'
-//	classpath 'https://oss.jfrog.org/oss-snapshot-local/me/champeau/gradle/antlr4-gradle-plugin/0.1.1-SNAPSHOT/antlr4-gradle-plugin-0.1.1-20140828.124346-1.jar'
-//        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1.1-SNAPSHOT'	
+        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1.1-SNAPSHOT'	
     }
 }
-*/
-//apply plugin: 'me.champeau.gradle.antlr4'
-//apply plugin: 'antlr4'
 
-//antlr4 {
- //  source = new File("src/main/antlr")
-//   listener = false;
-//}
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'me.champeau.gradle.antlr4'
+
+compileJava {
+	sourceCompatibility=1.8
+	targetCompatibility=1.8
+}
+
+antlr4 {
+   source = file "src/main/antlr"
+   output = file "target/generated-sources/antlr4/org/dykman/jtl"
+   listener = false
+   extraArgs = ['-package', "org.dykman.jtl"]
+}
 
 
 // In this section you declare the dependencies for your production and test code
@@ -57,18 +57,21 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.4'
 
 
-//    compile 'org.antlr:antlr4-maven-plugin:4.5'
 
     
-//    antlr   "org.antlr:antlr4:4.5" // use ANTLR version 4.5
-
-    // Declare the dependency for your favourite test framework you want to use in your tests.
-    // TestNG is also supported by the Gradle Test task. Just change the
-    // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
-    // 'test.useTestNG()' to your build script.
     testCompile "junit:junit:4.11"
 }
 
-//generateGrammarSource.doFirst {
-//	visitor=true
-//}
+
+compileJava.dependsOn antlr4
+
+sourceSets.main.java.srcDirs += "target/generated-sources/antlr4"
+
+configurations {
+   compile.extendsFrom antlr4
+}
+
+clean {
+    delete += fileTree(antlr4.output).include('**/*')
+}
+

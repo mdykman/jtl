@@ -38,6 +38,7 @@ public interface JSON {
 		OBJECT,
 		ARRAY,
 		NULL,
+		FRAME,
 	};
 
 }

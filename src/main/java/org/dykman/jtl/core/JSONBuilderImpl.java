@@ -6,21 +6,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
-
-import main.antlr.jsonLexer;
-import main.antlr.jsonParser;
-import main.antlr.jsonParser.JsonContext;
-import main.antlr.jtlLexer;
-import main.antlr.jtlParser;
-import main.antlr.jtlParser.JtlContext;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.dykman.jtl.jsonLexer;
+import org.dykman.jtl.jsonParser;
+import org.dykman.jtl.jsonParser.JsonContext;
 import org.dykman.jtl.core.engine.CollectionFactory;
 import org.dykman.jtl.core.engine.MapFactory;
 import org.dykman.jtl.core.parser.DataValue;
@@ -40,10 +33,12 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public JSONBuilderImpl() {
 		mf = new MapFactory<String, JSON>() {
 			@Override public Map<String, JSON> createMap() { return new LinkedHashMap<>(); }
-			@Override public Map<String, JSON> createMap(int cap) {	return new LinkedHashMap<>(cap); } };
+			@Override public Map<String, JSON> createMap(int cap) {	return new LinkedHashMap<>(cap); } 
+			@Override public Map<String, JSON> copyMap(Map<String, JSON> rhs) {	return new LinkedHashMap<>(rhs); } };
 		cf = new CollectionFactory<JSON>() { 
 			@Override public Collection<JSON> createCollection() {return new ArrayList<>(); }
-			@Override public Collection<JSON> createCollection(int cap) { return new ArrayList<>(cap); } };
+			@Override public Collection<JSON> createCollection(int cap) { return new ArrayList<>(cap); } 
+			@Override public Collection<JSON> copyCollection(Collection<JSON> rhs) { return new ArrayList<>(rhs); } };
 	}
 	private JSON sign(JSON j) {
 		j.setBuilder(this);
@@ -90,6 +85,15 @@ public class JSONBuilderImpl implements JSONBuilder {
 		JSONArray r = new JSONArray(parent,cf.createCollection(),bound);
 		return (JSONArray) sign(r);
 	}
+	@Override
+	public Frame frame() {
+		return new Frame(cf.createCollection());
+	}
+	@Override
+	public Frame frame(Frame f) {
+		Collection<JSON> cc = cf.copyCollection(f.collection());
+		return new Frame(cc);
+	}
 
 	@Override
 	public JSONArray array(JSON parent) {
@@ -124,7 +128,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 			//parser.setTrace(true);
 			JsonContext tree = parser.json();
 			DataVisitor visitor = new DataVisitor(this);
-			DataValue<JSON> v = visitor.visit(tree);
+			DataValue<JSON> v = visitor.visitJson(tree);
 			if(v!=null && v.value != null) v.value.setBuilder(this);
 			if(v == null) return  null;
 			v.value.setBuilder(this);

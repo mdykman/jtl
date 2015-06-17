@@ -156,8 +156,9 @@ func
 variable
       : '$' ID 
       | '$' INTEGER
-      | '!' ID 
+//      | '!' ID 
       ;
+
 
 number
       : INTEGER 
@@ -173,6 +174,7 @@ id
      | id '.' ident
      ;
  
+ 
 string
 	: STRING
 	| SSTRING
@@ -184,5 +186,5 @@ jstring : SSTR strc ESTR
      
 strc : SS
 	| START_BLOCK jtl END_BLOCK
-	| strc strc
+	| strc strc+
 	; 

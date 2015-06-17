@@ -16,4 +16,7 @@ public class ConcurrentMapFactory implements MapFactory<String,JSON> {
 		return new ConcurrentHashMap<String, JSON>(cap);
 	}
 
+	public Map<String, JSON> copyMap(Map<String, JSON> c) {
+		return new ConcurrentHashMap<String, JSON>(c);
+	}
 }

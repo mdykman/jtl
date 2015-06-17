@@ -3,12 +3,11 @@ package org.dykman.jtl.core.engine;
 import java.io.IOException;
 import java.io.InputStream;
 
-import main.antlr.jtlLexer;
-import main.antlr.jtlParser;
-import main.antlr.jtlParser.JtlContext;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.dykman.jtl.jtlLexer;
+import org.dykman.jtl.jtlParser;
+import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.parser.DataValue;
