@@ -17,12 +17,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.dykman.jtl.core.Frame;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
+import org.dykman.jtl.core.ModuleLoader;
 import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.ExecutionException;
 
@@ -61,6 +63,38 @@ public class InstructionFutureFactory {
 		};
 	}
 
+	public InstructionFuture<JSON> loadModule(JSONObject conf) {
+		return new AbstractInstructionFuture() {
+			
+			@Override
+			public ListenableFuture<JSON> callItem(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+				throws ExecutionException {
+				List<ListenableFuture<JSON>> ll = new ArrayList<>(2);
+				ll.add(context.getdef("1").call(context, data));
+				InstructionFuture<JSON> ci =  context.getdef("3");
+				if(ci != null) {
+					ll.add(ci.call(context, data));
+				}
+				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+						Iterator<JSON> jit = input.iterator();
+						String name = stringValue(jit.next());
+						JSONObject config = (JSONObject) (jit.hasNext() ? jit.next() : null);
+						ModuleLoader ml = ModuleLoader.getInstance(builder,conf);
+						
+						AsyncExecutionContext<JSON> modctx = context.getMasterContext().getNamedContext(name);
+						int n = ml.create(name, modctx, config);
+						return immediateCheckedFuture(builder.value(n));
+					}
+				});
+				
+			}
+		};
+		
+	}
+	
 	private JSON applyRegex(Pattern p, JSON j) {
 		if (j.isValue()) {
 			String ins = ((JSONValue) j).stringValue();
@@ -221,8 +255,9 @@ public class InstructionFutureFactory {
 	}
 
 	public InstructionFuture<JSON> number(TerminalNode i, TerminalNode d) {
-		return value(i != null ? Long.parseLong(i.getText()) : Double
-				.parseDouble(d.getText()));
+		if(i!=null) return value(Long.parseLong(i.getText()));
+		return value(Double
+			.parseDouble(d.getText()));
 	}
 
 	public InstructionFuture<JSON> array(final List<InstructionFuture<JSON>> ch) {
@@ -323,6 +358,7 @@ public class InstructionFutureFactory {
 						});
 				insts.add(lf);
 			}
+			
 			return transform(allAsList(insts),
 					new AsyncFunction<List<Pair<String, JSON>>, JSON>() {
 						@Override
@@ -879,50 +915,35 @@ public class InstructionFutureFactory {
 										|| btype == JSONType.OBJECT)
 									return immediateCheckedFuture(builder.value());
 
-								JSONArray unbound = btype == JSONType.ARRAY ? builder
-										.array(null) : null;
+								Frame unbound = btype == JSONType.ARRAY ? builder.frame() : null;
 								switch (ra.getType()) {
+								case FRAME:
 								case ARRAY: {
 									JSONArray larr = (JSONArray) ra;
 									if (unbound != null) {
 										JSONArray rarr = (JSONArray) rb;
 										for (JSON j : rarr) {
 											JSONType jtype = j.getType();
-											Long l = longValue(rb);
-											if (l != null) {
-												unbound.add(larr.get(l
-														.intValue()));
-											} else if (JSONType.ARRAY == jtype) {
-												JSONArray jva = (JSONArray) rb;
-												if (jva.size() == 2) {
-													JSON aa = jva.get(0);
-													JSON bb = jva.get(1);
-													if (aa.getType() == JSONType.LONG
-															&& bb.getType() == JSONType.LONG) {
-														long la = ((JSONValue) aa)
-																.longValue();
-														long lb = ((JSONValue) bb)
-																.longValue();
-														if (la <= lb) {
-															for (; la <= lb; ++la) {
-																unbound.add(larr
-																		.get((int) la));
-															}
-														} else {
-															for (; lb >= la; --lb) {
-																unbound.add(larr
-																		.get((int) lb));
-															}
-														}
-													}
+											if(jtype == JSONType.ARRAY) {
+												JSONArray jarr = (JSONArray) j;
+												Long f = longValue(jarr.get(0));
+												Long s = longValue(jarr.get(1));
+												int i = f < s ? 1: -1;
+												for(;f<=s;f+=i) {
+													JSON k = larr.get(f.intValue());
+													unbound.add(k == null ? builder.value() :k.cloneJSON());
 												}
 											} else {
-												unbound.add(builder.value());
+												Long l = longValue(rb);
+												JSON k = larr.get(l.intValue());
+												unbound.add(k == null ? builder.value() :k.cloneJSON());
 											}
+
 										}
 										return immediateCheckedFuture(unbound);
 									} else {
-										return immediateCheckedFuture(builder.value());
+										JSON k = larr.get(((JSONValue)rb).longValue().intValue());
+										return immediateCheckedFuture(k == null ? builder.value() : k.cloneJSON());
 									}
 								}
 								case OBJECT: {

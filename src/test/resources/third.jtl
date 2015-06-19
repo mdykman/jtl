@@ -1,0 +1,25 @@
+{
+   !init: {
+      curl: module("http", {
+         proxy:true,
+         proxyserver:null
+   })
+   },   
+	_: {
+		message:"Hello World",
+		function: data/people[0],
+		jsontest: http.get("http://ip.jsontest.com/"),
+		elysium: http.post("http://localhost:8080/elysium/query/content/content",{
+            "q1": {
+               "statement": "SELECT * from sections"
+             }
+       })
+	},
+	f: */gender,
+	g: {
+			arg: $1,
+			input: .,
+			output: data/people/*/first,
+			depts: **/department
+	}
+}

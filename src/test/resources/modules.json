@@ -1,0 +1,5 @@
+{
+   http: {
+      class:"org.dykman.jtl.core.modules.HttpModule"
+   }
+}

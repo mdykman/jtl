@@ -101,6 +101,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		if (theList == null) {
 			theList = asList();
 		}
+		if(arr.size() == 0) return null;
 		// let negatives reference from the end
 		i=(i+theList.size()) % theList.size(); 
 		return theList.get(i);
@@ -109,21 +110,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	public Iterator<JSON> iterator() {
 		return arr.iterator();
 	}
-/*
-	public String toString() {
-		StringBuilder builder = new StringBuilder("[");
-		boolean first = true;
-		for (JSON j : arr) {
-			if (first)
-				first = false;
-			else
-				builder.append(",");
-			builder.append(j.toString());
-		}
-		builder.append("]");
-		return builder.toString();
-	}
-*/
+
 	public int size() {
 		return arr.size();
 	}
@@ -153,7 +140,6 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 
 		boolean first = true;
 		JSONType ctype = firstChildType();
-//		boolean cia = type == JSONType.ARRAY;
 		if (ctype != JSONType.ARRAY) {
 			if (indent > 0 && ctype!=JSONType.OBJECT)
 				out.write(' ');
@@ -176,9 +162,6 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 					if(indent > 0) out.write('\n');
 					indent(out,indent,depth+1);
 				}
-//				for (int k = 0; k < nn; ++k) {
-//					out.write(' ');
-//				}
 				j.write(out, indent, depth + 1);
 			}
 

@@ -10,9 +10,12 @@ public interface AsyncExecutionContext<T> {
 	public void define(String n,InstructionFuture<T> i);
 	
 	public ListeningExecutorService executor();
-	
-	public ListenableFuture<JSON> execute(InstructionFuture<JSON> inst,
-			ListenableFuture<JSON> data);
+
+	public AsyncExecutionContext<T> getMasterContext();
+
+	public AsyncExecutionContext<T> getParent();
+	public ListenableFuture<T> execute(InstructionFuture<JSON> inst,
+			ListenableFuture<T> data);
 
 	public InstructionFuture<T> getdef(String name);
 

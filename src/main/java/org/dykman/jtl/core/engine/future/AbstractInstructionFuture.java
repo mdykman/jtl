@@ -9,11 +9,14 @@ import java.util.List;
 
 import org.dykman.jtl.core.Frame;
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.AsyncFunction;
+
 import static com.google.common.util.concurrent.Futures.*;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class AbstractInstructionFuture implements InstructionFuture<JSON> {
@@ -56,7 +59,18 @@ public abstract class AbstractInstructionFuture implements InstructionFuture<JSO
 			}
 		});
 	}
-
+	protected String stringValue(JSON j) {
+		if(j == null) return null;
+		switch(j.getType()) {
+			case STRING:
+			case DOUBLE:
+			case LONG:
+				return ((JSONValue)j).stringValue();
+			default:
+				return null;
+		}
+	}
+	
 	public abstract ListenableFuture<JSON> callItem(AsyncExecutionContext<JSON> context,
 			ListenableFuture<JSON> data) throws ExecutionException;
 

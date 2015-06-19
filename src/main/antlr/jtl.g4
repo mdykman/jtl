@@ -23,9 +23,7 @@ jtl
       ;
 
 value
-    : object 
-    | array
-    | jpath 
+    : jpath 
     | '(' value ')'
     ;
 
@@ -141,6 +139,9 @@ pathstep
 	| variable
 	| number
 	| jstring
+	| object 
+   | array
+	
 	;
             
 recurs 
@@ -149,8 +150,8 @@ recurs
     ;
             
 func
-     : ID '(' ')'
-     | ID '(' value (',' value )* ')' 
+     : id '(' ')'
+     | id '(' value (',' value )* ')' 
      ;
 
 variable
@@ -172,6 +173,8 @@ ident
 id 
      : ident
      | id '.' ident
+     | '!' id
+     | '$' id
      ;
  
  
