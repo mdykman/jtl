@@ -88,13 +88,12 @@ public class JSONBuilderImpl implements JSONBuilder {
 	@Override
 	public Frame frame() {
 		Frame f = new Frame(cf.createCollection());
-		f.setBuilder(this);
-		return f;
+		return (Frame) sign(f);
 	}
 	@Override
 	public Frame frame(Frame f) {
 		Collection<JSON> cc = cf.copyCollection(f.collection());
-		return new Frame(cc);
+		return (Frame) sign(new Frame(cc));
 	}
 
 	@Override
