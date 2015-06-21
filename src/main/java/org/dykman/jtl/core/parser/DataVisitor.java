@@ -16,6 +16,7 @@ import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.Pair;
+import org.dykman.jtl.core.engine.future.InstructionFutureValue;
 
 public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 
@@ -74,7 +75,8 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		NumberContext nc = ctx.number();
 		if(nc!=null) return visitNumber(nc);
 		StringContext sc = ctx.string();
-		if(sc!=null) return visitString(sc);
+		if(sc!=null) return  new DataValue(builder.value(visitString(sc).str));
+		
 		ParseTree pt = ctx.getChild(0);
 		switch(pt.getText()) {
 		case "true": return new DataValue<JSON>(builder.value(true));
@@ -97,21 +99,18 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitId(IdContext ctx) {
 		return new DataValue<JSON>(ctx.ID().getText());
 	}
+
 	@Override
 	public DataValue<JSON> visitString(StringContext ctx) {
 		String k = null;
-	
 		TerminalNode tn = ctx.STRING();
-		
 		if(tn!=null) {
 			k = tn.getText();
 		} else if((tn=ctx.SSTRING())!=null){
 			k = tn.getText();
 		}
-		
 		k=k.substring(1,k.length()-1);
-		return new DataValue<JSON>(builder.value(k));
-//		return super.visitString(ctx);
+		return new DataValue<JSON>(k);
 	}
 
 }

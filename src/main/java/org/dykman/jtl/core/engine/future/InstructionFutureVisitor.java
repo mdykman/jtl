@@ -112,6 +112,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
+//			System.err.println(pp.ninst.f + " " + pp.ninst.s.toString());
 			ins.add(new Pair<String, InstructionFuture<JSON>>(pp.ninst.f, pp.ninst.s));
 		}
 
@@ -159,8 +160,14 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	@Override
 	public InstructionFutureValue<JSON> visitString(StringContext ctx) {
 		TerminalNode tn = ctx.STRING();
-		String s = tn.getText();
-		return new InstructionFutureValue<JSON>(factory.string(s.substring(1, s.length() - 1)));
+		String s = null;
+		if(tn != null) {
+			s = tn.getText();
+		} else {
+			tn = ctx.SSTRING();
+			s = tn.getText();
+		}
+		return new InstructionFutureValue<JSON>(s.substring(1, s.length()-1));
 	}
 
 	@Override
@@ -530,7 +537,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
 		StringContext sc = ctx.string();
 		if (sc != null)
-			return visitString(sc);
+			return new InstructionFutureValue<JSON>(factory.string(visitString(sc).string));
 		StrcContext stc = ctx.strc();
 		return visitStrc(stc);
 	}

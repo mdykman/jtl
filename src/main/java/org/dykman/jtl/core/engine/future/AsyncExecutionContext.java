@@ -1,6 +1,7 @@
 package org.dykman.jtl.core.engine.future;
 
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -11,6 +12,7 @@ public interface AsyncExecutionContext<T> {
 	
 	public ListeningExecutorService executor();
 
+	public JSONBuilder builder();
 	public AsyncExecutionContext<T> getMasterContext();
 
 	public AsyncExecutionContext<T> getParent();

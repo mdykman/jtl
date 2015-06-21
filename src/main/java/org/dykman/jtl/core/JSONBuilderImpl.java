@@ -87,7 +87,9 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 	@Override
 	public Frame frame() {
-		return new Frame(cf.createCollection());
+		Frame f = new Frame(cf.createCollection());
+		f.setBuilder(this);
+		return f;
 	}
 	@Override
 	public Frame frame(Frame f) {

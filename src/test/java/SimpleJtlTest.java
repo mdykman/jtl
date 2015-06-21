@@ -4,12 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JtlCompiler;
+import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
 import org.dykman.jtl.core.engine.future.InstructionFuture;
 import org.dykman.jtl.core.engine.future.InstructionFutureFactory;
 import org.dykman.jtl.core.engine.future.SimpleExecutionContext;
@@ -21,6 +24,18 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 public class SimpleJtlTest {
 
+
+	public static AsyncExecutionContext<JSON> createInitialContext(
+			JSONObject modules,
+			InstructionFutureFactory factory,
+			ListeningExecutorService les ) {
+		
+		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder());
+		context.define("module", factory.loadModule(modules));
+		context.define("error", factory.defaultError());
+		context.setExecutionService(les);
+		return context;
+	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		try {
@@ -37,20 +52,18 @@ public class SimpleJtlTest {
 			}
 			JSON data = builder.parse(new File(args[1]));
 			System.err.println("acquired data");
-			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
-			SimpleExecutionContext context = new SimpleExecutionContext();
-			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-			context.setExecutionService(les);
-
-			JSON modules = builder.parse(new File(args[2]));
-
-			context.define("module", factory.loadModule((JSONObject)modules));
+			JSONObject modules = (JSONObject)builder.parse(new File(args[2]));
 			
+			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
+			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+			AsyncExecutionContext<JSON>  context = createInitialContext(modules, factory, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);
 			j.get().write(pw, 3);
 			pw.flush();
+			les.shutdownNow();
+			les.awaitTermination(2, TimeUnit.SECONDS);
 //			System.out.println(j.get().toString());
 		} catch (Exception e) {
 			e.printStackTrace();

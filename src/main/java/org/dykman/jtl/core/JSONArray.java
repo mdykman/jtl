@@ -9,7 +9,7 @@ import java.util.Iterator;
 import org.dykman.jtl.core.engine.CollectionFactory;
 
 public class JSONArray extends AbstractJSON implements Iterable<JSON> {
-	private Collection<JSON> arr = new ArrayList<>();
+	protected Collection<JSON> arr = new ArrayList<>();
 
 	private ArrayList<JSON> theList = null;
 	private boolean bound = true;

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -18,10 +19,31 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 	ListeningExecutorService executorService = null;
 
+	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext() {
-		this(null, false);
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder ,boolean fc) {
+		this.parent = parent;
+		this.functionContext = fc;
+		this.builder = builder;
+	}
+
+
+	public SimpleExecutionContext(JSONBuilder builder) {
+		this(null, builder,false);
+	}
+	
+	
+	@Override
+	public JSONBuilder builder() {
+		JSONBuilder r = this.builder;
+		AsyncExecutionContext<JSON> p = this.getParent();
+		while(r  == null && p != null) {
+			r = p.builder();
+			p = p.getParent();
+		}
+		return r;
+		
 	}
 
 	@Override
@@ -65,11 +87,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return c;
 	}
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, boolean fc) {
-		this.parent = parent;
-		this.functionContext = fc;
-	}
-
 	@Override
 	public void define(String n, InstructionFuture<JSON> i) {
 		functions.put(n, i);
@@ -82,7 +99,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc) {
-		return new SimpleExecutionContext(this, fc);
+		return new SimpleExecutionContext(this, null,fc);
 	}
 
 	@Override

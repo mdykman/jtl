@@ -15,4 +15,13 @@ public class Frame extends JSONArray {
 		return JSONType.FRAME;
 	}
 
+	public JSON cloneJSON() {
+		Frame res = builder.frame();
+		int i = 0;
+		for(JSON j:arr) {
+			res.add(j);
+		}
+		return res;
+	}
+
 }

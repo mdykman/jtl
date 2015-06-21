@@ -2,14 +2,15 @@ package org.dykman.jtl.core;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
 
 public class ModuleLoader {
 
 	JSONBuilder builder;
-
 	JSONObject modules;
+	
 	public ModuleLoader(JSONBuilder builder,JSONObject conf) {
 		this.builder = builder;
 		this.modules = conf;
@@ -53,9 +54,10 @@ public class ModuleLoader {
 		try {
 			String klass = stringValue(m.get("class"));
 			Class kl = Class.forName(klass);
-			Module o = (Module)kl.newInstance();
+			Constructor<Module> mc = kl.getConstructor(config.getClass());
+			Module o = mc.newInstance(config);
 //			AsyncExecutionContext<JSON> mc = context.createChild(false);
-			o.define(context, builder,config);
+			o.define(context);
 			return 1;
 		} catch(Exception e) {
 			  throw new RuntimeException("error loading module " + name,e);
