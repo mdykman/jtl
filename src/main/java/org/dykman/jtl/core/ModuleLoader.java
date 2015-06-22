@@ -49,10 +49,19 @@ public class ModuleLoader {
 		String name,
 		AsyncExecutionContext<JSON> context,
 		JSONObject config) {
-		JSONObject m = (JSONObject)modules.get(name);
-		if(m == null) throw new RuntimeException("can not find module " + name);
+//		JSONObject m = (JSONObject)modules.get(name);
+//		if(m == null) throw new RuntimeException("can not find module " + name);
 		try {
-			String klass = stringValue(m.get("class"));
+			if(modules == null) {
+				System.err.println("no modules are defined");
+			  throw new RuntimeException("no modules are defined");
+			} 
+			JSONObject mod = (JSONObject)modules.get(name);
+			if(mod == null) {
+				System.err.println("module " + name + " is not defined");
+			  throw new RuntimeException("module " + name + " is not defined");
+			} 
+			String klass = stringValue(mod.get("class"));
 			Class kl = Class.forName(klass);
 			Constructor<Module> mc = kl.getConstructor(config.getClass());
 			Module o = mc.newInstance(config);
@@ -60,6 +69,7 @@ public class ModuleLoader {
 			o.define(context);
 			return 1;
 		} catch(Exception e) {
+			System.err.println("error loading module " + name + ": " + e.getLocalizedMessage());
 			  throw new RuntimeException("error loading module " + name,e);
 		}
 		

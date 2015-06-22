@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
+import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -18,19 +20,25 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final boolean functionContext;
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 	ListeningExecutorService executorService = null;
+	JSONObject conf;
 
 	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder ,boolean fc) {
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONObject conf, JSONBuilder builder ,boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
+		this.conf = conf;
 	}
 
+	public ListenableFuture<JSON> config() {
+		if(conf==null && parent!=null) return parent.config();
+		return immediateFuture(conf);
+	}
 
-	public SimpleExecutionContext(JSONBuilder builder) {
-		this(null, builder,false);
+	public SimpleExecutionContext(JSONBuilder builder,JSONObject conf) {
+		this(null, conf, builder,false);
 	}
 	
 	
@@ -99,7 +107,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc) {
-		return new SimpleExecutionContext(this, null,fc);
+		return new SimpleExecutionContext(this,null, null,fc);
 	}
 
 	@Override

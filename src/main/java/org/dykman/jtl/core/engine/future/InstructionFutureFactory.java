@@ -70,7 +70,7 @@ public class InstructionFutureFactory {
 		return builder;
 	}
 
-	public InstructionFuture<JSON> loadModule(JSONObject conf) {
+	public InstructionFuture<JSON> loadModule(final JSONObject conf) {
 		return new AbstractInstructionFuture() {
 
 			@Override
@@ -536,8 +536,7 @@ public class InstructionFutureFactory {
 					defaultInstruction = inst;
 				} else if (k.startsWith("!")) {
 					// variable, (almost) immediate evaluation
-					InstructionFuture<JSON> imp = factory.deferred(inst,
-							context, data);
+					InstructionFuture<JSON> imp = memo(inst);
 					context.define(k.substring(1), imp);
 					imperitives.add(imp);
 				} else if (k.startsWith("$")) {
@@ -550,7 +549,9 @@ public class InstructionFutureFactory {
 				}
 			}
 			try {
-				if(init!=null) init.call(context, loadConfig()).get();
+				// ensure that init is completed so that any modules are installed
+				if(init!=null) init.call(context, context.config()).get();
+				
 				for (InstructionFuture<JSON> imp : imperitives) {
 					imp.call(context, data);
 				}

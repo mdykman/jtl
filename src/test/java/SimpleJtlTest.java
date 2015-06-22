@@ -26,11 +26,12 @@ public class SimpleJtlTest {
 
 
 	public static AsyncExecutionContext<JSON> createInitialContext(
-			JSONObject modules,
+			JSONObject config,
 			InstructionFutureFactory factory,
 			ListeningExecutorService les ) {
 		
-		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder());
+		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
+		JSONObject modules= (JSONObject)config.get("modules");
 		context.define("module", factory.loadModule(modules));
 		context.define("error", factory.defaultError());
 		context.setExecutionService(les);
@@ -52,11 +53,11 @@ public class SimpleJtlTest {
 			}
 			JSON data = builder.parse(new File(args[1]));
 			System.err.println("acquired data");
-			JSONObject modules = (JSONObject)builder.parse(new File(args[2]));
-			
+			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
+	
 			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
 			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-			AsyncExecutionContext<JSON>  context = createInitialContext(modules, factory, les);
+			AsyncExecutionContext<JSON>  context = createInitialContext(config, factory, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);

@@ -11,8 +11,10 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
@@ -131,6 +133,30 @@ public class HttpModule implements Module {
 					}
 				}
 				return post;
+			}
+		};
+		return httpInstruction(les, builder, mf);
+	}
+
+	public InstructionFuture<JSON> _putInstruction(
+			final ListeningExecutorService les, final JSONBuilder builder) {
+		MethodFactory mf = new MethodFactory() {
+
+			@Override
+			public HttpMethod method(String url, JSONObject p) {
+				PutMethod put = new PutMethod(url);
+//				PostMethod post = new PostMethod(url);
+				if (p != null) {
+					try {
+						// IOUtils.cop
+						// post.setr
+						put.setRequestEntity(new StringRequestEntity(p
+								.toString(), "application/json", "UTF-8"));
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				return put;
 			}
 		};
 		return httpInstruction(les, builder, mf);

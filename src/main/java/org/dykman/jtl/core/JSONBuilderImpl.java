@@ -74,6 +74,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 		JSONObject r = new JSONObject(parent,mf.createMap());
 		return (JSONObject) sign(r);
 	}
+
 	@Override
 	public JSONObject object(JSON parent,int cap) {
 		JSONObject r = new JSONObject(parent,mf.createMap(cap));
@@ -85,6 +86,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 		JSONArray r = new JSONArray(parent,cf.createCollection(),bound);
 		return (JSONArray) sign(r);
 	}
+
 	@Override
 	public Frame frame() {
 		Frame f = new Frame(cf.createCollection());
@@ -132,10 +134,8 @@ public class JSONBuilderImpl implements JSONBuilder {
 			DataValue<JSON> v = visitor.visitJson(tree);
 			if(v!=null && v.value != null) v.value.setBuilder(this);
 			if(v == null) return  null;
-			v.value.setBuilder(this);
 			v.value.lock();
 			return v.value;
-			
 		}
 
 	
