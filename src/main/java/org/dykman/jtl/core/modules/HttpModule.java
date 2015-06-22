@@ -1,6 +1,8 @@
 package org.dykman.jtl.core.modules;
 
-import java.io.IOException;
+import static com.google.common.util.concurrent.Futures.allAsList;
+import static com.google.common.util.concurrent.Futures.transform;
+
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,19 +17,13 @@ import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.httpclient.params.HttpParams;
-import org.apache.commons.io.IOUtils;
 import org.dykman.jtl.core.JSON;
-import org.dykman.jtl.core.JSONArray;
+import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.Module;
-import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.ExecutionException;
 import org.dykman.jtl.core.engine.future.AbstractInstructionFuture;
@@ -37,8 +33,6 @@ import org.dykman.jtl.core.engine.future.InstructionFuture;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-
-import static com.google.common.util.concurrent.Futures.*;
 
 public class HttpModule implements Module {
 
@@ -53,6 +47,8 @@ public class HttpModule implements Module {
 		ListeningExecutorService les = context.executor();
 		context.define("get", _getInstruction(les, context.builder()));
 		context.define("post", _postInstruction(les, context.builder()));
+		context.define("put", _putInstruction(les, context.builder()));
+		context.define("delete", _deleteInstruction(les, context.builder()));
 		context.define("form", _formInstruction(les, context.builder()));
 
 	}
@@ -101,6 +97,27 @@ public class HttpModule implements Module {
 			@Override
 			public HttpMethod method(String url, JSONObject p) {
 				HttpMethod get = new GetMethod(url);
+				if (p != null) {
+					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+					for (Pair<String, JSON> pp : p) {
+						nvps.add(new NameValuePair(pp.f, pp.s.toString()));
+					}
+					get.setQueryString(nvps.toArray(new NameValuePair[nvps
+							.size()]));
+				}
+				return get;
+			}
+		};
+		return httpInstruction(les, builder, mf);
+	}
+
+	public InstructionFuture<JSON> _deleteInstruction(
+			final ListeningExecutorService les, final JSONBuilder builder) {
+		MethodFactory mf = new MethodFactory() {
+
+			@Override
+			public HttpMethod method(String url, JSONObject p) {
+				HttpMethod get = new DeleteMethod(url);
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					for (Pair<String, JSON> pp : p) {
