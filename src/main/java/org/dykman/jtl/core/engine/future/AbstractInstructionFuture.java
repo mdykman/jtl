@@ -23,7 +23,11 @@ public abstract class AbstractInstructionFuture implements
 		InstructionFuture<JSON> {
 
 	@Override
-	public final ListenableFuture<JSON> call(
+	public InstructionFuture<JSON> unwrap() {
+		return this;
+	}
+	@Override
+	public ListenableFuture<JSON> call(
 			final AsyncExecutionContext<JSON> context,
 			final ListenableFuture<JSON> data) throws ExecutionException {
 		return transform(data, new AsyncFunction<JSON, JSON>() {

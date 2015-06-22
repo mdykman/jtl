@@ -144,7 +144,7 @@ public class HttpModule implements Module {
 						// IOUtils.cop
 						// post.setr
 						post.setRequestEntity(new StringRequestEntity(p
-								.toString(), "application/json", "UTF-8"));
+								.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}

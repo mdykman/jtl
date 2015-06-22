@@ -7,9 +7,9 @@ import org.dykman.jtl.core.engine.ExecutionException;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class DeferredCall implements InstructionFuture<JSON>{
-	final InstructionFuture<JSON> inst; 
-	final AsyncExecutionContext<JSON> context;
-	final ListenableFuture<JSON> t;
+	public final InstructionFuture<JSON> inst; 
+	public final AsyncExecutionContext<JSON> context;
+	public final ListenableFuture<JSON> t;
 	
 	public DeferredCall(
 			final InstructionFuture<JSON> inst, 
@@ -18,6 +18,11 @@ public class DeferredCall implements InstructionFuture<JSON>{
 		this.inst = inst;
 		this.context = context;
 		this.t = t;
+	}
+	
+	@Override
+	public InstructionFuture<JSON> unwrap() {
+		return inst.unwrap();
 	}
 
 	@Override

@@ -135,7 +135,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	}
 
 	@Override
-	public void write(Writer out, int indent, int depth) throws IOException {
+	public void write(Writer out, int indent, int depth,boolean fq) throws IOException {
 		out.write('[');
 
 		boolean first = true;
@@ -151,7 +151,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 					if (indent > 0)
 						out.write(' ');
 				}
-				j.write(out, indent, depth + (ctype != JSONType.OBJECT ? 1 : 0));
+				j.write(out, indent, depth + (ctype != JSONType.OBJECT ? 1 : 0),fq);
 			}
 		} else {
 			for (JSON j : arr) {
@@ -162,7 +162,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 					if(indent > 0) out.write('\n');
 					indent(out,indent,depth+1);
 				}
-				j.write(out, indent, depth + 1);
+				j.write(out, indent, depth + 1,fq);
 			}
 
 		}

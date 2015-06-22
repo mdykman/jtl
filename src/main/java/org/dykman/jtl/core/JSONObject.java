@@ -32,6 +32,7 @@ public class JSONObject extends AbstractJSON implements
 		return obj.containsKey(k);
 	}
 	protected boolean isKeySafe(String k) {
+		
 		int n = k.length();
 		for (int i = 0; i < n; ++i) {
 			Character cc = k.charAt(i);
@@ -42,6 +43,7 @@ public class JSONObject extends AbstractJSON implements
 			}
 		}
 		return true;
+		
 	}
 	public boolean equals(JSON r) {
 		if(r == null) return false;
@@ -63,7 +65,7 @@ public class JSONObject extends AbstractJSON implements
 
 
 	@Override
-	public void write(Writer out, int n, int d) throws IOException {
+	public void write(Writer out, int n, int d,boolean fq) throws IOException {
 		out.write('{');
 		// if(n > 0) {
 		// out.write('\n');
@@ -84,7 +86,7 @@ public class JSONObject extends AbstractJSON implements
 //				}
 			}
 			String k = ee.getKey();
-			if (isKeySafe(k)) {
+			if (fq == false && isKeySafe(k)) {
 				out.write(k);
 			} else {
 				writeAsString(out, k);
@@ -93,7 +95,7 @@ public class JSONObject extends AbstractJSON implements
 			if (n > 0) {
 				out.write(' ');
 			}
-			ee.getValue().write(out, n, d +1);
+			ee.getValue().write(out, n, d +1,fq);
 		}
 		if (n > 0) {
 			out.write('\n');

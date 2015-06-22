@@ -1,0 +1,12 @@
+{
+
+		message:"Hello World",
+		function: data/people[0],
+      "by department": data/people/group(department),
+		data: {
+	   		thing: "fool" + [3,1,4,1,5,9,2,6,5,3,5],
+	   		expr: **/salary,
+	   		name:data/people/*/first,
+	   		depts:data/people/department
+		}	
+}

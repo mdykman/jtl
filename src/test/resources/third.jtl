@@ -4,7 +4,7 @@
          proxy:true,
          proxyserver:null,
          error: {
-         	status_message:'there was an error in curl module'
+         	status_message:"there was an error in curl module: ${ $1 }"
          }
    })
    },   
@@ -12,13 +12,15 @@
 		message:"Hello World",
 		function: data/people[0],
 		jsontest: curl.get("http://ip.jsontest.com/"),
-		elysium: curl.post("http://localhost:8080/elysium/query/content/content",{
+		elysium: curl.post("http://localhost:8080/elysium/v1/query/content/michael_viafoura",{
             q1: {
                statement: "SELECT * from sections"
              }
-       })
+       })/q1/result/cluster_name
+	},
+	procdata: {
 	},
 	error: {
-		status: "general error"
+		status: "general error: ${ $1 }"
 	}
 }

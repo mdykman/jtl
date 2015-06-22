@@ -30,7 +30,7 @@ public class DataParseTest {
 				System.err.println("parser returned null");
 			} else {
 			PrintWriter pw = new PrintWriter(System.out);
-			json.write(pw, 1);
+			json.write(pw, 1,false);
 			pw.flush();
 			}
 		} catch (Exception e) {

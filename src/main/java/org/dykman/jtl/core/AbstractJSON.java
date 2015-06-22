@@ -14,6 +14,7 @@ public abstract class AbstractJSON implements JSON {
 	Integer index = null;
 	JSONBuilder builder = null;
 	static final int charbuffer = 4096;
+//	boolean forcequotes = false;
 
 	static final char[] SPACES = new char[charbuffer];
 	static {
@@ -74,7 +75,7 @@ public abstract class AbstractJSON implements JSON {
 
 	protected void writeAsString(Writer writer, String s) throws IOException {
 		writer.write('"');
-		StringEscapeUtils.escapeJson(s);
+		writer.write(StringEscapeUtils.escapeJson(s));
 		writer.write('"');
 
 	}
@@ -122,7 +123,7 @@ public abstract class AbstractJSON implements JSON {
 
 	@Override
 	public void lock() {
-		locked = true;
+//		locked = true;
 	}
 
 	@Override
@@ -150,8 +151,8 @@ public abstract class AbstractJSON implements JSON {
 	}
 
 	@Override
-	public void write(Writer out, int indent) throws IOException {
-		write(out, indent, 0);
+	public void write(Writer out, int indent,boolean fq) throws IOException {
+		write(out, indent, 0,fq);
 		if (indent > 0) {
 			out.write("\n");
 		}
@@ -174,9 +175,14 @@ public abstract class AbstractJSON implements JSON {
 	}
 	@Override
 	public final String toString() {
+		return toString(false);
+	}
+	
+	@Override
+	public final String toString(boolean fq) {
 		StringWriter writer = new StringWriter();
 		try {
-			write(writer,0);
+			write(writer,0,fq);
 		} catch(IOException e) {
 			throw new RuntimeException("error while rendering");
 		}

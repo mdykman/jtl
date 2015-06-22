@@ -34,6 +34,8 @@ public class SimpleJtlTest {
 		JSONObject modules= (JSONObject)config.get("modules");
 		context.define("module", factory.loadModule(modules));
 		context.define("error", factory.defaultError());
+		context.define("group", factory.groupBy());
+		
 		context.setExecutionService(les);
 		return context;
 	}
@@ -61,7 +63,7 @@ public class SimpleJtlTest {
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);
-			j.get().write(pw, 3);
+			j.get().write(pw, 3,false);
 			pw.flush();
 			les.shutdownNow();
 			les.awaitTermination(2, TimeUnit.SECONDS);

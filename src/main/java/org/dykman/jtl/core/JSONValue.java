@@ -160,7 +160,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 	}
 
 	@Override
-	public void write(Writer out, int n, int d) throws IOException {
+	public void write(Writer out, int n, int d,boolean fq) throws IOException {
 		if (o == null) {
 			out.write("null");
 		} else {

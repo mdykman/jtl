@@ -22,9 +22,10 @@ public interface JSON {
 	public int compare(JSON r);
 	public String path();
 	public void path(StringBuilder sb);
-	public void write(Writer out,int indent)
+	public void write(Writer out,int indent,boolean fq)
 		throws IOException;
-	void write(Writer out,int indent, int depth)
+	public String toString(boolean fq);
+	void write(Writer out,int indent, int depth,boolean fq)
 			throws IOException;
 	
 	public void setBuilder(JSONBuilder builder);

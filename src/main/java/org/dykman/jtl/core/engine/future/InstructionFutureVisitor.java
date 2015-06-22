@@ -364,9 +364,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 				case "+":
-					return new InstructionFutureValue<JSON>(factory.addInstruction(a.inst, bv.inst));
+					return new InstructionFutureValue<JSON>(factory.addInstruction(bv.inst,a.inst ));
 				case "-":
-					return new InstructionFutureValue<>(factory.subInstruction(a.inst, bv.inst));
+					return new InstructionFutureValue<>(factory.subInstruction(bv.inst,a.inst));
 			}
 		}
 		return a;
@@ -382,11 +382,11 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 				case "*":
-					return new InstructionFutureValue<>(factory.mulInstruction(a.inst, bv.inst));
+					return new InstructionFutureValue<>(factory.mulInstruction(bv.inst,a.inst));
 				case "div":
-					return new InstructionFutureValue<>(factory.divInstruction(a.inst, bv.inst));
+					return new InstructionFutureValue<>(factory.divInstruction(bv.inst, a.inst));
 				case "%":
-					return new InstructionFutureValue<>(factory.modInstruction(a.inst, bv.inst));
+					return new InstructionFutureValue<>(factory.modInstruction(bv.inst, a.inst));
 			}
 		}
 		return a;

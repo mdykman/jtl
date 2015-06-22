@@ -21,11 +21,13 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 	@Override
 	public JSON op(AsyncExecutionContext<JSON> eng, JSON l, JSON r) throws ExecutionException {
 		switch (l.getType()) {
+		case FRAME:
 		case ARRAY: {
 			JSONArray left = (JSONArray) l;
 			switch (r.getType()) {
 			case ARRAY:
 				return op(eng, left, (JSONArray) r);
+			case FRAME:
 			case OBJECT:
 				return op(eng, left, (JSONObject) r);
 			case BOOLEAN:
@@ -91,6 +93,7 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			case NULL:
 				return builder.value();
 			case ARRAY:
+			case FRAME:
 			case OBJECT:
 				return op(eng,left,r);
 			}
