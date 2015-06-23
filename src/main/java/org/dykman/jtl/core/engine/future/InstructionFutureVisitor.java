@@ -1,9 +1,5 @@
 package org.dykman.jtl.core.engine.future;
 
-import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-import static com.google.common.util.concurrent.Futures.transform;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -51,22 +47,21 @@ import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.Pair;
 import org.dykman.jtl.core.engine.ExecutionException;
-
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 
 public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureValue<JSON>> {
 
 	final JSONBuilder builder;
 	final InstructionFutureFactory factory;
-
+	volatile boolean imported = false;
 	public InstructionFutureVisitor(JSONBuilder builder) {
+		this(builder,false);
+	}
+	public InstructionFutureVisitor(JSONBuilder builder, boolean imported) {
 		this.builder = builder;
 		this.factory = new InstructionFutureFactory(builder);
+		this.imported = imported;
 	}
 
 	@Override
@@ -117,7 +112,12 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		}
 
 		try {
-			return new InstructionFutureValue<JSON>(factory.object(ins));
+			boolean _import = false; 
+			if(imported) {
+				imported = false;
+				_import = true;
+			}
+			return new InstructionFutureValue<JSON>(factory.object(ins,_import));
 		} catch (ExecutionException e) {
 			return new InstructionFutureValue<JSON>(factory.value("ExecutionException during visitObject: "
 				+ e.getLocalizedMessage()));

@@ -33,8 +33,10 @@ public class SimpleJtlTest {
 		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
 		JSONObject modules= (JSONObject)config.get("modules");
 		context.define("module", factory.loadModule(modules));
+		context.define("import", factory.importInstruction(config));
 		context.define("error", factory.defaultError());
 		context.define("group", factory.groupBy());
+		context.define("file", factory.file());
 		
 		context.setExecutionService(les);
 		return context;
@@ -43,7 +45,7 @@ public class SimpleJtlTest {
 		// TODO Auto-generated method stub
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
-			JtlCompiler compiler = new JtlCompiler(builder,false,false);
+			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 			
 			System.err.println("compiling " + args[0]);
 			
@@ -54,7 +56,7 @@ public class SimpleJtlTest {
 				System.exit(1);
 			}
 			JSON data = builder.parse(new File(args[1]));
-			System.err.println("acquired data");
+//			System.err.println("acquired data");
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	
 			InstructionFutureFactory factory = new InstructionFutureFactory(builder);

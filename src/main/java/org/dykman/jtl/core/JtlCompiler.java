@@ -18,14 +18,16 @@ public class JtlCompiler {
 	final JSONBuilder jsonBuilder;
 	boolean trace;
 	boolean profile;
+	boolean imported;
 
 	public JtlCompiler(JSONBuilder jsonBuilder) {
-		this(jsonBuilder,false,false);
+		this(jsonBuilder,false,false,false);
 	}
-	public JtlCompiler(JSONBuilder jsonBuilder,boolean trace, boolean profile) {
+	public JtlCompiler(JSONBuilder jsonBuilder,boolean trace, boolean profile,boolean imported) {
 		this.jsonBuilder = jsonBuilder;
 		this.trace= trace;
 		this.profile = profile;
+		this.imported = imported;
 	}
 	
 	public InstructionFuture<JSON> parse(InputStream in) 
@@ -69,7 +71,7 @@ public class JtlCompiler {
 			parser.setProfile(profile);
 //			parser.getCurrentToken();
 			JtlContext tree = parser.jtl();
-			InstructionFutureVisitor visitor = new InstructionFutureVisitor(jsonBuilder);
+			InstructionFutureVisitor visitor = new InstructionFutureVisitor(jsonBuilder,imported);
 			InstructionFutureValue<JSON> v = visitor.visit(tree);
 			return v.inst;
 		}
