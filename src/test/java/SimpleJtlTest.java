@@ -35,6 +35,9 @@ public class SimpleJtlTest {
 		context.define("module", factory.loadModule(modules));
 		context.define("error", factory.defaultError());
 		context.define("group", factory.groupBy());
+		context.define("map", factory.map());
+		context.define("unique", factory.unique());
+		context.define("count", factory.count());
 		
 		context.setExecutionService(les);
 		return context;

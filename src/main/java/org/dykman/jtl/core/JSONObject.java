@@ -15,6 +15,7 @@ import org.dykman.jtl.core.engine.MapFactory;
 public class JSONObject extends AbstractJSON implements
 		Iterable<Pair<String, JSON>> {
 	final Map<String, JSON> obj;
+	int hash = 12345678;
 
 	public JSONObject(JSON parent, Map<String, JSON> map) {
 		super(parent);
@@ -126,17 +127,23 @@ public class JSONObject extends AbstractJSON implements
 		if (locked)
 			raise("container is locked");
 		if(!dontclone) v = v.cloneJSON();
+		hash ^= k.hashCode();
+		hash ^= v.hashCode();
 		v.setParent(this);
 		v.setName(k);
 		v.lock();
 		obj.put(k, v);
 	}
+	public int hashCode() {
+		return hash;
+	}
 
 	public void putAll(JSONObject v) {
 		if (locked)
 			raise("container is locked");
-		
-		obj.putAll(v.obj);
+		for(Pair<String, JSON> pp : v) {
+			put(pp.f,pp.s);
+		}
 	}
 
 	public Iterator<Pair<String, JSON>> iterator() {

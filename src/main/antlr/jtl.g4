@@ -127,20 +127,20 @@ indexl
 	;
 	
 pathstep 
-	: '.'
+   : id
+   | recurs
+   | func
+   | variable
+   | number
+   | jstring
+   | object 
+   | array
+	| '.'
 	| '..'
 	| '*'
     | 'true'  
     | 'false' 
     | 'null' 
-	| id
-	| recurs
-	| func
-	| variable
-	| number
-	| jstring
-	| object 
-   | array
 	
 	;
             

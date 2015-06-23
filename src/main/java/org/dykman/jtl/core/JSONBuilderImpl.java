@@ -104,6 +104,11 @@ public class JSONBuilderImpl implements JSONBuilder {
 		return (JSONArray) sign(r);
 	}
 	@Override
+	public JSONArray array(JSON parent,Collection<JSON> cc) {
+		JSONArray r = new JSONArray(parent,cc);
+		return (JSONArray) sign(r);
+	}
+	@Override
 	public JSONArray array(JSON parent,int cap) {
 		JSONArray r = new JSONArray(parent,cf.createCollection(cap));
 		return (JSONArray) sign(r);

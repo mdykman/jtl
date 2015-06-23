@@ -4,15 +4,12 @@
          proxy:true,
          proxyserver:null,
          error: {
-         	status_message:"there was an error in curl module: ${ $1 }"
+         	status:"there was an error in curl module: ${ $1 }"
          }
    })
    },   
 	_: {
-		message:"Hello World",
-		function: data/people[0],
-		jsontest: curl.get("http://ip.jsontest.com/"),
-		elysium: curl.post("http://localhost:8080/elysium/v1/query/content/michael_viafoura",{
+		grouptest: curl.post("http://localhost:8080/elysium/v1/query/content/michael_viafoura",{
             q1: {
                statement: "SELECT * from sections"
              }
@@ -21,10 +18,8 @@
 		 clusters: q1/result/*/{
 		 	name: cluster_name,
 			uuid: cluster_uuid
-		 	}/group(name)
+		 	}/group(name)/map(*/uuid/unique())
 		 }
-	},
-	procdata: {
 	},
 	error: {
 		status: "general error: ${ $1 }"

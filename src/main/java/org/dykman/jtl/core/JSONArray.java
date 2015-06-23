@@ -11,6 +11,7 @@ import org.dykman.jtl.core.engine.CollectionFactory;
 public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	protected Collection<JSON> arr = new ArrayList<>();
 
+	int hash = 45860934;
 	private ArrayList<JSON> theList = null;
 	private boolean bound = true;
 	public JSONArray(JSON parent, Collection<JSON> coll) {
@@ -74,9 +75,11 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 			j.setIndex(arr.size());
 			j.lock();
 		}
+		hash ^= j.hashCode();
 		arr.add(j);
 	}
 
+	@Override public int hashCode() { return hash; }
 	public void addAll(JSONArray a) {
 		if (locked)
 			raise("container is locked");

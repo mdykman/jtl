@@ -3,6 +3,7 @@ package org.dykman.jtl.core;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 
 public interface JSONBuilder {
 	public JSONValue value();
@@ -18,7 +19,7 @@ public interface JSONBuilder {
 
 	public JSONArray array(JSON parent);
 	public JSONArray array(JSON parent, int cap);
-//	public JSONArray array(JSON parent, Collection<JSON> col);
+	public JSONArray array(JSON parent, Collection<JSON> col);
 	public Frame frame();
 	public Frame frame(Frame f);
 
