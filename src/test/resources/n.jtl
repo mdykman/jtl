@@ -3,6 +3,7 @@
 		fruits: people/group(favoriteFruit)/map(*/{email:email,guid:guid}),
 		tags: people/*/{
 				name: name,
+				email: email,
 				tags: tags,
 				tcount: tags/count()
 			}

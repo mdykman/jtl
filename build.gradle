@@ -92,9 +92,11 @@ clean {
 task execute( dependsOn: 'classes', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
-   main = "org.dykman.jtl.core.JtlMain"
-   args "src/test/resources/curl.jtl"  
-   args "src/test/resources/data.json"
+   main = "SimpleJtlTest"
+   //main = "org.dykman.jtl.core.JtlMain"
+//   args "src/test/resources/curl.jtl"  
+   args "src/test/resources/n.jtl"  
+   args "src/test/resources/generated.json"
    args "src/test/resources/config.json"
 
 }
