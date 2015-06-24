@@ -91,8 +91,8 @@ task execute( dependsOn: 'classes', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
    main = "SimpleJtlTest"
-   args "src/test/resources/first.jtl"  
-   args "src/test/resources/data.json"
+   args "src/test/resources/n.jtl"  
+   args "src/test/resources/generated.json"
    args "src/test/resources/config.json"
 
 }

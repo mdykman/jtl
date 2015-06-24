@@ -25,22 +25,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class SimpleJtlTest {
 
 
-	public static AsyncExecutionContext<JSON> createInitialContext(
-			JSONObject config,
-			InstructionFutureFactory factory,
-			ListeningExecutorService les ) {
-		
-		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
-		JSONObject modules= (JSONObject)config.get("modules");
-		context.define("module", factory.loadModule(modules));
-		context.define("import", factory.importInstruction(config));
-		context.define("error", factory.defaultError());
-		context.define("group", factory.groupBy());
-		context.define("file", factory.file());
-		
-		context.setExecutionService(les);
-		return context;
-	}
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		try {
@@ -56,12 +40,11 @@ public class SimpleJtlTest {
 				System.exit(1);
 			}
 			JSON data = builder.parse(new File(args[1]));
-//			System.err.println("acquired data");
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	
 			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
 			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-			AsyncExecutionContext<JSON>  context = createInitialContext(config, factory, les);
+			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(config, factory, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);
@@ -69,7 +52,6 @@ public class SimpleJtlTest {
 			pw.flush();
 			les.shutdownNow();
 			les.awaitTermination(2, TimeUnit.SECONDS);
-//			System.out.println(j.get().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -94,6 +94,12 @@ public class JSONValue extends AbstractJSON implements JSON {
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		if(o == null || getType() == JSONType.NULL) return 0;	
+		String s = stringValue();
+		return s.hashCode();
+	}
 	public String stringValue() {
 		if (type == JSONType.BOOLEAN)
 			return (Boolean) o ? "true" : "false";

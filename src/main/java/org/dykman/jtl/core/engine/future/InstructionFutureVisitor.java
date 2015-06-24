@@ -503,6 +503,8 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		String t = ctx.getText();
 		{
 			switch (t) {
+//				case "*:*" :
+//					return new InstructionFutureValue<>(factory.mapChildren());
 				case "true":
 					return new InstructionFutureValue<>(factory.value(true));
 				case "false":

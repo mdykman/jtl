@@ -1,8 +1,6 @@
 {
-	modules: {
-   	http:{  class:"org.dykman.jtl.core.modules.HttpModule" }
-   },
-   jdbc: {
-   	class:"org.dykman.jtl.core.modules.JdbcModule"
-   }
+  modules: {
+   	http:{  class:"org.dykman.jtl.core.modules.HttpModule" },
+    jdbc: { class:"org.dykman.jtl.core.modules.JdbcModule" }
+  }
 }

@@ -10,9 +10,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.jtlParser.JtlContext;
+import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
 import org.dykman.jtl.core.engine.future.InstructionFuture;
+import org.dykman.jtl.core.engine.future.InstructionFutureFactory;
 import org.dykman.jtl.core.engine.future.InstructionFutureValue;
 import org.dykman.jtl.core.engine.future.InstructionFutureVisitor;
+import org.dykman.jtl.core.engine.future.SimpleExecutionContext;
+
+import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class JtlCompiler {
 	final JSONBuilder jsonBuilder;
@@ -75,5 +80,25 @@ public class JtlCompiler {
 			InstructionFutureValue<JSON> v = visitor.visit(tree);
 			return v.inst;
 		}
+
+	public static AsyncExecutionContext<JSON> createInitialContext(
+			JSONObject config,
+			InstructionFutureFactory factory,
+			ListeningExecutorService les ) {
+		
+		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
+		JSONObject modules= (JSONObject)config.get("modules");
+		context.define("module", factory.loadModule(modules));
+		context.define("import", factory.importInstruction(config));
+		context.define("error", factory.defaultError());
+		context.define("group", factory.groupBy());
+		context.define("file", factory.file());
+		context.define("map", factory.map());
+		context.define("unique", factory.unique());
+		context.define("count", factory.count());
+		
+		context.setExecutionService(les);
+		return context;
+	}
 
 }
