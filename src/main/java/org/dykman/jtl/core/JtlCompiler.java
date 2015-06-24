@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.jtlParser.JtlContext;
+import org.dykman.jtl.core.JSON.JSONType;
 import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
 import org.dykman.jtl.core.engine.future.InstructionFuture;
 import org.dykman.jtl.core.engine.future.InstructionFutureFactory;
@@ -82,13 +83,18 @@ public class JtlCompiler {
 		}
 
 	public static AsyncExecutionContext<JSON> createInitialContext(
-			JSONObject config,
+			JSON config,
 			InstructionFutureFactory factory,
 			ListeningExecutorService les ) {
-		
+
 		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
-		JSONObject modules= (JSONObject)config.get("modules");
-		context.define("module", factory.loadModule(modules));
+		
+		if(config.getType() == JSONType.OBJECT) {
+			JSONObject conf = (JSONObject) config;
+			JSONObject modules= (JSONObject)conf.get("modules");
+			context.define("module", factory.loadModule(modules));
+			
+		}
 		context.define("import", factory.importInstruction(config));
 		context.define("error", factory.defaultError());
 		context.define("group", factory.groupBy());

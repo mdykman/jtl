@@ -4,7 +4,7 @@
 		tags: people/*/{
 				name: name,
 				tags: tags,
-				tagcount: tags/count()
+				tcount: tags/count()
 			}
 	}
 }

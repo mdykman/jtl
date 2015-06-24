@@ -64,6 +64,8 @@ dependencies {
     compile 'org.codehaus.jettison:jettison:1.3.7'
     compile 'org.apache.commons:commons-lang3:3.4'
     compile 'commons-io:commons-io:2.4'
+	 compile 'gnu.getopt:java-getopt:1.0.13'
+
 
 
    compile 'commons-httpclient:commons-httpclient:3.1'
@@ -90,9 +92,9 @@ clean {
 task execute( dependsOn: 'classes', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
-   main = "SimpleJtlTest"
-   args "src/test/resources/n.jtl"  
-   args "src/test/resources/generated.json"
+   main = "org.dykman.jtl.core.JtlMain"
+   args "src/test/resources/curl.jtl"  
+   args "src/test/resources/data.json"
    args "src/test/resources/config.json"
 
 }

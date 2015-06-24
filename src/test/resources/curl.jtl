@@ -15,10 +15,12 @@
                statement: "SELECT * from sections"
              }
        })/cc()
+
 	},
 	cc: q1/result/group(cluster_name)/map(*/{
 		type: row_type,
-		uuid:cluster_uuid
+		uuid: cluster_uuid,
+		domain: primary_domain
 	}/unique()),
 
 	error: {

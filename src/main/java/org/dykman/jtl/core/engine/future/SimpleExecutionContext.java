@@ -20,16 +20,19 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final boolean functionContext;
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 	ListeningExecutorService executorService = null;
-	JSONObject conf;
+	JSON conf;
 
 	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONObject conf, JSONBuilder builder ,boolean fc) {
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSON conf, JSONBuilder builder ,boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
 		this.conf = conf;
+	}
+	public SimpleExecutionContext(JSONBuilder builder,JSON conf) {
+		this(null, conf, builder,false);
 	}
 
 	public ListenableFuture<JSON> config() {
@@ -37,9 +40,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return immediateFuture(conf);
 	}
 
-	public SimpleExecutionContext(JSONBuilder builder,JSONObject conf) {
-		this(null, conf, builder,false);
-	}
 	
 	
 	@Override
