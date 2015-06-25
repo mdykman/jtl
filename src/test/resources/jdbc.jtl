@@ -1,0 +1,12 @@
+{
+   !init: {
+      db: module("jdbc",{
+              user:"root",
+              password:"password",
+              uri:"jdbc:mysql://localhost:3306/vf_master",
+              driver:"com.mysql.jdbc.Driver"
+      })
+   },
+   
+   _: db.query("select count(*) from Users")
+}

@@ -76,6 +76,15 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
+jar {
+  manifest { 
+    attributes "Main-Class": "org.dykman.jtl.core.JtlMain"
+  }  
+
+  from {
+    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
 
 compileJava.dependsOn antlr4
 
@@ -89,13 +98,13 @@ clean {
     delete += fileTree(antlr4.output).include('**/*')
 }
 
-task execute( dependsOn: 'classes', type:JavaExec) {
+task execute( dependsOn: 'compileJava', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
    main = "SimpleJtlTest"
    //main = "org.dykman.jtl.core.JtlMain"
 //   args "src/test/resources/curl.jtl"  
-   args "src/test/resources/n.jtl"  
+   args "src/test/resources/jdbc.jtl"  
    args "src/test/resources/generated.json"
    args "src/test/resources/config.json"
 

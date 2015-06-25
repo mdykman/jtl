@@ -108,17 +108,14 @@ public class JdbcModule implements Module {
 						String driver = stringValue(conf.get("driver"));
 						String uri = stringValue(conf.get("uri"));
 						String user = stringValue(conf.get("user"));
-						String password = stringValue(conf.get("pass"));
-						String database = stringValue(conf.get("db"));
+						String password = stringValue(conf.get("password"));
 						if(driver!=null) {
 							try {
 								Class<Driver> drc = (Class<Driver>) Class.forName(driver);
 								Driver drv = drc.newInstance();
 								Properties  properties = new Properties();
-								properties.setProperty("", user);
-								properties.setProperty("", password);
-								properties.setProperty("", database);
-								properties.setProperty("", uri);
+								properties.setProperty("user", user);
+								properties.setProperty("password", password);
 								connection = drv.connect(uri,properties);
 							} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 								throw new RuntimeException("JDBC: unable to load class " + driver);
