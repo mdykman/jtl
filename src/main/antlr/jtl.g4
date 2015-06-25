@@ -155,9 +155,8 @@ func
      ;
 
 variable
-      : '$' ID 
+      : '$' ident 
       | '$' INTEGER
-//      | '!' ID 
       ;
 
 

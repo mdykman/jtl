@@ -145,7 +145,7 @@ public class JdbcModule implements Module {
 					List<ListenableFuture<JSON>> ll = new ArrayList<>();
 					ll.add(q.call(context, data));
 					if(p!=null) {
-						ll.add(q.call(context, data));
+						ll.add(p.call(context, data));
 					}
 					return transform(allAsList(ll),new AsyncFunction<List<JSON>, JSON>() {
 

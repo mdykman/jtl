@@ -93,7 +93,6 @@ public class JtlCompiler {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");
 			context.define("module", factory.loadModule(modules));
-			
 		}
 		context.define("import", factory.importInstruction(config));
 		context.define("error", factory.defaultError());
@@ -102,6 +101,12 @@ public class JtlCompiler {
 		context.define("map", factory.map());
 		context.define("unique", factory.unique());
 		context.define("count", factory.count());
+		context.define("sort", factory.sort());
+		context.define("filter", factory.filter());
+		context.define("params", factory.params());
+		context.define("collate", factory.collate());
+		
+	
 		
 		context.setExecutionService(les);
 		return context;

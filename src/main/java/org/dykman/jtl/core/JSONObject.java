@@ -58,7 +58,7 @@ public class JSONObject extends AbstractJSON implements
 		for(Map.Entry<String, JSON> lj: obj.entrySet()) {
 			String k = lj.getKey();
 			JSON rvj = r.get(k);
-			int rr = lj.getValue().compare(rvj);
+			int rr = lj.getValue().compareTo(rvj);
 			if(rr!=0) return rr;
 		}
 		return 0;

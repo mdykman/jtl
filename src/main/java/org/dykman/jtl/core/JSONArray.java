@@ -40,7 +40,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		Iterator<JSON> rit = r.iterator();
 		for(JSON j: this) {
 			JSON rj = rit.next();
-			int rc = j.compare(rj);
+			int rc = j.compareTo(rj);
 			if(rc != 0) return rc;
 		}
 		return 0;

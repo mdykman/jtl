@@ -181,7 +181,14 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitVariable(VariableContext ctx) {
-		String name = ctx.getText();
+		IdentContext ic = ctx.ident();
+		String name;
+		if(ic!=null) {
+			name = visitIdent(ic).string;
+		} else {
+			name = ctx.getText();
+		}
+//		String name = ctx.getText();
 		char c = name.charAt(0);
 		if (c == '!' || c == '$')
 			name = name.substring(1);
@@ -320,7 +327,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					df = new DyadicAsyncFunction<JSON>() {
 						@Override
 						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-							return builder.value(l.compare(r) < 0);
+							return builder.value(l.compareTo(r) < 0);
 						}
 					};
 					break;
@@ -328,7 +335,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					df = new DyadicAsyncFunction<JSON>() {
 						@Override
 						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-							return builder.value(l.compare(r) > 0);
+							return builder.value(l.compareTo(r) > 0);
 						}
 					};
 					break;
@@ -336,7 +343,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					df = new DyadicAsyncFunction<JSON>() {
 						@Override
 						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-							return builder.value(l.compare(r) <= 0);
+							return builder.value(l.compareTo(r) <= 0);
 						}
 					};
 					break;
@@ -344,7 +351,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					df = new DyadicAsyncFunction<JSON>() {
 						@Override
 						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON l, JSON r) {
-							return builder.value(l.compare(r) >= 0);
+							return builder.value(l.compareTo(r) >= 0);
 						}
 					};
 					break;

@@ -1,12 +1,20 @@
 {
    !init: {
       db: module("jdbc",{
-              user:"root",
-              password:"password",
               uri:"jdbc:mysql://localhost:3306/vf_master",
-              driver:"com.mysql.jdbc.Driver"
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:"password"
       })
    },
+	$mydomain: /domain,
    
-   _: db.query("select count(*) from Users")
+   _: users('viafoura.com')/filter(has_picture)/*/{
+			created:date_created,
+			email:email,
+			id:id,
+			name:name,
+			username:username
+		}/*/collate(),
+   users: db.query("select * from Users where email like CONCAT('%@', ? )",$1)  
 }

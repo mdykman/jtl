@@ -33,7 +33,7 @@ public abstract class AbstractJSON implements JSON {
 		if(!(o instanceof JSON)) return false;
 		return equals((JSON)o);
 	}
-	public int compare(JSON r) {
+	public int compareTo(JSON r) {
 		JSONType rtype = r.getType();
 		switch(getType()) {
 		case OBJECT:
@@ -64,7 +64,7 @@ public abstract class AbstractJSON implements JSON {
 		case STRING:
 			if(rtype == JSONType.ARRAY || rtype == JSONType.OBJECT) return -1;
 			if(rtype !=getType()) return 1;
-			return ((JSONValue)this).stringValue().compareTo(((JSONValue)r).stringValue());
+			return ((JSONValue)this).stringValue().compareToIgnoreCase(((JSONValue)r).stringValue());
 		}
 		// TODO:: should throw an exception here
 		return -1;

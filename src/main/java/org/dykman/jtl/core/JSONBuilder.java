@@ -7,7 +7,7 @@ import java.util.Collection;
 
 public interface JSONBuilder {
 	public JSONValue value();
-	public JSONValue value(Object o);
+	public JSON value(Object o);
 	public JSONValue value(Number number);
 	public JSONValue value(String string);
 	public JSONValue value(Boolean b);

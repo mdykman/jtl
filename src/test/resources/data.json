@@ -1,4 +1,5 @@
 {
+   domain: 'viafoura.com',
 	data: {
 		people: [
 			{

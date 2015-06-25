@@ -105,7 +105,7 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
    //main = "org.dykman.jtl.core.JtlMain"
 //   args "src/test/resources/curl.jtl"  
    args "src/test/resources/jdbc.jtl"  
-   args "src/test/resources/generated.json"
+   args "src/test/resources/data.json"
    args "src/test/resources/config.json"
 
 }

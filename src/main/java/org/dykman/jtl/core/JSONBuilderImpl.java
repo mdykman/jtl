@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -51,16 +52,30 @@ public class JSONBuilderImpl implements JSONBuilder {
 		return (JSONValue) sign(v);
 	}
 	@Override
-	public JSONValue value(Object o) {
+	public JSON value(Object o) {
 		if(o == null) return value();
 		if(o instanceof Boolean) return value((Boolean)o);
+		if(o instanceof BigInteger) {
+			BigInteger maxLong = new BigInteger(Long.toString(Long.MAX_VALUE));
+			if(((BigInteger)o).compareTo(maxLong)>0) {
+				return value(((BigInteger)o).doubleValue());
+			}
+		}
 		if(o instanceof Number) {
-			if(o instanceof Integer || o instanceof Long) {
+			if(o instanceof Integer || o instanceof Long || o instanceof Short || o instanceof BigInteger) {
 				return value(((Number)o).longValue());
 			}
 			return value(((Number)o).doubleValue());
 			
-		} else {
+		} else if(o instanceof byte[]) {
+			JSONArray arr = array(null);
+			for(Byte b : (byte[])o) {
+				int ii  = b.intValue();
+				arr.add(value((256 + ii) % 256));
+			}
+			arr.lock();
+			return arr;
+		}else {
 			return value(o.toString());
 		}
 	}

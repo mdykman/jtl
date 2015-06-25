@@ -3,7 +3,7 @@ package org.dykman.jtl.core;
 import java.io.IOException;
 import java.io.Writer;
 
-public interface JSON {
+public interface JSON extends Comparable<JSON> {
 	public String getName();
 	public void setName(String s);
 	public Integer getIndex() ;
@@ -19,7 +19,7 @@ public interface JSON {
 	public boolean isNumber();
 	public JSON cloneJSON();
 	public boolean equals(JSON r);
-	public int compare(JSON r);
+	public int compareTo(JSON r);
 	public String path();
 	public void path(StringBuilder sb);
 	public void write(Writer out,int indent,boolean fq)
