@@ -50,6 +50,20 @@ public class JSONBuilderImpl implements JSONBuilder {
 		JSONValue v = new JSONValue(null);
 		return (JSONValue) sign(v);
 	}
+	@Override
+	public JSONValue value(Object o) {
+		if(o == null) return value();
+		if(o instanceof Boolean) return value((Boolean)o);
+		if(o instanceof Number) {
+			if(o instanceof Integer || o instanceof Long) {
+				return value(((Number)o).longValue());
+			}
+			return value(((Number)o).doubleValue());
+			
+		} else {
+			return value(o.toString());
+		}
+	}
 
 	@Override
 	public JSONValue value(Number number) {

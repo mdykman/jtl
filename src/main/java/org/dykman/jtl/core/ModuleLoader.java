@@ -64,7 +64,7 @@ public class ModuleLoader {
 			String klass = stringValue(mod.get("class"));
 			Class kl = Class.forName(klass);
 			Constructor<Module> mc = kl.getConstructor(config.getClass());
-			Module o = mc.newInstance(config);
+			Module o = mc.newInstance(mod);
 //			AsyncExecutionContext<JSON> mc = context.createChild(false);
 			o.define(context);
 			return 1;
