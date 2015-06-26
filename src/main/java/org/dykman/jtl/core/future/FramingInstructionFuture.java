@@ -1,31 +1,31 @@
-package org.dykman.jtl.core.engine.future;
+package org.dykman.jtl.core.future;
 
 import static com.google.common.util.concurrent.Futures.allAsList;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dykman.jtl.core.ExecutionException;
 import org.dykman.jtl.core.Frame;
 import org.dykman.jtl.core.JSON;
-import org.dykman.jtl.core.JSONValue;
 import org.dykman.jtl.core.JSON.JSONType;
-import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.AsyncFunction;
-
-import static com.google.common.util.concurrent.Futures.*;
-
 import com.google.common.util.concurrent.ListenableFuture;
 
-public abstract class AbstractInstructionFuture implements
-		InstructionFuture<JSON> {
+public abstract class FramingInstructionFuture extends AbstractInstructionFuture {
 
-	@Override
-	public InstructionFuture<JSON> unwrap() {
-		return this;
+	public FramingInstructionFuture() {
+		// TODO Auto-generated constructor stub
 	}
+
+	public abstract ListenableFuture<JSON> callItem(AsyncExecutionContext<JSON> context,
+			ListenableFuture<JSON> data) throws ExecutionException;
+	
+	
 	@Override
 	public ListenableFuture<JSON> call(
 			final AsyncExecutionContext<JSON> context,
@@ -72,21 +72,5 @@ public abstract class AbstractInstructionFuture implements
 		});
 	}
 
-	protected String stringValue(JSON j) {
-		if (j == null)
-			return null;
-		switch (j.getType()) {
-		case STRING:
-		case DOUBLE:
-		case LONG:
-			return ((JSONValue) j).stringValue();
-		default:
-			return null;
-		}
-	}
-
-	public abstract ListenableFuture<JSON> callItem(
-			AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
-			throws ExecutionException;
 
 }

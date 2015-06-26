@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.dykman.jtl.core.engine.CollectionFactory;
+import main.antlr.jtlBaseVisitor;
+
+import org.dykman.jtl.core.factory.CollectionFactory;
 
 public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	protected Collection<JSON> arr = new ArrayList<>();
@@ -131,7 +133,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		if (arr.size() == 0)
 			return false;
 		JSON j = arr.iterator().next();
-		if (j.getType() == JSONType.ARRAY) {
+		if (j.getType() == JSONType.ARRAY || j.getType() == JSONType.FRAME) {
 			return true;
 		}
 		return false;
@@ -143,7 +145,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 
 		boolean first = true;
 		JSONType ctype = firstChildType();
-		if (ctype != JSONType.ARRAY) {
+		if (ctype != JSONType.ARRAY && ctype != JSONType.FRAME) {
 			if (indent > 0 && ctype!=JSONType.OBJECT)
 				out.write(' ');
 			for (JSON j : arr) {
@@ -160,6 +162,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 			for (JSON j : arr) {
 				if (first) {
 					first = false;
+//					if(indent>0) out.write(' ');
 				} else {
 					out.write(',');
 					if(indent > 0) out.write('\n');
@@ -170,7 +173,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 
 		}
 
-		if (indent > 0 && ctype!=JSONType.ARRAY && ctype!=JSONType.OBJECT)
+		if (indent > 0 && ctype != JSONType.ARRAY && ctype != JSONType.FRAME && ctype!=JSONType.OBJECT)
 			out.write(' ');
 		out.write(']');
 	}

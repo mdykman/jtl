@@ -1,4 +1,4 @@
-package org.dykman.jtl.core.engine;
+package org.dykman.jtl.core;
 
 public class ExecutionException extends Exception {
 

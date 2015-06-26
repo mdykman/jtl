@@ -15,8 +15,8 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
 import org.dykman.jtl.jsonParser.JsonContext;
-import org.dykman.jtl.core.engine.CollectionFactory;
-import org.dykman.jtl.core.engine.MapFactory;
+import org.dykman.jtl.core.factory.CollectionFactory;
+import org.dykman.jtl.core.factory.MapFactory;
 import org.dykman.jtl.core.parser.DataValue;
 import org.dykman.jtl.core.parser.DataVisitor;
 

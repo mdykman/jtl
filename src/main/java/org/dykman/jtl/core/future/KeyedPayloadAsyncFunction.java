@@ -1,4 +1,4 @@
-package org.dykman.jtl.core.engine.future;
+package org.dykman.jtl.core.future;
 
 import com.google.common.util.concurrent.AsyncFunction;
 

@@ -8,6 +8,7 @@ public class Frame extends JSONArray {
 
 	public Frame(Collection<JSON> col) {
 		super(null,col);
+		hash = 45763478;
 	}
 
 	@Override
@@ -22,6 +23,14 @@ public class Frame extends JSONArray {
 			res.add(j);
 		}
 		return res;
+	}
+
+	public void add(JSON j) {
+		add(j,false);
+	}
+	public void add(JSON j,boolean dontclone) {
+		hash ^= j.hashCode();
+		arr.add(j);
 	}
 
 }

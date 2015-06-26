@@ -1,4 +1,4 @@
-package org.dykman.jtl.core.engine.future;
+package org.dykman.jtl.core.future;
 
 import static com.google.common.util.concurrent.Futures.*;
 
@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.dykman.jtl.core.ExecutionException;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;

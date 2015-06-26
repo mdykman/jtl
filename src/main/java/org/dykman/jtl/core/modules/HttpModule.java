@@ -20,15 +20,14 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSON.JSONType;
+import org.dykman.jtl.core.ExecutionException;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JSONValue;
-import org.dykman.jtl.core.Module;
 import org.dykman.jtl.core.Pair;
-import org.dykman.jtl.core.engine.ExecutionException;
-import org.dykman.jtl.core.engine.future.AbstractInstructionFuture;
-import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
-import org.dykman.jtl.core.engine.future.InstructionFuture;
+import org.dykman.jtl.core.future.AbstractInstructionFuture;
+import org.dykman.jtl.core.future.AsyncExecutionContext;
+import org.dykman.jtl.core.future.InstructionFuture;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -185,7 +184,7 @@ public class HttpModule implements Module {
 		return new AbstractInstructionFuture() {
 
 			@Override
-			public ListenableFuture<JSON> callItem(
+			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();

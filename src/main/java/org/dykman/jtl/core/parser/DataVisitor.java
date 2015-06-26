@@ -16,7 +16,7 @@ import org.dykman.jtl.core.JSONArray;
 import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.Pair;
-import org.dykman.jtl.core.engine.future.InstructionFutureValue;
+import org.dykman.jtl.core.future.InstructionFutureValue;
 
 public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 

@@ -1,10 +1,11 @@
 {
 	_: {
+		ff: people/group(favoriteFruit),
 		fruits: people/group(favoriteFruit)/map(*/{email:email,guid:guid}),
 		tags: people/*/{
 				name: name,
 				email: email,
-				tags: tags,
+				tags: tags/sort(),
 				tcount: tags/count()
 			}
 	}

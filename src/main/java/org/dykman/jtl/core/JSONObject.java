@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.dykman.jtl.core.JSON.JSONType;
-import org.dykman.jtl.core.engine.MapFactory;
+import org.dykman.jtl.core.factory.MapFactory;
 
 public class JSONObject extends AbstractJSON implements
 		Iterable<Pair<String, JSON>> {

@@ -1,8 +1,8 @@
-package org.dykman.jtl.core.engine.future;
+package org.dykman.jtl.core.future;
 
+import org.dykman.jtl.core.ExecutionException;
 import  org.dykman.jtl.core.JSON;
 import org.dykman.jtl.core.JSONException;
-import org.dykman.jtl.core.engine.ExecutionException;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

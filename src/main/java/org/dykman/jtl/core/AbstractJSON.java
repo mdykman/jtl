@@ -39,8 +39,9 @@ public abstract class AbstractJSON implements JSON {
 		case OBJECT:
 			if(rtype != JSONType.OBJECT) return 1;
 			return ((JSONObject) this).deepCompare((JSONObject) r);
+		case FRAME:
 		case ARRAY:
-			if(rtype != JSONType.ARRAY) return rtype == JSONType.OBJECT ? -1 : 1;
+			if(rtype != JSONType.ARRAY && rtype != JSONType.FRAME) return rtype == JSONType.OBJECT ? -1 : 1;
 			if(rtype != JSONType.OBJECT) return 1;
 			return ((JSONArray) this).deepCompare((JSONArray) r);
 		case BOOLEAN:
@@ -92,16 +93,16 @@ public abstract class AbstractJSON implements JSON {
 	}
 
 	@Override
-	public void path(StringBuilder builder) {
+	public void path(StringBuilder sb) {
 		if (parent != null)
-			parent.path(builder);
+			parent.path(sb);
 		if (name != null) {
-			builder.append("/");
-			builder.append(name);
+			sb.append("/");
+			sb.append(name);
 		} else if (index != null) {
-			builder.append("[").append(index.toString()).append("]");
+			sb.append("[").append(index.toString()).append("]");
 		} else {
-			builder.append("/");
+			sb.append("/");
 //			builder.append("(undefined)");
 		}
 	}

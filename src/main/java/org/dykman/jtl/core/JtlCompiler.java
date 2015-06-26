@@ -11,12 +11,12 @@ import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.core.JSON.JSONType;
-import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
-import org.dykman.jtl.core.engine.future.InstructionFuture;
-import org.dykman.jtl.core.engine.future.InstructionFutureFactory;
-import org.dykman.jtl.core.engine.future.InstructionFutureValue;
-import org.dykman.jtl.core.engine.future.InstructionFutureVisitor;
-import org.dykman.jtl.core.engine.future.SimpleExecutionContext;
+import org.dykman.jtl.core.future.AsyncExecutionContext;
+import org.dykman.jtl.core.future.InstructionFuture;
+import org.dykman.jtl.core.future.InstructionFutureFactory;
+import org.dykman.jtl.core.future.InstructionFutureValue;
+import org.dykman.jtl.core.future.InstructionFutureVisitor;
+import org.dykman.jtl.core.future.SimpleExecutionContext;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 
@@ -101,7 +101,8 @@ public class JtlCompiler {
 		context.define("map", factory.map());
 		context.define("unique", factory.unique());
 		context.define("count", factory.count());
-		context.define("sort", factory.sort());
+		context.define("sort", factory.sort(false));
+		context.define("rsort", factory.sort(true));
 		context.define("filter", factory.filter());
 		context.define("params", factory.params());
 		context.define("collate", factory.collate());

@@ -1,10 +1,14 @@
-package org.dykman.jtl.core;
+package org.dykman.jtl.core.modules;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
-import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
+import org.dykman.jtl.core.JSON;
+import org.dykman.jtl.core.JSONBuilder;
+import org.dykman.jtl.core.JSONObject;
+import org.dykman.jtl.core.JSONValue;
+import org.dykman.jtl.core.future.AsyncExecutionContext;
 
 public class ModuleLoader {
 

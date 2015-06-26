@@ -18,10 +18,10 @@ import org.dykman.jtl.core.JSONBuilder;
 import org.dykman.jtl.core.JSONBuilderImpl;
 import org.dykman.jtl.core.JSONObject;
 import org.dykman.jtl.core.JtlCompiler;
-import org.dykman.jtl.core.engine.future.AsyncExecutionContext;
-import org.dykman.jtl.core.engine.future.InstructionFuture;
-import org.dykman.jtl.core.engine.future.InstructionFutureFactory;
-import org.dykman.jtl.core.engine.future.SimpleExecutionContext;
+import org.dykman.jtl.core.future.AsyncExecutionContext;
+import org.dykman.jtl.core.future.InstructionFuture;
+import org.dykman.jtl.core.future.InstructionFutureFactory;
+import org.dykman.jtl.core.future.SimpleExecutionContext;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

@@ -1,4 +1,4 @@
-package org.dykman.jtl.core.engine.future;
+package org.dykman.jtl.core.future;
 
 import org.dykman.jtl.core.Pair;
 
