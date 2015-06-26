@@ -6,16 +6,16 @@ import java.io.PrintWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.dykman.jtl.core.JSON;
-import org.dykman.jtl.core.JSONArray;
-import org.dykman.jtl.core.JSONBuilder;
-import org.dykman.jtl.core.JSONBuilderImpl;
-import org.dykman.jtl.core.JSONObject;
-import org.dykman.jtl.core.JtlCompiler;
-import org.dykman.jtl.core.future.AsyncExecutionContext;
-import org.dykman.jtl.core.future.InstructionFuture;
-import org.dykman.jtl.core.future.InstructionFutureFactory;
-import org.dykman.jtl.core.future.SimpleExecutionContext;
+import org.dykman.jtl.JtlCompiler;
+import org.dykman.jtl.future.AsyncExecutionContext;
+import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.InstructionFutureFactory;
+import org.dykman.jtl.future.SimpleExecutionContext;
+import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONArray;
+import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
+import org.dykman.jtl.json.JSONObject;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,7 +29,7 @@ public class SimpleJtlTest {
 		// TODO Auto-generated method stub
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
-			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
+			JtlCompiler compiler = new JtlCompiler(builder,true,false,false);
 			
 			System.err.println("compiling " + args[0]);
 			

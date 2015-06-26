@@ -8,9 +8,21 @@ COMMENT : '/' '/' [^\n]* -> skip;
 
 EMPTY_STR: '""';
 
+fragment DD: '$' '$';
+fragment DSTRBOD :  (DD | ESC | ~[$\'\"\\]+);
+
+DSTRING : '"' ( DD | '\'' | DSTRBOD)* '"';
+
+
+
+
+
+
 SSTR : '"' ->pushMode(MSTR);
 
 SSTRM : '"""' -> pushMode(MULTI);
+
+
 
 fragment ESC :   '\\' ([\\/bfnrt] | UNICODE) ;
 fragment UNICODE : 'u' HEX HEX HEX HEX ;

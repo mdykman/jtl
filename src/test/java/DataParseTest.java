@@ -1,9 +1,9 @@
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 
-import org.dykman.jtl.core.JSON;
-import org.dykman.jtl.core.JSONBuilder;
-import org.dykman.jtl.core.JSONBuilderImpl;
+import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
 
 public class DataParseTest {
 

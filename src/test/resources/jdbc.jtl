@@ -9,12 +9,15 @@
    },
 	$mydomain: /domain,
    
-   _: users('viafoura.com')/filter(has_picture)/*/{
+   _: {
+
+		users: users('viafoura.com')/filter(has_picture)/{
 			created:date_created,
 			email:email,
 			id:id,
 			name:name,
 			username:username
-		}/*/collate(),
-   users: db.query("select * from Users where email like CONCAT('%@', ? )",$1)  
+		}/collate()
+	},
+   users: db.query("select * from Users where email like CONCAT('%@', ? )",/domain)  
 }

@@ -1,7 +1,6 @@
 {
 	_: {
-		ff: people/group(favoriteFruit),
-		fruits: people/group(favoriteFruit)/map(*/{email:email,guid:guid}),
+		fruits: people/group(favoriteFruit)/map(*/{email:email,guid:guid}/sort(email)),
 		tags: people/*/{
 				name: name,
 				email: email,
