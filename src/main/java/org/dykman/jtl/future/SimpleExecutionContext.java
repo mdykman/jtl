@@ -23,21 +23,26 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 	ListeningExecutorService executorService = null;
 	JSON conf;
+	JSON data;
 
 	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSON conf, JSONBuilder builder ,boolean fc) {
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSON data,JSON conf, JSONBuilder builder ,boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
 		this.conf = conf;
+		this.data = data;
 	}
-	public SimpleExecutionContext(JSONBuilder builder,JSON conf) {
-		this(null, conf, builder,false);
+	public SimpleExecutionContext(JSONBuilder builder,JSON data,JSON conf) {
+		this(null, data,conf, builder,false);
 	}
 
 
+	public ListenableFuture<JSON> dataContext() {
+		return immediateCheckedFuture(data);
+	}
 	public ListenableFuture<JSON> config() {
 		if(conf==null && parent!=null) return parent.config();
 		return immediateFuture(conf);
@@ -110,7 +115,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc) {
-		return new SimpleExecutionContext(this,null, null,fc);
+		return new SimpleExecutionContext(this,data,null, null,fc);
 	}
 
 	@Override

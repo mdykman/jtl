@@ -60,7 +60,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 
 	@Override
 	public JSON cloneJSON() {
-		return new JSONValue(null, type, o);
+		return new JSONValue(parent, type, o);
 	}
 
 

@@ -7,10 +7,12 @@ import org.dykman.jtl.json.JSON.JSONType;
 public class Frame extends JSONArray {
 
 	public Frame(Collection<JSON> col) {
-		super(null,col);
+		this(null,col);
+	}
+	public Frame(JSON parent,Collection<JSON> col) {
+		super(parent,col);
 		hash = 45763478;
 	}
-
 	@Override
 	public JSONType getType() {
 		return JSONType.FRAME;

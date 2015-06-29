@@ -17,6 +17,8 @@ public interface AsyncExecutionContext<T> {
 
 	public ListenableFuture<T> config();
 
+	public ListenableFuture<T> dataContext();
+
 	public AsyncExecutionContext<T> getParent();
 	public ListenableFuture<T> execute(InstructionFuture<T> inst,
 			ListenableFuture<T> data);

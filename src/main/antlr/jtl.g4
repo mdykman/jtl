@@ -117,13 +117,11 @@ pathindex
 	;
 	
 indexlist
-	: indexl
-	| indexlist ',' indexl
+	: indexl (',' indexl)*
 	;
 
 indexl
-	: value
-	| value '..' value
+	: value ('..' value)?
 	;
 	
 pathstep 

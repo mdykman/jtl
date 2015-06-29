@@ -46,7 +46,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		return 0;
 	}
 	public JSON cloneJSON() {
-		JSONArray res = builder.array(null);
+		JSONArray res = builder.array(parent);
 		int i = 0;
 		for(JSON j:arr) {
 			res.add(j);

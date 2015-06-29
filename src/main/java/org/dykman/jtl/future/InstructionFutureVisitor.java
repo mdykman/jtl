@@ -577,22 +577,22 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitIndexlist(IndexlistContext ctx) {
-		InstructionFutureValue<JSON> a = visitIndexl(ctx.indexl());
-		IndexlistContext b = ctx.indexlist();
-		if (b != null) {
-			InstructionFutureValue<JSON> bi = visitIndexlist(b);
-			return new InstructionFutureValue<JSON>(factory.dereference(a.inst, bi.inst));
+		List<InstructionFuture<JSON>> elements = new ArrayList<>();
+		List<IndexlContext> l= ctx.indexl();
+		for(IndexlContext dxlc: ctx.indexl()) {
+			elements.add(visitIndexl(dxlc).inst);
+			
 		}
-		return a;
+		return new InstructionFutureValue<>(factory.array(elements));
 	}
 
 	@Override
 	public InstructionFutureValue<JSON> visitIndexl(IndexlContext ctx) {
 		List<ValueContext> cl = ctx.value();
-		List<InstructionFuture<JSON>> elements = new ArrayList<>();
 		InstructionFuture<JSON> inst = visitValue(cl.get(0)).inst;
-		elements.add(inst);
 		if (cl.size() > 1) {
+			List<InstructionFuture<JSON>> elements = new ArrayList<>();
+			elements.add(inst);
 			elements.add(visitValue(cl.get(1)).inst);
 			return new InstructionFutureValue<>(factory.array(elements));
 		} else {

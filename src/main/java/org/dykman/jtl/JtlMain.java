@@ -142,7 +142,7 @@ public class JtlMain {
 		} else {
 			c = builder.value();
 		}
-		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(c, factory, les);
+		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,c, factory, les);
 //		InstructionFuture<JSON> inst = compiler.parse(jtl);
 		ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 		return j.get();

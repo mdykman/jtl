@@ -2,7 +2,6 @@ package org.dykman.jtl.future;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONException;
 
 import com.google.common.util.concurrent.ListenableFuture;
 

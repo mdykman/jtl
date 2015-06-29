@@ -88,11 +88,12 @@ public class JtlCompiler {
 		}
 
 	public static AsyncExecutionContext<JSON> createInitialContext(
+			JSON data,
 			JSON config,
 			InstructionFutureFactory factory,
 			ListeningExecutorService les ) {
 
-		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),config);
+		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),data,config);
 		
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
@@ -112,6 +113,8 @@ public class JtlCompiler {
 		context.define("params", factory.params());
 		context.define("collate", factory.collate());
 		
+		context.define("contains", factory.contains());
+		context.define("omap", factory.omap());
 	
 		
 		context.setExecutionService(les);

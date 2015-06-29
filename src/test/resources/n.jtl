@@ -1,11 +1,19 @@
 {
 	_: {
-		fruits: people/group(favoriteFruit)/map(*/{email:email,guid:guid}/sort(email)),
-		tags: people/*/{
+		fruits: people/group(favoriteFruit)/map(*/{"email address":email,guid:guid}/sort(.["email address"])),
+		select: people[3..-1],
+		tags: {
+			users:people/*/{
 				name: name,
 				email: email,
 				tags: tags/sort(),
 				tcount: tags/count()
-			}
+			},
+			summary: people/*/tags/*/unique()/sort(),
+			tgroups: people/**/tags/*/unique()/sort()/omap(/people/filter(tags/contains(key()))),
+			tt: people/filter(tags/contains("Lorem"))/{"email address":email,guid:guid}/collate()
+			
+			
+		}
 	}
 }

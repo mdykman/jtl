@@ -1,0 +1,3 @@
+{
+		tgroups: people/**/tags/*/unique()/sort()/omap(/people/filter(tags/contains(key())))
+}

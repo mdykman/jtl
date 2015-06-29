@@ -23,7 +23,8 @@ public interface JSONBuilder {
 	public JSONArray array(JSON parent, int cap);
 	public JSONArray array(JSON parent, Collection<JSON> col);
 	public Frame frame();
-	public Frame frame(Frame f);
+//	public Frame frame(Frame f);
+	public Frame frame(JSON parent);
 
 	public JSON parse(File in) throws IOException;
 	public JSON parse(InputStream in) throws IOException;

@@ -29,7 +29,7 @@ public class SimpleJtlTest {
 		// TODO Auto-generated method stub
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
-			JtlCompiler compiler = new JtlCompiler(builder,true,false,false);
+			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 			
 			System.err.println("compiling " + args[0]);
 			
@@ -44,7 +44,7 @@ public class SimpleJtlTest {
 	
 			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
 			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(config, factory, les);
+			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, factory, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);

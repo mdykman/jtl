@@ -109,14 +109,14 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 //   args "src/test/resources/jdbc.jtl"  
 //   args "src/test/resources/data.json"
 
-   args "src/test/resources/string.jtl"  
-   args "src/test/resources/data.json"
+//   args "src/test/resources/string.jtl"  
+ //  args "src/test/resources/data.json"
 
 //   args "src/test/resources/simple.jtl"  
 //   args "src/test/resources/data.json"
 
-//   args "src/test/resources/n.jtl"  
-//   args "src/test/resources/generated.json"
+   args "src/test/resources/m.jtl"  
+   args "src/test/resources/generated.json"
 
    args "src/test/resources/config.json"
 }
