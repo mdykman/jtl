@@ -477,13 +477,13 @@ public class InstructionFutureFactory {
 				AsyncExecutionContext<JSON> childContext = context
 						.createChild(true);
 
-				List<InstructionFuture<JSON>> a = new ArrayList<>(iargs.size());
+	//			List<InstructionFuture<JSON>> a = new ArrayList<>(iargs.size());
 				int cc = 1;
 				childContext.define("0", value(name));
 				for (InstructionFuture<JSON> i : iargs) {
 					InstructionFuture<JSON> inst = deferred(i, context, t);
 					childContext.define(Integer.toString(cc++), inst);
-					a.add(inst);
+//					a.add(inst);
 				}
 				return func.call(childContext, t);
 			}
@@ -859,7 +859,9 @@ public class InstructionFutureFactory {
 				final String kk = ii.f;
 				final AsyncExecutionContext<JSON> newc = context
 						.createChild(false);
-				newc.define(JTL_INTERNAL_KEY, value(kk));
+				InstructionFuture<JSON> ki = value(kk);
+				newc.define(JTL_INTERNAL_KEY,ki);
+				newc.define("key", ki);
 				ListenableFuture<Pair<String, JSON>> lf = transform(
 						ii.s.call(newc, data),
 						new AsyncFunction<JSON, Pair<String, JSON>>() {
@@ -1580,7 +1582,7 @@ public class InstructionFutureFactory {
 						 * if (inst != null) { return inst.call(context, data);
 						 * }
 						 */
-						return null;
+						 return null;
 						// return immediateCheckedFuture(builder.value());
 						// return null;
 					}
@@ -1814,7 +1816,7 @@ public class InstructionFutureFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input)
 							throws Exception {
-						return context.getMasterContext().dataContext();
+						return inst.call(context,context.getMasterContext().dataContext());
 					}
 				});
 			}
@@ -1975,7 +1977,7 @@ public class InstructionFutureFactory {
 							throws Exception {
 						if(input.getType() == JSONType.ARRAY) {
 							InstructionFuture<JSON> mf = context.getdef("1");
-//							mf = mf.unwrap();
+							mf = mf.unwrap();
 							List<ListenableFuture<Pair<JSON,JSON>>> ll = new ArrayList<>();
 							for(JSON j: (JSONArray) input) {
 								AsyncExecutionContext<JSON> cc = context.createChild(true);

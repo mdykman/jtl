@@ -9,11 +9,7 @@
 				tags: tags/sort(),
 				tcount: tags/count()
 			},
-			summary: people/*/tags/*/unique()/sort(),
-			tgroups: people/**/tags/*/unique()/sort()/omap(/people/filter(tags/contains(key()))),
-			tt: people/filter(tags/contains("Lorem"))/{"email address":email,guid:guid}/collate()
-			
-			
+			tgroups: people/**/tags/*/unique()/sort()/omap(/people/filter(tags/contains(key()))/email)
 		}
 	}
 }
