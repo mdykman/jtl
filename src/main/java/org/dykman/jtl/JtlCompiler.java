@@ -116,6 +116,12 @@ public class JtlCompiler {
 		context.define("contains", factory.contains());
 		context.define("omap", factory.omap());
 	
+		context.define("object", factory.isObject());
+		context.define("array", factory.isArray());
+		context.define("number", factory.isNumber());
+		context.define("string", factory.isString());
+		context.define("null", factory.isNull());
+
 		
 		context.setExecutionService(les);
 		return context;

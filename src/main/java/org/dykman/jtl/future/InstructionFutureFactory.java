@@ -2224,5 +2224,52 @@ public class InstructionFutureFactory {
 			}
 		});
 	}
+	
+	public InstructionFuture<JSON> isValue() {
+		return isType(JSONType.NULL,JSONType.DOUBLE,JSONType.LONG, JSONType.STRING);
+	}
+	
+	public InstructionFuture<JSON> isString() {
+		return isType(JSONType.STRING);
+	}
+	
+	public InstructionFuture<JSON> isNull() {
+		return isType(JSONType.NULL);
+	}
+	
+	public InstructionFuture<JSON> isArray() {
+		return isType(JSONType.ARRAY,JSONType.FRAME);
+	}
+	
+	public InstructionFuture<JSON> isObject() {
+		return isType(JSONType.OBJECT);
+	}
+	
+	public InstructionFuture<JSON> isNumber() {
+		return isType(JSONType.LONG,JSONType.DOUBLE);
+	}
+	protected InstructionFuture<JSON> isType(JSONType... types) {
+		return new AbstractInstructionFuture() {
+			
+			@Override
+			public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+				throws ExecutionException {
+					return transform(data, new AsyncFunction<JSON, JSON>() {
+						@Override
+						public ListenableFuture<JSON> apply(JSON input) throws Exception {
+							boolean res = false;
+							JSONType jt=input.getType();
+							for(JSONType t: types) {
+								if(jt.equals(t)) {
+									res= true;
+									break;
+								}
+							}
+							return immediateCheckedFuture(builder.value(res));
+						}
+					});
+			}
+		};
+	}
 
 }
