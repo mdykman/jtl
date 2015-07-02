@@ -10,7 +10,7 @@ public abstract class AbstractInstructionFuture implements
 		InstructionFuture<JSON> {
 
 	@Override
-	public InstructionFuture<JSON> unwrap() {
+	public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
 		return this;
 	}
 

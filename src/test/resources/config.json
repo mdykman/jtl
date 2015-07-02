@@ -1,6 +1,10 @@
 {
   modules: {
    	http:{  class:"org.dykman.jtl.core.modules.HttpModule" },
-    jdbc: { class:"org.dykman.jtl.core.modules.JdbcModule" }
+      jdbc: { class:"org.dykman.jtl.core.modules.JdbcModule" }
+  },
+  author: {
+  	name:"Michael Dykman",
+	email:"mdykman@gmail.com"
   }
 }

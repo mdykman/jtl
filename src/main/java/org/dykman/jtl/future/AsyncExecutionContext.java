@@ -20,12 +20,9 @@ public interface AsyncExecutionContext<T> {
 	public ListenableFuture<T> dataContext();
 
 	public AsyncExecutionContext<T> getParent();
-	public ListenableFuture<T> execute(InstructionFuture<T> inst,
-			ListenableFuture<T> data);
 
 	public InstructionFuture<T> getdef(String name);
 
-	public void set(String name,ListenableFuture<T> t);
 	public ListenableFuture<T> lookup(String name,ListenableFuture<T> t)
 		throws ExecutionException;
 	

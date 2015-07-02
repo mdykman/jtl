@@ -115,7 +115,7 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 //   args "src/test/resources/simple.jtl"  
 //   args "src/test/resources/data.json"
 
-   args "src/test/resources/l.jtl"  
+   args "src/test/resources/re.jtl"  
    args "src/test/resources/generated.json"
 
    args "src/test/resources/config.json"

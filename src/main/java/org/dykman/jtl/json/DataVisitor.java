@@ -1,5 +1,6 @@
 package org.dykman.jtl.json;
 
+
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.Pair;
@@ -12,7 +13,6 @@ import org.dykman.jtl.jsonParser.ObjectContext;
 import org.dykman.jtl.jsonParser.PairContext;
 import org.dykman.jtl.jsonParser.StringContext;
 import org.dykman.jtl.jsonParser.ValueContext;
-import org.dykman.jtl.future.InstructionFutureValue;
 
 public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 
@@ -98,15 +98,38 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 
 	@Override
 	public DataValue<JSON> visitString(StringContext ctx) {
-		String k = null;
 		TerminalNode tn = ctx.STRING();
-		if(tn!=null) {
-			k = tn.getText();
-		} else if((tn=ctx.SSTRING())!=null){
-			k = tn.getText();
+//		TerminalNode tn = ctx.StringLiteral();
+		if(tn==null) {
+			tn = ctx.SSTRING();
 		}
+		tn=ctx.SSTRING();
+		String k = tn.getText();
 		k=k.substring(1,k.length()-1);
 		return new DataValue<JSON>(k);
+		
 	}
-
+	/*
+	@Override
+	public DataValue<JSON> visitStrbod(StrbodContext ctx) {
+		TerminalNode tn = ctx.ESC();
+		if(tn!=null) {
+			return new DataValue<>(StringEscapeUtils.unescapeJson(tn.getText()));
+		}
+		tn = ctx.STRBIT();
+		if(tn!=null) {
+			return new DataValue<>(tn.getText());
+		}
+		return new DataValue<>(ctx.getText());
+	}
+	@Override
+	public DataValue<JSON> visitLstr(LstrContext ctx) {
+		List<StrbodContext> sbc = ctx.strbod();
+		StringBuilder sb = new StringBuilder();
+		for(StrbodContext sc: sbc) {
+			sb.append(visitStrbod(sc).str);
+		}
+		return new DataValue<>(sb.toString());
+	}
+*/
 }

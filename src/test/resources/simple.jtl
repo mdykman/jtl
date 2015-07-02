@@ -1,8 +1,4 @@
 {
-
-		message:"Hello World",
-		blog: data/people[0],
-      "by department": data/people/group(department),
 		data: {
 	   		expr: **/salary,
 	   		name:data/people/*/first,

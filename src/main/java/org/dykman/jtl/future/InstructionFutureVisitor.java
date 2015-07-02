@@ -8,12 +8,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jtlBaseVisitor;
-import org.dykman.jtl.json.Frame;
-import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONArray;
-import org.dykman.jtl.json.JSONBuilder;
-import org.dykman.jtl.json.JSONObject;
-import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.jtlParser.Abs_pathContext;
 import org.dykman.jtl.jtlParser.Add_exprContext;
 import org.dykman.jtl.jtlParser.And_exprContext;
@@ -27,7 +21,6 @@ import org.dykman.jtl.jtlParser.IndexlContext;
 import org.dykman.jtl.jtlParser.IndexlistContext;
 import org.dykman.jtl.jtlParser.JpathContext;
 import org.dykman.jtl.jtlParser.JsonContext;
-import org.dykman.jtl.jtlParser.JstringContext;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.jtlParser.Mul_exprContext;
 import org.dykman.jtl.jtlParser.NumberContext;
@@ -42,13 +35,18 @@ import org.dykman.jtl.jtlParser.Re_exprContext;
 import org.dykman.jtl.jtlParser.RecursContext;
 import org.dykman.jtl.jtlParser.Rel_exprContext;
 import org.dykman.jtl.jtlParser.Rel_pathContext;
-import org.dykman.jtl.jtlParser.StrcContext;
 import org.dykman.jtl.jtlParser.StringContext;
 import org.dykman.jtl.jtlParser.Tern_exprContext;
 import org.dykman.jtl.jtlParser.Unary_exprContext;
 import org.dykman.jtl.jtlParser.Union_exprContext;
 import org.dykman.jtl.jtlParser.ValueContext;
 import org.dykman.jtl.jtlParser.VariableContext;
+import org.dykman.jtl.json.Frame;
+import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSON.JSONType;
+import org.dykman.jtl.json.JSONArray;
+import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONObject;
 
 public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureValue<JSON>> {
 
@@ -128,7 +126,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	public InstructionFutureValue<JSON> visitPair(PairContext ctx) {
 		InstructionFutureValue<JSON> k = null;
 		IdContext id = ctx.id();
-//		String ss = ctx.toText(;
+//		String ss = ctx.toTex(;
 		if (id != null) {
 			k = visitId(id);
 		} else {
@@ -156,11 +154,14 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		if (jc != null) {
 			return visitJpath(jc);
 		}
-		throw new RuntimeException("unknown value type");
+		ValueContext vc = ctx.value();
+		return visitValue(vc);
+//		throw new RuntimeException("unknown value type");
 	}
 
 	@Override
-	public InstructionFutureValue<JSON> visitString(StringContext ctx) {
+		public InstructionFutureValue<JSON> visitString(StringContext ctx) {
+//		TerminalNode tn = ctx.StringLiteral();
 		TerminalNode tn = ctx.STRING();
 		String s = null;
 		if(tn != null) {
@@ -254,7 +255,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		Iterator<ValueContext> vit = ctx.value().iterator();
 		ValueContext va = vit.next();
 		ValueContext vb = vit.next();
-		return new InstructionFutureValue<>(factory.ternary(visitTern_expr(tc).inst, visitValue(va).inst,
+		return new InstructionFutureValue<>(factory.conditional(visitTern_expr(tc).inst, visitValue(va).inst,
 			visitValue(vb).inst));
 	}
 
@@ -494,11 +495,11 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		NumberContext nc = ctx.number();
 		if (nc != null)
 			return visitNumber(nc);
-
+/*
 		JstringContext jc = ctx.jstring();
 		if (jc != null)
 			return visitJstring(jc);
-
+*/
 		RecursContext rc = ctx.recurs();
 		if (rc != null)
 			return visitRecurs(rc);
@@ -543,7 +544,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		}
 		throw new RuntimeException("token " + t + " is not implemented in recurs");
 	}
-
+/*
 	@Override
 	public InstructionFutureValue<JSON> visitJstring(JstringContext ctx) {
 		StringContext sc = ctx.string();
@@ -569,7 +570,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		}
 		return new InstructionFutureValue<>(factory.value(ctx.getText()));
 	}
-
+*/
 	@Override
 	public InstructionFutureValue<JSON> visitPathindex(PathindexContext ctx) {
 		return visitIndexlist(ctx.indexlist());

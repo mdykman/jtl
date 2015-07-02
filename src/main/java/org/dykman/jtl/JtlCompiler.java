@@ -120,6 +120,7 @@ public class JtlCompiler {
 		context.define("array", factory.isArray());
 		context.define("number", factory.isNumber());
 		context.define("string", factory.isString());
+		context.define("boolean", factory.isBoolean());
 		context.define("null", factory.isNull());
 
 		

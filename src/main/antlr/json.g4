@@ -50,6 +50,17 @@ string
     ;
 
 
+//lstr
+//	: '"' strbod* '"'
+//	;
+
+//strbod 
+//	:  ESC 
+//	|  STRBIT
+//	| '\''
+//	;
+
+
 fragment INT :   '0' | [1-9] [0-9]* ; // no leading zeros
 fragment EXP :   [Ee] [+\-]? INT ; // \- since - means "range" inside [...]
 
@@ -59,6 +70,63 @@ fragment HEX : [0-9a-fA-F] ;
 
 fragment STRBOD :  (ESC | ~[\'\"\\]+);
 
+
+/* 
+fragment
+StringCharacters
+	:	StringCharacter+
+	;
+
+fragment StringCharacter
+	:	~["\\]
+	|	EscapeSequence
+	;
+
+fragment
+OctalDigit
+	:	[0-7]
+	;
+
+fragment
+HexDigit
+	:	[0-9a-fA-F]
+	;
+
+
+fragment
+EscapeSequence
+	:	'\\' [btnfr"'\\]
+	|	OctalEscape
+    |   UnicodeEscape // This is not in the spec but prevents having to preprocess the input
+	;
+
+fragment
+OctalEscape
+	:	'\\' OctalDigit
+	|	'\\' OctalDigit OctalDigit
+	|	'\\' ZeroToThree OctalDigit OctalDigit
+	;
+
+fragment
+ZeroToThree
+	:	[0-3]
+	;
+
+// This is not in the spec but prevents having to preprocess the input
+fragment
+UnicodeEscape
+    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+    ;
+fragment
+StringLiteral
+	:	'"' StringCharacters? '"'
+	;
+
+*/
+STRBIT
+	: ~[\'\"\\]+
+	;
+
 INTEGER
     :   '-'? INT                 // -3, 45
     |   '-'? INT EXP             // 7e6
@@ -67,6 +135,7 @@ INTEGER
 FLOAT 
     :   '-'? INT '.' [0-9]+ EXP? // 1.35, 1.35E-9, 0.3, -4.5
     ;
+    
 
 STRING : '"' ('\'' | STRBOD)* '"';
 

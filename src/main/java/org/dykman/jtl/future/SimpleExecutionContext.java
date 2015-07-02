@@ -108,25 +108,12 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		functions.put(n, i);
 	}
 
-	@Override
-	public void set(String name, ListenableFuture<JSON> t) {
-		functions.put(name, InstructionFutureFactory.value(t));
-	}
 
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc) {
 		return new SimpleExecutionContext(this,data,null, null,fc);
 	}
 
-	@Override
-	public ListenableFuture<JSON> execute(InstructionFuture<JSON> inst,
-			ListenableFuture<JSON> data) {
-		try {
-			return inst.call(this, data);
-		} catch (ExecutionException e) {
-			return immediateFailedCheckedFuture(e);
-		}
-	}
 
 	@Override
 	public InstructionFuture<JSON> getdef(String name) {

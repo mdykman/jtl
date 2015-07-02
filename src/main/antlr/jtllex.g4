@@ -6,19 +6,19 @@ END_BLOCK : '}' -> popMode;
 
 COMMENT : '/' '/' [^\n]* -> skip;
 
-EMPTY_STR: '""';
+fragment EMPTY_STR: '""';
 
 fragment DD: '$' '$';
 fragment DSTRBOD :  (DD | ESC | ~[$\'\"\\]+);
 
-DSTRING : '"' ( DD | '\'' | DSTRBOD)* '"';
+//DSTRING : '"' ( DD | '\'' | DSTRBOD)* '"';
 
 
 
 
 
 
-SSTR : '"' ->pushMode(MSTR);
+//SSTR : '"' ->pushMode(MSTR);
 
 SSTRM : '"""' -> pushMode(MULTI);
 
@@ -42,6 +42,8 @@ START_BLOCKM : '${' ->pushMode(DEFAULT_MODE);
 mode MSTR;
 
 ESTR : '"' -> popMode;
+
+fragment
 SS  : ~["\\$\n]+ 
 	| ESC
 	;

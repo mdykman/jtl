@@ -4,12 +4,12 @@
 		username: "user",
 		password: "password"
 	}),
-	http: module("httpclient", { proxy: "jdbc://mysql:host:port" }),
+	curl: module("http", { proxy: "jdbc://mysql:host:port" }),
 	$base: "http://somewhere.com.context/",
 	
 	_: {
 		result: fetch("int"),
-		web: http.get($base + "status", {
+		web: curl.get($base + "status", {
 			cid:1234
 		})
 	},

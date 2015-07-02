@@ -1,27 +1,3 @@
 {
-   !init: {
-      curl: module("http", {
-         proxy:true,
-         proxyserver:null,
-         error: {
-         	status:"there was an error in curl module: ${ $1 }"
-         }
-   })
-   },   
-	_: {
-		grouptest: curl.post("http://localhost:8080/elysium/v1/query/content/michael_viafoura",{
-            q1: {
-               statement: "SELECT * from sections"
-             }
-       })/{
-		 time:time,
-		 clusters: q1/result/*/{
-		 	name: cluster_name,
-			uuid: cluster_uuid
-		 	}/group(name)/map(*/uuid/unique())
-		 }
-	},
-	error: {
-		status: "general error: ${ $1 }"
-	}
+      "by element": people/group(element)/map(*/name)
 }

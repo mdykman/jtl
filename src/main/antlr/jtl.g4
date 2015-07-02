@@ -130,7 +130,7 @@ pathstep
    | func
    | variable
    | number
-   | jstring
+//   | jstring
    | object 
    | array
 	| '.'
@@ -182,11 +182,11 @@ string
 
 
 
-jstring : SSTR strc ESTR
-     | string
-     ;
+//jstring : SSTR strc ESTR
+//     | string
+//     ;
      
-strc : SS
-	| START_BLOCK jtl END_BLOCK
-	| strc strc+
-	; 
+//strc : SS
+//	| START_BLOCK jtl END_BLOCK
+//	| strc strc+
+//	; 

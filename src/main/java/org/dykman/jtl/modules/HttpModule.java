@@ -46,12 +46,11 @@ public class HttpModule implements Module {
 
 	@Override
 	public void define(AsyncExecutionContext<JSON> context) {
-		ListeningExecutorService les = context.executor();
-		context.define("get", _getInstruction(les, context.builder()));
-		context.define("post", _postInstruction(les, context.builder()));
-		context.define("put", _putInstruction(les, context.builder()));
-		context.define("delete", _deleteInstruction(les, context.builder()));
-		context.define("form", _formInstruction(les, context.builder()));
+		context.define("get", _getInstruction(context.builder()));
+		context.define("post", _postInstruction(context.builder()));
+		context.define("put", _putInstruction(context.builder()));
+		context.define("delete", _deleteInstruction(context.builder()));
+		context.define("form", _formInstruction(context.builder()));
 
 	}
 
@@ -74,7 +73,7 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _formInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder) {
+			final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -89,11 +88,11 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(les, builder, mf);
+		return httpInstruction(builder, mf);
 	}
 
 	public InstructionFuture<JSON> _getInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder) {
+			final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -110,11 +109,11 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(les, builder, mf);
+		return httpInstruction(builder, mf);
 	}
 
 	public InstructionFuture<JSON> _deleteInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder) {
+			final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -131,11 +130,11 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(les, builder, mf);
+		return httpInstruction(builder, mf);
 	}
 
 	public InstructionFuture<JSON> _postInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder) {
+			final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -154,11 +153,11 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(les, builder, mf);
+		return httpInstruction(builder, mf);
 	}
 
 	public InstructionFuture<JSON> _putInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder) {
+			final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -178,11 +177,11 @@ public class HttpModule implements Module {
 				return put;
 			}
 		};
-		return httpInstruction(les, builder, mf);
+		return httpInstruction(builder, mf);
 	}
 
 	protected InstructionFuture<JSON> httpInstruction(
-			final ListeningExecutorService les, final JSONBuilder builder,
+			 final JSONBuilder builder,
 			final MethodFactory mf) {
 		return new AbstractInstructionFuture() {
 
@@ -224,7 +223,7 @@ public class HttpModule implements Module {
 									url = stringValue(a);
 									data = (JSONObject) b;
 								}
-								return les.submit(new Callable<JSON>() {
+								return context.executor().submit(new Callable<JSON>() {
 									@Override
 									public JSON call() throws Exception {
 										HttpClient client = new HttpClient();
