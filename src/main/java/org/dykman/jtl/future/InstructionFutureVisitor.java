@@ -151,11 +151,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	@Override
 	public InstructionFutureValue<JSON> visitValue(ValueContext ctx) {
 		JpathContext jc = ctx.jpath();
-		if (jc != null) {
 			return visitJpath(jc);
-		}
-		ValueContext vc = ctx.value();
-		return visitValue(vc);
 //		throw new RuntimeException("unknown value type");
 	}
 
@@ -480,6 +476,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		if (oc != null) {
 			return visitObject(oc);
 		}
+		ValueContext xvc = ctx.value();
+		if(xvc!=null) return visitValue(xvc);
+
 		ArrayContext ac = ctx.array();
 		if (ac != null) {
 			return visitArray(ac);
@@ -495,6 +494,10 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		NumberContext nc = ctx.number();
 		if (nc != null)
 			return visitNumber(nc);
+
+		StringContext sc = ctx.string();
+		if (sc != null)
+			return visitString(sc);
 /*
 		JstringContext jc = ctx.jstring();
 		if (jc != null)

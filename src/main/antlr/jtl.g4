@@ -24,7 +24,6 @@ jtl
 
 value
     : jpath 
-    | '(' value ')'
     ;
 
 
@@ -131,8 +130,10 @@ pathstep
    | variable
    | number
 //   | jstring
+   | string
    | object 
    | array
+   | '(' value ')'
 	| '.'
 	| '..'
 	| '*'

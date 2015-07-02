@@ -39,6 +39,7 @@ public class SimpleJtlTest {
 				System.err.println("no program");
 				System.exit(1);
 			}
+			
 			JSON data = builder.parse(new File(args[1]));
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	

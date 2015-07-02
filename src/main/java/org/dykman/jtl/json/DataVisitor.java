@@ -103,7 +103,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		if(tn==null) {
 			tn = ctx.SSTRING();
 		}
-		tn=ctx.SSTRING();
+//		tn=ctx.SSTRING();
 		String k = tn.getText();
 		k=k.substring(1,k.length()-1);
 		return new DataValue<JSON>(k);

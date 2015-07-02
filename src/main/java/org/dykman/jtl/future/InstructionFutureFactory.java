@@ -378,7 +378,6 @@ public class InstructionFutureFactory {
 				Matcher m = p.matcher(ins);
 				if (m.find()) {
 					JSONArray unbound = builder.array(null);
-					unbound.add(j);
 					int n = m.groupCount();
 					for (int i = 0; i <= n; ++i) {
 						JSON r = builder.value(m.group(i));
@@ -404,10 +403,12 @@ public class InstructionFutureFactory {
 			boolean any = false;
 			for (JSON k : inarr) {
 				JSON r = applyRegex(p, k);
-				any |= r.isTrue();
-				unbound.add(r);
+				if(r.isTrue()) unbound.add(r);
+//				any |= r.isTrue();
+//				unbound.add(r);
 			}
-			return any ? unbound : builder.array(null);
+//			return any ? unbound : builder.array(null);
+			return unbound;
 		}
 		default:
 
@@ -855,7 +856,7 @@ public class InstructionFutureFactory {
 		};
 	}
 
-	class ObjectInstructionFuture extends FramingInstructionFuture {
+	class ObjectInstructionFuture extends AbstractInstructionFuture {
 		final InstructionFutureFactory factory;
 		// protected Set<String> keys = new HashSet<>();
 		final List<Pair<String, InstructionFuture<JSON>>> ll;
@@ -913,7 +914,7 @@ public class InstructionFutureFactory {
 		}
 
 		@Override
-		public ListenableFuture<JSON> callItem(
+		public ListenableFuture<JSON> call(
 				final AsyncExecutionContext<JSON> context,
 				final ListenableFuture<JSON> data) throws ExecutionException {
 			return dataObject(context, data);
@@ -1484,7 +1485,7 @@ public class InstructionFutureFactory {
 	// cache
 	public InstructionFuture<JSON> stepChildren() {
 
-		return new FramingInstructionFuture() {
+		return new AbstractInstructionFuture() {
 
 			public ListenableFuture<JSON> call(
 					AsyncExecutionContext<JSON> context,
@@ -1507,9 +1508,10 @@ public class InstructionFutureFactory {
 									break;
 								// return immediateCheckedFuture(frame);
 								case OBJECT: {
-									for (Pair<String, JSON> pp : (JSONObject) j) {
-										frame.add(pp.s);
-									}
+									frame.add(j);
+//									for (Pair<String, JSON> pp : (JSONObject) j) {
+//										frame.add(pp.s);
+//									}
 								}
 								}
 							}
@@ -1534,7 +1536,7 @@ public class InstructionFutureFactory {
 				});
 			}
 
-			@Override
+//			@Override
 			public ListenableFuture<JSON> callItem(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws ExecutionException {
@@ -1759,8 +1761,8 @@ public class InstructionFutureFactory {
 	 * 
 	 * }
 	 */
-	public InstructionFuture<JSON> relpath(InstructionFuture<JSON> a,
-			InstructionFuture<JSON> b) {
+	public InstructionFuture<JSON> relpath(final InstructionFuture<JSON> a,
+			final InstructionFuture<JSON> b) {
 		return new AbstractInstructionFuture() {
 
 			@Override
