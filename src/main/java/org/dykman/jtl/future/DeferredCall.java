@@ -23,7 +23,7 @@ public class DeferredCall implements InstructionFuture<JSON> {
 	}
 
 	@Override
-	public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
+	public InstructionFuture<JSON> unwrap(final AsyncExecutionContext<JSON> context) {
 		//return inst.unwrap(context);
 		
 		return new AbstractInstructionFuture() {
@@ -88,7 +88,13 @@ public class DeferredCall implements InstructionFuture<JSON> {
 					public ListenableFuture<JSON> lookup(String name,
 							ListenableFuture<JSON> t) throws ExecutionException {
 						ListenableFuture<JSON> l = pcontext.lookup(name, data);
-						if(l == null) l = context.lookup(name, data);
+						if(l == null) 
+							try {
+								// only look in local context if name is NOT numeric
+								Integer.parseInt(name);
+							} catch(NumberFormatException e) {
+								l = context.lookup(name, data);
+							}
 						return l;
 					}
 
@@ -102,6 +108,8 @@ public class DeferredCall implements InstructionFuture<JSON> {
 					public AsyncExecutionContext<JSON> getNamedContext(
 							String label, boolean create) {
 						AsyncExecutionContext<JSON> c = pcontext.getNamedContext(label,create);
+						
+						/// NB: it is had to imagine this call succeeding if the previous one has not
 						if(c == null) c = context.getNamedContext(label,create);
 						return c;
 					}
@@ -111,7 +119,7 @@ public class DeferredCall implements InstructionFuture<JSON> {
 						return pcontext.createChild(fc);
 					}
 				};
-				return inst.call(compound, data);
+				return inst.unwrap(compound).call(compound, data);
 			}
 		};
 		

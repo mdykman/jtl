@@ -1,8 +1,6 @@
 {
-	people: people/filter(name =~ "^B.*" )/*/{email:email},
-	people2: people/*/(name =~ "(^B[a-z]+) ([A-Za-z]+)")/filter(.)/{
-		first: .[1],
-		last: .[2]
-	},
+	people: people/*/filter(name =~ "^B.*" )/{email:email},
+	people2: people/*/(name =~ "(^B[a-z]+) ([A-Za-z]+)")/*/{first:.[1],last:.[2]},
 	mapped: people/*/name =~ "(^B[a-z]+) ([A-Za-z]+)",
- 	matcher: people/*/(name =~ "Bo.*")/filter(.)/*
+ 	matcher: people/*/(name =~ "Bo.*")/filter(.)/*/*
+}

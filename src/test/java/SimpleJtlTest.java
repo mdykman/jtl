@@ -29,7 +29,7 @@ public class SimpleJtlTest {
 		// TODO Auto-generated method stub
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
-			JtlCompiler compiler = new JtlCompiler(builder,true,false,false);
+			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 			
 			System.err.println("compiling " + args[0]);
 			

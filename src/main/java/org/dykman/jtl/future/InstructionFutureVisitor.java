@@ -193,7 +193,10 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			name = name.substring(1);
 		final String nm = name;
 		// return factory.variable(nm);
-		return new InstructionFutureValue<JSON>(factory.variable(nm));
+		List<InstructionFuture<JSON>> iargs = new ArrayList<>();
+//		factory.function(name, iargs);
+		return new InstructionFutureValue<JSON>(factory.function(name, iargs));
+//		return new InstructionFutureValue<JSON>(factory.variable(nm));
 	}
 
 	@Override

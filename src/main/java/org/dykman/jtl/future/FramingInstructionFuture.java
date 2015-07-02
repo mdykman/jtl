@@ -34,6 +34,7 @@ public abstract class FramingInstructionFuture extends AbstractInstructionFuture
 
 			@Override
 			public ListenableFuture<JSON> apply(JSON input) {
+//				final Frame outputFrame = context.builder().frame();
 				if (input.getType() == JSONType.FRAME) {
 					Frame frame = (Frame) input;
 					List<ListenableFuture<JSON>> rr = new ArrayList<>();
@@ -54,7 +55,7 @@ public abstract class FramingInstructionFuture extends AbstractInstructionFuture
 										List<JSON> _input) {
 									Frame newf = context.builder().frame();
 									for (JSON j : _input) {
-										if (j.getType() != JSONType.NULL) {
+										if (j.getType() != JSONType.NULL && j.isTrue()) {
 											newf.add(j);
 										}
 									}
