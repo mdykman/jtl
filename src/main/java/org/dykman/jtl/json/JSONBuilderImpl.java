@@ -103,6 +103,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 		return (JSONObject) sign(r);
 	}
 
+	
 	@Override
 	public JSONObject object(JSON parent,int cap) {
 		JSONObject r = new JSONObject(parent,mf.createMap(cap));
@@ -110,15 +111,14 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	@Override
-	public JSONArray array(JSON parent,boolean bound) {
-		JSONArray r = new JSONArray(parent,cf.createCollection(),bound);
-		return (JSONArray) sign(r);
-	}
-
-	@Override
 	public Frame frame() {
 		Frame f = new Frame(cf.createCollection());
 		return (Frame) sign(f);
+	}
+
+	@Override
+	public Frame frame(JSON parent,Collection<JSON> col) {
+		return (Frame) sign(new Frame(parent,col));		
 	}
 	
 //	@Override
@@ -130,6 +130,12 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public Frame frame(JSON parent) {
 //		Collection<JSON> cc = cf.copyCollection(f.collection());
 		return (Frame) sign(new Frame(parent,cf.createCollection()));
+	}
+
+	@Override
+	public JSONArray array(JSON parent,boolean bound) {
+		JSONArray r = new JSONArray(parent,cf.createCollection(),bound);
+		return (JSONArray) sign(r);
 	}
 
 	@Override

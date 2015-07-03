@@ -133,6 +133,38 @@ public class InstructionFutureFactory {
 		};
 	}
 	
+	public InstructionFuture<JSON> items(
+			final InstructionFuture<JSON> inst) {
+		return new AbstractInstructionFuture() {
+
+			@Override
+			public ListenableFuture<JSON> call(
+					final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data) throws ExecutionException {
+				return transform(data,new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(final JSON input)
+							throws Exception {
+						if(input.getType()==JSONType.FRAME) {
+							List<ListenableFuture<JSON>> ll = new ArrayList<>();
+							for(JSON j:(Frame)input) {
+								ll.add(inst.call(context, immediateCheckedFuture(j)));
+							}
+							return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+								@Override
+								public ListenableFuture<JSON> apply(
+										List<JSON> input2) throws Exception {
+									return immediateCheckedFuture(builder.frame(input.getParent(),input2));
+								}
+							});
+						}
+						return inst.call(context, immediateCheckedFuture(input));
+					}
+				});
+			}
+		};
+	}
 	public InstructionFuture<JSON> url() {
 		return new AbstractInstructionFuture() {
 

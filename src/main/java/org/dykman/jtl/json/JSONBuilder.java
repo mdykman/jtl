@@ -25,6 +25,7 @@ public interface JSONBuilder {
 	public Frame frame();
 //	public Frame frame(Frame f);
 	public Frame frame(JSON parent);
+	public Frame frame(JSON parent,Collection<JSON> col);
 
 	public JSON parse(File in) throws IOException;
 	public JSON parse(InputStream in) throws IOException;
