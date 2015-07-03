@@ -3,6 +3,12 @@ package org.dykman.jtl.future;
 import static com.google.common.util.concurrent.Futures.*;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -80,6 +86,57 @@ public class InstructionFutureFactory {
 		return new AbstractInstructionFuture() {
 
 			@Override
+			public ListenableFuture<JSON> call(
+					final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data)
+				throws ExecutionException {
+				InstructionFuture<JSON> f = context.getdef("1");
+				return transform(f.call(context, data), new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						final InstructionFuture<JSON> dd = context.getdef("2");
+						final File ff = new File(stringValue(input));
+						if(dd == null) {
+							Callable<JSON> cc = new Callable<JSON>() {
+								@Override
+								public JSON call() throws Exception {
+									if (ff.exists())
+										return builder.parse(ff);
+									System.err.println("failed to find file " + ff.getPath());
+									return builder.value();	
+								}
+							};
+							return context.executor().submit(cc);
+						} else {
+							return transform(dd.call(context, data),new AsyncFunction<JSON, JSON>() {
+
+								@Override
+								public ListenableFuture<JSON> apply(final JSON dataout)
+										throws Exception {
+									Callable<JSON> cc = new Callable<JSON>() {
+										@Override
+										public JSON call() throws Exception {
+											Writer out = new FileWriter(ff);
+											dataout.write(out, 2, true);
+											out.flush();
+											return builder.value(0L);
+										}
+									};
+									return context.executor().submit(cc);
+								}
+							});
+						}
+					}
+				});
+			}
+		};
+	}
+	
+	public InstructionFuture<JSON> url() {
+		return new AbstractInstructionFuture() {
+
+			@Override
 			public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 				throws ExecutionException {
 				InstructionFuture<JSON> f = context.getdef("1");
@@ -91,11 +148,10 @@ public class InstructionFutureFactory {
 
 							@Override
 							public JSON call() throws Exception {
-								File ff = new File(stringValue(input));
-								if (ff.exists())
-									return builder.parse(ff);
-								System.err.println("failed to find file " + ff.getPath());
-								return builder.value();
+								URL url = new URL(stringValue(input));
+								InputStream in = url.openStream();
+								System.err.println("opened url " + url.toExternalForm());
+								return builder.parse(in);
 							}
 						};
 						return context.executor().submit(cc);
@@ -2043,7 +2099,7 @@ public class InstructionFutureFactory {
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						if (input.getType() == JSONType.NULL)
 							return immediateCheckedFuture(builder.value(""));
-						return immediateCheckedFuture(builder.value(input.toString()));
+						return immediateCheckedFuture(builder.value(input.toString()).setParent(input.getParent()));
 					}
 				},JSONType.STRING);
 	}
@@ -2087,7 +2143,7 @@ public class InstructionFutureFactory {
 						}
 						
 				}
-				return immediateCheckedFuture(builder.value(number));
+				return immediateCheckedFuture(builder.value(number).setParent(input.getParent()));
 			}
 		},JSONType.LONG.LONG, JSONType.DOUBLE);
 	}
@@ -2098,7 +2154,7 @@ public class InstructionFutureFactory {
 
 				@Override
 				public ListenableFuture<JSON> apply(JSON input) throws Exception {
-					return immediateCheckedFuture(builder.value(input.isTrue()));
+					return immediateCheckedFuture(builder.value(input.isTrue()).setParent(input.getParent()));
 				}
 			},JSONType.BOOLEAN);
 	}
@@ -2108,7 +2164,31 @@ public class InstructionFutureFactory {
 	}
 
 	public InstructionFuture<JSON> isArray() {
-		return isType(null,JSONType.ARRAY, JSONType.FRAME);
+		final JSONType[] types = { JSONType.ARRAY, JSONType.FRAME };
+		return isType(new AsyncFunction<JSON, JSON>() {
+
+			@Override
+			public ListenableFuture<JSON> apply(final JSON input) throws Exception {
+				JSONType type = input.getType();
+				boolean proceed = false;
+				for(JSONType t:types) {
+					if(t.equals(type)) {
+						proceed = true;
+					}
+				}
+				if(proceed) {
+					if(type==JSONType.ARRAY) return immediateCheckedFuture(input);
+					// apparently, it's a frame: let's explicitly convert
+					JSONArray arr = builder.array(input.getParent());
+					for(JSON j: (JSONArray)arr) {
+						arr.add(j);
+					}
+					return immediateCheckedFuture(arr);
+				}
+				// TODO Auto-generated method stub
+				return immediateCheckedFuture(builder.value().setParent(input.getParent()));
+			}
+		},types);
 	}
 
 	public InstructionFuture<JSON> isObject() {
@@ -2121,8 +2201,8 @@ public class InstructionFutureFactory {
 			@Override
 			public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 				throws ExecutionException {
-				if(conv!=null) {
-					InstructionFuture<JSON> arg = context.getdef("1");
+				InstructionFuture<JSON> arg = context.getdef("1");
+				if(arg !=null && conv!=null) {
 					if(arg!=null) {
 						return transform(arg.call(context, data), conv);
 					}

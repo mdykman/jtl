@@ -148,7 +148,8 @@ public abstract class AbstractJSON implements JSON {
 	public JSON setParent(JSON p) {
 		if (locked)
 			raise("container is locked");
-		return parent = p;
+		 parent = p;
+		 return this;
 	}
 
 	@Override

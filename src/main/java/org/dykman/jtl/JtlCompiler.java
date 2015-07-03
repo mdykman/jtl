@@ -94,37 +94,51 @@ public class JtlCompiler {
 			ListeningExecutorService les ) {
 
 		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),data,config);
+		context.setExecutionService(les);
 		
+		// configurable: import, extend
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");
 			context.define("module", factory.loadModule(modules));
+			context.define("import", factory.importInstruction(config));
 		}
-		context.define("import", factory.importInstruction(config));
+		
 		context.define("error", factory.defaultError());
-		context.define("group", factory.groupBy());
+		context.define("params", factory.params());
+
+		// external data
 		context.define("file", factory.file());
-		context.define("map", factory.map());
+		context.define("url", factory.url());
+
+		// list-oriented
 		context.define("unique", factory.unique());
 		context.define("count", factory.count());
 		context.define("sort", factory.sort(false));
 		context.define("rsort", factory.sort(true));
 		context.define("filter", factory.filter());
-		context.define("params", factory.params());
+
+		// object-oriented
+		context.define("group", factory.groupBy());
+		context.define("map", factory.map());
 		context.define("collate", factory.collate());
+
 		
 		context.define("contains", factory.contains());
 		context.define("omap", factory.omap());
 	
+		// boolean type test only
+		context.define("null", factory.isNull());
 		context.define("object", factory.isObject());
+
+		// with 0 args, they return boolean type test
+		// with 1 arg, attempts to coerce to the specified type
 		context.define("array", factory.isArray());
 		context.define("number", factory.isNumber());
 		context.define("string", factory.isString());
 		context.define("boolean", factory.isBoolean());
-		context.define("null", factory.isNull());
 
 		
-		context.setExecutionService(les);
 		return context;
 	}
 
