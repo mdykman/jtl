@@ -33,7 +33,9 @@ public class SimpleJtlTest {
 			
 			System.err.println("compiling " + args[0]);
 			
-			FileInputStream fin = new FileInputStream(args[0]);
+			
+			File inputFile = new File(args[0]);
+			FileInputStream fin = new FileInputStream(inputFile);
 			InstructionFuture<JSON> inst = compiler.parse(fin);
 			if(inst == null) {
 				System.err.println("no program");
@@ -45,7 +47,8 @@ public class SimpleJtlTest {
 	
 			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
 			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, factory, les);
+			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
+				inputFile.getParentFile(),factory, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);

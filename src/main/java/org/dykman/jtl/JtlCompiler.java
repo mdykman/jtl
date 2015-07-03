@@ -90,10 +90,11 @@ public class JtlCompiler {
 	public static AsyncExecutionContext<JSON> createInitialContext(
 			JSON data,
 			JSON config,
+			File f,
 			InstructionFutureFactory factory,
 			ListeningExecutorService les ) {
 
-		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),data,config);
+		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),data,config,f);
 		context.setExecutionService(les);
 		
 		// configurable: import, extend
@@ -117,15 +118,15 @@ public class JtlCompiler {
 		context.define("sort", factory.sort(false));
 		context.define("rsort", factory.sort(true));
 		context.define("filter", factory.filter());
+		context.define("contains", factory.contains());
 
 		// object-oriented
 		context.define("group", factory.groupBy());
 		context.define("map", factory.map());
 		context.define("collate", factory.collate());
-
-		
-		context.define("contains", factory.contains());
 		context.define("omap", factory.omap());
+		context.define("amend", factory.amend());
+		context.define("replace", factory.replace());
 	
 		// boolean type test only
 		context.define("null", factory.isNull());

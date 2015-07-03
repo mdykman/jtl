@@ -2,6 +2,8 @@ package org.dykman.jtl.future;
 
 import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 
+import java.io.File;
+
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
@@ -117,6 +119,16 @@ public class DeferredCall implements InstructionFuture<JSON> {
 					@Override
 					public AsyncExecutionContext<JSON> createChild(boolean fc) {
 						return pcontext.createChild(fc);
+					}
+
+					@Override
+					public File currentDirectory() {
+						return pcontext.currentDirectory();
+					}
+
+					@Override
+					public File file(String in) {
+						return pcontext.file(in);
 					}
 				};
 				return inst.unwrap(compound).call(compound, data);

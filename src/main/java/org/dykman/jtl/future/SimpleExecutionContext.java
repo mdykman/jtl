@@ -2,6 +2,7 @@ package org.dykman.jtl.future;
 
 import static com.google.common.util.concurrent.Futures.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,18 +26,21 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	JSON conf;
 	JSON data;
 
+	File currentDirectory = new File(".");
 	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSON data,JSON conf, JSONBuilder builder ,boolean fc) {
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder ,
+		JSON data,JSON conf, File f, boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
 		this.conf = conf;
 		this.data = data;
+		this.currentDirectory = f;
 	}
-	public SimpleExecutionContext(JSONBuilder builder,JSON data,JSON conf) {
-		this(null, data,conf, builder,false);
+	public SimpleExecutionContext(JSONBuilder builder,JSON data,JSON conf,File f) {
+		this(null,builder, data,conf, f,false);
 	}
 
 
@@ -111,7 +115,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc) {
-		return new SimpleExecutionContext(this,data,null, null,fc);
+		return new SimpleExecutionContext(this,null,data,null,currentDirectory(), fc);
 	}
 
 
@@ -156,6 +160,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		executorService = s;
 	}
 
+
 	@Override
 	public ListeningExecutorService executor() {
 		if (executorService != null)
@@ -163,6 +168,14 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		if (parent != null)
 			return parent.executor();
 		return null;
+	}
+
+	@Override
+	public File currentDirectory() {
+		return currentDirectory;
+	}
+	public File file(String f) {
+		return new File(currentDirectory,f);
 	}
 
 }

@@ -1,5 +1,7 @@
 package org.dykman.jtl.future;
 
+import java.io.File;
+
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.json.JSONBuilder;
 
@@ -15,6 +17,8 @@ public interface AsyncExecutionContext<T> {
 	public AsyncExecutionContext<T> getMasterContext();
 
 
+	public File currentDirectory();
+	public File file(String in);
 	public ListenableFuture<T> config();
 
 	public ListenableFuture<T> dataContext();

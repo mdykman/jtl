@@ -57,12 +57,16 @@ public class JtlMain {
 			opts[2] = new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, sb, 'p');
 			opts[3] = new LongOpt("data", LongOpt.REQUIRED_ARGUMENT, sb, 'd');
 			opts[4] = new LongOpt("help", LongOpt.REQUIRED_ARGUMENT, sb, 'h');
+			opts[5] = new LongOpt("directory", LongOpt.REQUIRED_ARGUMENT, sb, 'D');
+			
 			int c;
 			boolean help = false;
 			File fconfig = null;
 			File jtl = null;
 			File fdata = null;
-			int port = 0;
+			File cwd = new File(".");
+			boolean server = false;
+			int port = 7719; // default port
 			
 			Getopt g = new Getopt("jtl", args,"h" ,opts);
 			while((c = g.getopt()) != -1) {
@@ -79,7 +83,12 @@ public class JtlMain {
 					case 3: {
 						fdata = new File(home,g.getOptarg());
 					}
-					case 'h': help = true;
+					case 4: {
+						help = true;
+					}
+					case 5: {
+						cwd = new File(home,g.getOptarg());
+					}
 					break;
 				}
 				
@@ -99,7 +108,7 @@ public class JtlMain {
 				String line;
 				while((line=buffer.readLine())!=null) {
 					main.compile(line);
-					JSON result = main.execute(inst, data, fconfig);
+					JSON result = main.execute(inst, data, cwd,fconfig);
 					result.write(pw, 3,false);
 					pw.flush();
 				}
@@ -107,7 +116,7 @@ public class JtlMain {
 				 for (int i = g.getOptind(); i < args.length ; i++) {
 						File f = new File(args[i]);
 						JSON data = main.parse(f);
-						JSON result = main.execute(inst, data, fconfig);
+						JSON result = main.execute(inst, data, cwd,fconfig);
 						result.write(pw, 3,false);
 						pw.flush();					 
 				 }
@@ -133,7 +142,7 @@ public class JtlMain {
 		return builder.parse(f);
 	}
 	
-	public JSON execute(InstructionFuture<JSON> inst, JSON data,File config) 
+	public JSON execute(InstructionFuture<JSON> inst, JSON data,File cwd,File config) 
 		throws Exception {
 //		JSON d = builder.parse(data);
 		JSON c; 
@@ -142,7 +151,7 @@ public class JtlMain {
 		} else {
 			c = builder.value();
 		}
-		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,c, factory, les);
+		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,c, cwd,factory, les);
 //		InstructionFuture<JSON> inst = compiler.parse(jtl);
 		ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 		return j.get();
