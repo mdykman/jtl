@@ -1,7 +1,7 @@
 {
   modules: {
-   	http:{  class:"org.dykman.jtl.core.modules.HttpModule" },
-      jdbc: { class:"org.dykman.jtl.core.modules.JdbcModule" }
+   	http:{  class:"org.dykman.jtl.modules.HttpModule" },
+      jdbc: { class:"org.dykman.jtl.modules.JdbcModule" }
   },
   author: {
   	name:"Michael Dykman",

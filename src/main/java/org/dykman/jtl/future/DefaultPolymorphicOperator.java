@@ -13,29 +13,29 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 		this.builder = builder;
 	}
 	@Override
-	public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) 
+	public JSON invoke(AsyncExecutionContext<JSON> context, JSON a, JSON b) 
 			throws ExecutionException {
-		return op(eng,a,b);
+		return op(context,a,b);
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSON l, JSON r) throws ExecutionException {
+	public JSON op(AsyncExecutionContext<JSON> context, JSON l, JSON r) throws ExecutionException {
 		switch (l.getType()) {
 		case FRAME:
 		case ARRAY: {
 			JSONArray left = (JSONArray) l;
 			switch (r.getType()) {
 			case ARRAY:
-				return op(eng, left, (JSONArray) r);
+				return op(context, left, (JSONArray) r);
 			case FRAME:
 			case OBJECT:
-				return op(eng, left, (JSONObject) r);
+				return op(context, left, (JSONObject) r);
 			case BOOLEAN:
 			case DOUBLE:
 			case LONG:
 			case NULL:
 			case STRING:
-				return op(eng, left, r);
+				return op(context, left, r);
 			}
 			break;
 		}
@@ -43,15 +43,15 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			JSONObject left = (JSONObject) l;
 			switch (r.getType()) {
 			case OBJECT:
-				return op(eng, left, (JSONObject) r);
+				return op(context, left, (JSONObject) r);
 			case ARRAY:
-				return op(eng, left, (JSONArray) r);
+				return op(context, left, (JSONArray) r);
 			case BOOLEAN:
 			case DOUBLE:
 			case LONG:
 			case NULL:
 			case STRING:
-				return op(eng,left, r);
+				return op(context,left, r);
 			}
 			break;
 		}
@@ -59,19 +59,19 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			Boolean left = (Boolean) ((JSONValue) l).get();
 			switch (r.getType()) {
 			case BOOLEAN:
-				return builder.value(op(eng,left,
+				return builder.value(op(context,left,
 						(Boolean) ((JSONValue) r).get()));
 			case DOUBLE:
-				return builder.value(op(eng, left ? (double)1f  : (double)0f,
+				return builder.value(op(context, left ? (double)1f  : (double)0f,
 						(Double) ((JSONValue) r).get()));
 			case LONG:
-				return builder.value(op(eng,left ? 1L  : 0L,
+				return builder.value(op(context,left ? 1L  : 0L,
 						(Long) ((JSONValue) r).get()));
 			case OBJECT:
 			case ARRAY:
 			case NULL:
 			case STRING:
-				return  builder.value(op(eng, left,r.isTrue()));
+				return  builder.value(op(context, left,r.isTrue()));
 			}
 			break;
 		}
@@ -79,23 +79,23 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			Long left  = (Long) ((JSONValue) l).get();
 			switch (r.getType()) {
 			case LONG:
-				return builder.value( op(eng,left,
+				return builder.value( op(context,left,
 						(Long) ((JSONValue) r).get()));
 			case DOUBLE:
-				return builder.value(op(eng,left.doubleValue(),
+				return builder.value(op(context,left.doubleValue(),
 						((Double) ((JSONValue) r).get())));
 			case BOOLEAN:
-				return builder.value( op(eng,left,
+				return builder.value( op(context,left,
 						(Boolean) ((JSONValue) r).get() ? 1L : 0L));
 			case STRING:
-				return builder.value(op(eng,left.toString(),
+				return builder.value(op(context,left.toString(),
 						((JSONValue) r).get().toString()));
 			case NULL:
 				return builder.value();
 			case ARRAY:
 			case FRAME:
 			case OBJECT:
-				return op(eng,left,r);
+				return op(context,left,r);
 			}
 			break;
 		}
@@ -103,22 +103,22 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			Double left = ((Double) ((JSONValue) l).get());
 			switch (r.getType()) {
 			case DOUBLE:
-				return builder.value(op(eng,left,
+				return builder.value(op(context,left,
 						((Double) ((JSONValue) r).get())));
 			case LONG:
-				return builder.value(op(eng,left,
+				return builder.value(op(context,left,
 						 ((JSONValue) r).doubleValue()));
 			case BOOLEAN:
-				return builder.value(op(eng, left,
+				return builder.value(op(context, left,
 						((JSONValue) r).booleanValue() ? (double)1.0f : 0.0f));
 			case STRING:
-				return builder.value(op(eng,left.toString(),
+				return builder.value(op(context,left.toString(),
 						((JSONValue) r).stringValue()));
 			case NULL:
 //				return new JSONValue(null);
 			case ARRAY:
 			case OBJECT:
-				return op(eng,left,r);
+				return op(context,left,r);
 			}
 			break;
 		}
@@ -129,13 +129,13 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 			case LONG:
 			case STRING:
 
-				return builder.value(op(eng,left,
+				return builder.value(op(context,left,
 						((JSONValue) r).stringValue()));
 			case NULL:
 			case ARRAY:
 			case BOOLEAN:
 			case OBJECT:
-				return op(eng,left,r);
+				return op(context,left,r);
 			}
 			break;
 		}
@@ -149,54 +149,54 @@ public class DefaultPolymorphicOperator implements PolymorphicOperator, DyadicAs
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONArray l, JSONArray r) {
 		return builder.value();
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONObject l, JSONObject r) {
 		return builder.value();
 	}
 
 
 	@Override
-	public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
+	public Long op(AsyncExecutionContext<JSON> context, Long l, Long r) {
 		return null;
 	}
 
 	@Override
-	public Boolean op(AsyncExecutionContext<JSON> eng, Boolean l, Boolean r) {
+	public Boolean op(AsyncExecutionContext<JSON> context, Boolean l, Boolean r) {
 		return null;
 	}
 
 
 	@Override
-	public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
+	public Double op(AsyncExecutionContext<JSON> context, Double l, Double r) {
 		return null;
 	}
 
 	@Override
-	public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
+	public String op(AsyncExecutionContext<JSON> context, String l, String r) {
 		return null;
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONArray r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONObject l, JSONArray r) {
 		return builder.value();
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONObject r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONArray l, JSONObject r) {
 		return builder.value();
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONObject l, JSON r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONObject l, JSON r) {
 		return builder.value();
 	}
 
 	@Override
-	public JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
+	public JSON op(AsyncExecutionContext<JSON> context, JSONArray l, JSON r) {
 		return builder.value();
 	}
 

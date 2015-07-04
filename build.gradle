@@ -57,6 +57,7 @@ dependencies {
     compile 'com.zaxxer:HikariCP:2.3.8'
     compile 'mysql:mysql-connector-java:5.1.35'
     compile 'org.xerial:sqlite-jdbc:3.8.10.1'
+    runtime 'org.xerial:sqlite-jdbc:3.8.10.1'
 
 
     compile 'org.antlr:antlr4:4.5'
@@ -104,18 +105,21 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
    main = "SimpleJtlTest"
    //main = "org.dykman.jtl.core.JtlMain"
 //   args "src/test/resources/curl.jtl"  
-//   args "src/test/resources/data.json"
+//   args "src/test/resources/generated.json"
 
 //   args "src/test/resources/jdbc.jtl"  
 //   args "src/test/resources/data.json"
 
 //   args "src/test/resources/string.jtl"  
- //  args "src/test/resources/data.json"
+ //  args "src/test/resources/generated.json"
 
 //   args "src/test/resources/simple.jtl"  
 //   args "src/test/resources/data.json"
 
-   args "src/test/resources/re.jtl"  
+//   args "src/test/resources/re.jtl"  
+//   args "src/test/resources/generated.json"
+
+   args "src/test/resources/sqlite.jtl"  
    args "src/test/resources/generated.json"
 
    args "src/test/resources/config.json"

@@ -126,7 +126,7 @@ public class JtlCompiler {
 		context.define("collate", factory.collate());
 		context.define("omap", factory.omap());
 		context.define("amend", factory.amend());
-		context.define("replace", factory.replace());
+		context.define("apply", factory.apply());
 	
 		// boolean type test only
 		context.define("null", factory.isNull());

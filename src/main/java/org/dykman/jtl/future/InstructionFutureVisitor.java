@@ -173,7 +173,8 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	public InstructionFutureValue<JSON> visitFunc(FuncContext ctx) {
 		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
 		for (ValueContext jc : ctx.value()) {
-			ins.add(visitValue(jc).inst);
+			InstructionFutureValue<JSON> vv = visitValue(jc);
+			ins.add(vv.inst);
 		}
 		return new InstructionFutureValue<JSON>(factory.function(ctx.getChild(0).getText(), ins));
 	}
@@ -499,8 +500,11 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			return visitNumber(nc);
 
 		StringContext sc = ctx.string();
-		if (sc != null)
-			return visitString(sc);
+		if (sc != null) {
+			InstructionFutureValue<JSON> dd =  visitString(sc);
+			dd.inst = factory.value(dd.string);
+			return dd;
+		}
 /*
 		JstringContext jc = ctx.jstring();
 		if (jc != null)
