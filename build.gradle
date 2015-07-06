@@ -104,7 +104,10 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 	classpath.add(files("bin"))
    main = "SimpleJtlTest"
    //main = "org.dykman.jtl.core.JtlMain"
-//   args "src/test/resources/curl.jtl"  
+   args "src/test/resources/simple.jtl"  
+   args "src/test/resources/data.json"
+
+//   args "src/test/resources/n.jtl"  
 //   args "src/test/resources/generated.json"
 
 //   args "src/test/resources/jdbc.jtl"  
@@ -117,10 +120,10 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 //   args "src/test/resources/data.json"
 
 //   args "src/test/resources/re.jtl"  
-//   args "src/test/resources/generated.json"
+ //  args "src/test/resources/generated.json"
 
-   args "src/test/resources/sqlite.jtl"  
-   args "src/test/resources/generated.json"
+//   args "src/test/resources/sqlite.jtl"  
+//   args "src/test/resources/generated.json"
 
    args "src/test/resources/config.json"
 }

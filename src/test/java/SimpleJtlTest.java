@@ -9,10 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
-import org.dykman.jtl.future.InstructionFutureFactory;
-import org.dykman.jtl.future.SimpleExecutionContext;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
@@ -45,10 +42,9 @@ public class SimpleJtlTest {
 			JSON data = builder.parse(new File(args[1]));
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	
-			InstructionFutureFactory factory = new InstructionFutureFactory(builder);
 			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
-				inputFile.getParentFile(),factory, les);
+				inputFile.getParentFile(),builder, les);
 			
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);

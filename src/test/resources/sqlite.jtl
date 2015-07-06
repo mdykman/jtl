@@ -8,7 +8,7 @@
 	},
 	_: {
 		ff: [ ff(0), ff(17), ff(23) ],
-		filtered: [ ff(0), ff(17), ff(23) ]/filter(.)/*/amend("status",. + "ey-dokey")/amend("a",.+100),
+		filtered: [ ff(0), ff(17), ff(23) ]/*/amend("status",. + "ey-dokey")/amend("a",.+100),
 		all: all()
 	},
 	ff: db.query("select * from data where a = ?",$1)/amend("status","ok")/amend("param","I used " + $1 + " as a parameter")[0],

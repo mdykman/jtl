@@ -1,6 +1,7 @@
 {
 		data: {
-	   		expr: **/salary,
+	   		expr: **/salary/filter(value()),
+	   		salary: data/people/*/salary,
 	   		name:data/people/*/first,
 	   		depts:data/people/*/department
 		}	

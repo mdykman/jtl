@@ -50,6 +50,7 @@ public class HttpModule implements Module {
 		context.define("post", _postInstruction(context.builder()));
 		context.define("put", _putInstruction(context.builder()));
 		context.define("delete", _deleteInstruction(context.builder()));
+      context.define("patch", _patchInstruction(context.builder()));
 		context.define("form", _formInstruction(context.builder()));
 
 	}
@@ -81,6 +82,7 @@ public class HttpModule implements Module {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
 					for (Pair<String, JSON> pp : p) {
+					   // TODO:: I probably should be url-encoding these
 						post.addParameter(pp.f, pp.s.toString());
 					}
 				}
@@ -88,7 +90,7 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(builder, mf);
+		return httpInstruction(mf);
 	}
 
 	public InstructionFuture<JSON> _getInstruction(
@@ -109,7 +111,7 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(builder, mf);
+		return httpInstruction(mf);
 	}
 
 	public InstructionFuture<JSON> _deleteInstruction(
@@ -130,7 +132,7 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(builder, mf);
+		return httpInstruction(mf);
 	}
 
 	public InstructionFuture<JSON> _postInstruction(
@@ -153,7 +155,7 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(builder, mf);
+		return httpInstruction(mf);
 	}
 
 	public InstructionFuture<JSON> _putInstruction(
@@ -169,7 +171,7 @@ public class HttpModule implements Module {
 						// IOUtils.cop
 						// post.setr
 						put.setRequestEntity(new StringRequestEntity(p
-								.toString(), "application/json", "UTF-8"));
+								.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}
@@ -177,15 +179,47 @@ public class HttpModule implements Module {
 				return put;
 			}
 		};
-		return httpInstruction(builder, mf);
+		return httpInstruction(mf);
 	}
+	static class PatchMethod extends PostMethod {
+	   public PatchMethod(String url) {
+	      super(url);
+	   }
+	   /**
+    * Returns <tt>"PATCH"</tt>.
+     * @return <tt>"PATCH"</tt>
+	    * @see HttpMethod.getName()
+	    */
+      @Override
+	   public String getName() {
+	      return "PATCH";
+	   }
+	}
+   public InstructionFuture<JSON> _patchInstruction(
+         final JSONBuilder builder) {
+      MethodFactory mf = new MethodFactory() {
 
+         @Override
+         public HttpMethod method(String url, JSONObject p) {
+            PatchMethod patch = new PatchMethod(url);
+            if (p != null) {
+               try {
+                  patch.setRequestEntity(new StringRequestEntity(p
+                        .toString(true), "application/json", "UTF-8"));
+               } catch (UnsupportedEncodingException e) {
+                  throw new RuntimeException(e);
+               }
+            }
+            return patch;
+         }
+      };
+      return httpInstruction(mf);
+   }
 	protected InstructionFuture<JSON> httpInstruction(
-			 final JSONBuilder builder,
 			final MethodFactory mf) {
 		return new AbstractInstructionFuture() {
 
-			JSON read(HttpMethod m) 
+			JSON read(HttpMethod m,JSONBuilder builder) 
 				throws IOException {
 				Reader reader= new InputStreamReader(m
 					.getResponseBodyAsStream());
@@ -226,6 +260,7 @@ public class HttpModule implements Module {
 								return context.executor().submit(new Callable<JSON>() {
 									@Override
 									public JSON call() throws Exception {
+									   JSONBuilder builder = context.builder();
 										HttpClient client = new HttpClient();
 										HttpMethod mm = mf.method(url, data);
 										try {
@@ -240,7 +275,7 @@ public class HttpModule implements Module {
 											boolean json = rtype
 													.contains("/json");
 											if (json) {
-												JSON jj = read(mm);
+												JSON jj = read(mm,context.builder());
 												if (!(n >= 200 && n < 300)) {
 													if (jj instanceof JSONObject) {
 														((JSONObject) jj)
@@ -260,7 +295,7 @@ public class HttpModule implements Module {
 																.getResponseBodyAsString()));
 												return oo;
 											}
-											return read(mm);
+											return read(mm,builder);
 										} catch (Exception e) {
 											JSONObject oo = builder
 													.object(null);

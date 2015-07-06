@@ -1,18 +1,15 @@
 package org.dykman.jtl.future;
 
-import static com.google.common.util.concurrent.Futures.*;
+import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
-import org.dykman.jtl.json.JSONObject;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -24,36 +21,34 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
 	ListeningExecutorService executorService = null;
 	JSON conf;
-	JSON data;
+	ListenableFuture<JSON> data;
 
 	File currentDirectory = new File(".");
 	JSONBuilder builder = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder ,
-		JSON data,JSON conf, File f, boolean fc) {
+		ListenableFuture<JSON> data,JSON conf, File f, boolean fc) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
 		this.conf = conf;
 		this.data = data;
 		this.currentDirectory = f;
+		if(data!=null) define("_",InstructionFutureFactory.value(data));
 	}
-	public SimpleExecutionContext(JSONBuilder builder,JSON data,JSON conf,File f) {
+	public SimpleExecutionContext(JSONBuilder builder,ListenableFuture<JSON> data,JSON conf,File f) {
 		this(null,builder, data,conf, f,false);
 	}
 
-
 	public ListenableFuture<JSON> dataContext() {
-		return immediateCheckedFuture(data);
+		return data;
 	}
 	public ListenableFuture<JSON> config() {
 		if(conf==null && parent!=null) return parent.config();
 		return immediateFuture(conf);
 	}
 
-	
-	
 	@Override
 	public JSONBuilder builder() {
 		JSONBuilder r = this.builder;
@@ -98,7 +93,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 							return c;
 					}
 					if (create) {
-						c = this.createChild(false);
+						c = this.createChild(false,null);
 						namedContexts.put(label, c);
 					}
 				}
@@ -114,7 +109,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 
 	@Override
-	public AsyncExecutionContext<JSON> createChild(boolean fc) {
+	public AsyncExecutionContext<JSON> createChild(boolean fc,ListenableFuture<JSON> data) {
 		return new SimpleExecutionContext(this,null,data,null,currentDirectory(), fc);
 	}
 
@@ -122,13 +117,9 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	@Override
 	public InstructionFuture<JSON> getdef(String name) {
 		InstructionFuture<JSON> r = null;
-		String[] parts = name.split("[.]");
+		String[] parts = name.split("[.]",2);
 		if (parts.length > 1) {
 			AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
-			int c = 1;
-//			while (named != null && (c < (parts.length - 2))) {
-//				named = named.getNamedContext(parts[c++]);
-//			}
 			if (named != null) {
 				return named.getdef(parts[1]);
 			}

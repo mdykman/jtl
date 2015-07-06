@@ -1,5 +1,6 @@
 package org.dykman.jtl;
 
+@SuppressWarnings("serial")
 public class ExecutionException extends Exception {
 
 	public ExecutionException(String message, Throwable cause) {

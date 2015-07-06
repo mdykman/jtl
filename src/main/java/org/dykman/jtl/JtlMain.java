@@ -31,7 +31,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class JtlMain {
 
 	JSONBuilder builder = new JSONBuilderImpl();
-	InstructionFutureFactory factory = new InstructionFutureFactory(builder);
+	InstructionFutureFactory factory = new InstructionFutureFactory();
 	JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
@@ -151,7 +151,7 @@ public class JtlMain {
 		} else {
 			c = builder.value();
 		}
-		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,c, cwd,factory, les);
+		AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,c, cwd,builder, les);
 //		InstructionFuture<JSON> inst = compiler.parse(jtl);
 		ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 		return j.get();

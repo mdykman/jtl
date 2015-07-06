@@ -1,7 +1,7 @@
 {
 	_: {
 		fruits: people/group(favoriteFruit)/map(*/{"email address":email,guid:guid}/sort(.["email address"])),
-		select: people[3..-1],
+		select: people[0,3..-1],
 		tags: {
 			users:people/*/{
 				name: name,

@@ -33,5 +33,5 @@ public interface AsyncExecutionContext<T> {
 	public AsyncExecutionContext<T> getNamedContext(String label);
 	public AsyncExecutionContext<T> getNamedContext(String label,boolean create);
 	
-	public AsyncExecutionContext<T> createChild(boolean fc);
+	public AsyncExecutionContext<T> createChild(boolean fc,ListenableFuture<T> dataContext);
 }

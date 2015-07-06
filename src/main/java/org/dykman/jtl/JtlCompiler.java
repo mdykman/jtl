@@ -21,7 +21,10 @@ import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.future.InstructionFutureVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
+
+import static org.dykman.jtl.future.InstructionFutureFactory.*;
 
 public class JtlCompiler {
 	final JSONBuilder jsonBuilder;
@@ -91,53 +94,57 @@ public class JtlCompiler {
 			JSON data,
 			JSON config,
 			File f,
-			InstructionFutureFactory factory,
+			JSONBuilder builder,
 			ListeningExecutorService les ) {
 
-		SimpleExecutionContext context = new SimpleExecutionContext(factory.builder(),data,config,f);
+		SimpleExecutionContext context = new SimpleExecutionContext(builder,
+		      Futures.immediateCheckedFuture(data),config,f);
 		context.setExecutionService(les);
 		
 		// configurable: import, extend
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");
-			context.define("module", factory.loadModule(modules));
-			context.define("import", factory.importInstruction(config));
+			context.define("module", loadModule(modules));
+			context.define("import", importInstruction(config));
 		}
 		
-		context.define("error", factory.defaultError());
-		context.define("params", factory.params());
+		context.define("error", defaultError());
+		context.define("params", params());
 
 		// external data
-		context.define("file", factory.file());
-		context.define("url", factory.url());
+		context.define("file", file());
+		context.define("url", url());
 
 		// list-oriented
-		context.define("unique", factory.unique());
-		context.define("count", factory.count());
-		context.define("sort", factory.sort(false));
-		context.define("rsort", factory.sort(true));
-		context.define("filter", factory.filter());
-		context.define("contains", factory.contains());
+		context.define("unique", unique());
+		context.define("count", count());
+		context.define("sort", sort(false));
+		context.define("rsort", sort(true));
+		context.define("filter", filter());
+		context.define("contains", contains());
 
 		// object-oriented
-		context.define("group", factory.groupBy());
-		context.define("map", factory.map());
-		context.define("collate", factory.collate());
-		context.define("omap", factory.omap());
-		context.define("amend", factory.amend());
-		context.define("apply", factory.apply());
+		context.define("group", groupBy());
+		context.define("map", map());
+		context.define("collate", collate());
+		context.define("omap", omap());
+		context.define("amend", amend());
+      context.define("keys", keys());
+
+// ??		context.define("apply", apply());
 	
 		// boolean type test only
-		context.define("null", factory.isNull());
-		context.define("object", factory.isObject());
+      context.define("null", isNull());
+      context.define("value", isValue());
+		context.define("object", isObject());
 
 		// with 0 args, they return boolean type test
 		// with 1 arg, attempts to coerce to the specified type
-		context.define("array", factory.isArray());
-		context.define("number", factory.isNumber());
-		context.define("string", factory.isString());
-		context.define("boolean", factory.isBoolean());
+		context.define("array", isArray());
+		context.define("number", isNumber());
+		context.define("string", isString());
+		context.define("boolean", isBoolean());
 
 		
 		return context;
