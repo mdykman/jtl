@@ -109,6 +109,7 @@ public class JtlCompiler {
 			context.define("import", importInstruction(config));
 		}
 		
+		// general
 		context.define("error", defaultError());
 		context.define("params", params());
 
@@ -116,6 +117,12 @@ public class JtlCompiler {
 		context.define("file", file());
 		context.define("url", url());
 
+		
+		// string-oriented
+      context.define("split", split());
+      context.define("join", join());
+      context.define("substr", substr());
+		
 		// list-oriented
 		context.define("unique", unique());
 		context.define("count", count());
