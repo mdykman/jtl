@@ -58,6 +58,7 @@ public class JtlMain {
 			opts[3] = new LongOpt("data", LongOpt.REQUIRED_ARGUMENT, sb, 'd');
 			opts[4] = new LongOpt("help", LongOpt.REQUIRED_ARGUMENT, sb, 'h');
 			opts[5] = new LongOpt("directory", LongOpt.REQUIRED_ARGUMENT, sb, 'D');
+			opts[6] = new LongOpt("server", LongOpt.NO_ARGUMENT, sb, 's');
 			
 			int c;
 			boolean help = false;
@@ -72,24 +73,25 @@ public class JtlMain {
 			while((c = g.getopt()) != -1) {
 				switch(c) {
 					case 0: {
-						fconfig = new File(home,g.getOptarg());
+						fconfig = new File(cwd,g.getOptarg());
 					} break;
 					case 1: {
-						jtl = new File(home,g.getOptarg());
+						jtl = new File(cwd,g.getOptarg());
 					} break;
 					case 2: {
 						port = Integer.parseInt(g.getOptarg());
-					}
+					} break;
 					case 3: {
 						fdata = new File(home,g.getOptarg());
-					}
+					} break;
 					case 4: {
 						help = true;
-					}
+					} break;
 					case 5: {
 						cwd = new File(home,g.getOptarg());
-					}
-					break;
+					} break;
+//					case
+//					break;
 				}
 				
 			}

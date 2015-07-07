@@ -1,0 +1,13 @@
+{
+	!init: {
+		cache: module("cache",{
+			c1: {
+				max: 500,
+				update: "read"
+			}
+
+	}),
+	_:  cache("c1",ff(5,17)),
+	ff: {
+	}
+}
