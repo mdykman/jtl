@@ -115,7 +115,8 @@ public class JtlCompiler {
 
 		// external data
 		context.define("file", file());
-		context.define("url", url());
+      context.define("url", url());
+      context.define("write", write());
 
 		
 		// string-oriented
@@ -129,7 +130,8 @@ public class JtlCompiler {
 		context.define("sort", sort(false));
 		context.define("rsort", sort(true));
 		context.define("filter", filter());
-		context.define("contains", contains());
+      context.define("contains", contains());
+      context.define("copy", copy());
 
 		// object-oriented
 		context.define("group", groupBy());

@@ -738,20 +738,90 @@ public class InstructionFutureFactory {
          }
       });
    }
+   public static InstructionFuture<JSON> write() {
+      return new AbstractInstructionFuture() {
 
+         @Override
+         public ListenableFuture<JSON> call(
+               final AsyncExecutionContext<JSON> context, 
+               final ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg==null) return immediateFailedCheckedFuture(new ExecutionException("write() requires a filename argument"));
+            List<ListenableFuture<JSON>> ll = new ArrayList<>();
+            ll.add(data);
+            ll.add(arg.call(  context, data));
+            return transform(allAsList(ll),new AsyncFunction<List<JSON>, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+                  Iterator<JSON> jit = input.iterator();
+                  final JSON d = jit.next();
+                  JSON a = jit.next();
+                  final String l = stringValue(a);
+                  Callable cc = new Callable<JSON>() {
+
+                     @Override
+                     public JSON call() throws Exception {
+                        FileWriter fw=new FileWriter(l);
+                        d.write(fw, 3, true);
+                        fw.flush();
+                        fw.close();
+                        return context.builder().value(0);
+                     }
+                  };
+                  return context.executor().submit(cc);
+               }
+            });
+         }
+      };
+   }
+   public static InstructionFuture<JSON> copy() {
+      return new AbstractInstructionFuture() {
+
+         @Override
+         public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg==null) return immediateFailedCheckedFuture(new ExecutionException("copy() requires a numeric argument"));
+            List<ListenableFuture<JSON>> ll = new ArrayList<>();
+            ll.add(data);
+            ll.add(arg.call(  context, data));
+            return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+                  Iterator<JSON> jit = input.iterator();
+                  JSON d = jit.next();
+                  JSON a = jit.next();
+                  Long l = longValue(a);
+                  JSONArray arr = context.builder().array(d.getParent());
+                  if(l!=null) {
+                     for(int i=0;i<l.intValue();++i) {
+                        arr.add(d.cloneJSON());
+                     }
+                     return immediateCheckedFuture(arr);
+                  }
+                  return immediateCheckedFuture(d);
+               }
+            });
+         }
+      };
+   }
    public static InstructionFuture<JSON> join() {
       return new AbstractInstructionFuture() {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
                throws ExecutionException {
-            final InstructionFuture<JSON> first = context.getdef("1");
-            if(first == null) {
-               return data;
-            }
+            final InstructionFuture<JSON> arg = context.getdef("1");
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
             ll.add(data);
-            ll.add(first.call(context, data));
+            if(arg == null) {
+               ll.add(immediateCheckedFuture(context.builder().value("")));
+            } else {
+               ll.add(arg.call(context, data));
+            }
             return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
                @Override

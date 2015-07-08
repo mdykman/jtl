@@ -3,11 +3,15 @@
 		cache: module("cache",{
 			c1: {
 				max: 500,
-				update: "read"
+				update: "read", // one of "read","access","write"
+				ttl: 30000,
+				call: [$1,$2] // 
 			}
-
-	}),
-	_:  cache("c1",ff(5,17)),
-	ff: {
-	}
+		})
+	},
+	_:  {
+	first: cache.c1(5,22),
+	second: cache.c1(17,24),
+	third: cache.c1(5,22)
+	},
 }
