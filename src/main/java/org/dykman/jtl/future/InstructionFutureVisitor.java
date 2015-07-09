@@ -261,11 +261,12 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> a = visitAnd_expr(ctx.and_expr());
 		Or_exprContext c = ctx.or_expr();
 		if (c != null) {
+			final boolean or = ctx.getChild(1).getText().equals("or");
 			return new InstructionFutureValue<JSON>(dyadic(a.inst, visitOr_expr(c).inst,
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
-						return a.isTrue() ? a : b;
+						return or == a.isTrue() ? a : b;
 					}
 				}));
 		} else {

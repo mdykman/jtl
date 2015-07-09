@@ -14,4 +14,5 @@
 	second: cache.c1(17,24),
 	third: cache.c1(5,22)
 	},
+	items: . nor db.query(copy("select * from items where parentid = ? ",count())/join(" UNION "),$_)
 }

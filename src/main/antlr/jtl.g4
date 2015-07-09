@@ -44,6 +44,7 @@ tern_expr
 or_expr 
     : and_expr
     | or_expr 'or' and_expr
+    | or_expr 'nor' and_expr
     ;
 
 and_expr 
