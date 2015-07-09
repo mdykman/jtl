@@ -39,6 +39,22 @@ compileJava {
 	targetCompatibility=1.8
 }
 
+
+sourceSets {
+    main {
+        java {
+            srcDirs += "src/main/antlr"
+        }
+    }
+}
+
+eclipse {
+	jdt {
+		sourceCompatibility=1.8
+		targetCompatibility=1.8
+	}
+}
+
 antlr4 {
    source = file "src/main/antlr"
    output = file "target/generated-sources/antlr4/org/dykman/jtl"
@@ -70,6 +86,8 @@ dependencies {
 
 
    compile 'commons-httpclient:commons-httpclient:3.1'
+	compile 'org.apache.solr:solr-solrj:5.2.1'
+
 
 
 //	compile 'de.ailis.pherialize:pherialize:1.2.1'
