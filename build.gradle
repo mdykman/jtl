@@ -117,13 +117,21 @@ clean {
     delete += fileTree(antlr4.output).include('**/*')
 }
 
+clean.dependsOn cleanCompileJava
+
 task execute( dependsOn: 'compileJava', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
+
    main = "SimpleJtlTest"
-   //main = "org.dykman.jtl.core.JtlMain"
-   args "src/test/resources/simple.jtl"  
+
+ //main = "org.dykman.jtl.core.JtlMain"
+
+   args "src/test/resources/sx.jtl"  
    args "src/test/resources/data.json"
+
+//   args "src/test/resources/simple.jtl"  
+//   args "src/test/resources/data.json"
 
 //   args "src/test/resources/n.jtl"  
 //   args "src/test/resources/generated.json"

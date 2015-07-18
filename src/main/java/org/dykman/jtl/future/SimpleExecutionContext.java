@@ -35,7 +35,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		this.conf = conf;
 		this.data = data;
 		this.currentDirectory = f;
-		if(data!=null) define("_",InstructionFutureFactory.value(data));
+//		if(fc && data!=null) define("_",InstructionFutureFactory.value(data));
 	}
 	public SimpleExecutionContext(JSONBuilder builder,ListenableFuture<JSON> data,JSON conf,File f) {
 		this(null,builder, data,conf, f,false);

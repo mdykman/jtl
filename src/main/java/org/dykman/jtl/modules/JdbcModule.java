@@ -29,6 +29,7 @@ import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
@@ -118,8 +119,12 @@ public class JdbcModule implements Module {
 										List<JSON> input) throws Exception {
 									Iterator<JSON> jit = input.iterator();
 									final JSON qq = jit.next();
+									if(! qq.isValue()) return Futures.immediateFailedCheckedFuture(
+									      new ExecutionException("query is not a string: " + qq.toString()));
 									final JSON pp = jit.hasNext() ? jit.next()
 											: null;
+                           if(pp !=null && ! (pp instanceof JSONArray)) return Futures.immediateFailedCheckedFuture(
+                                 new ExecutionException("parameters are not an array: " + pp.toString()));
 									Callable<JSON> cc = new Callable<JSON>() {
 										@Override
 										public JSON call() throws Exception {

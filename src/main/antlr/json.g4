@@ -24,10 +24,14 @@ object
     ;
     
 pair
-    : string ':' value
-    | id ':' value 
+    : key ':' value
     ; 
-    
+
+key 
+	: ID
+	| string
+	;
+	
 array
     :   '[' value (',' value)* ']' 
     |   '[' ']' // empty array
@@ -38,9 +42,6 @@ number
       | FLOAT 
       ;
 
-id 
-     : ID 
-     ;
     
 string 
 	: STRING

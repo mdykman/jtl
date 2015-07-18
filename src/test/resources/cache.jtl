@@ -3,16 +3,18 @@
 		cache: module("cache",{
 			c1: {
 				max: 500,
-				update: "read", // one of "read","access","write"
-				ttl: 30000,
-				call: [$1,$2] // 
+				update: "read", // one of "read","access"
+				ttl: 30000
 			}
 		})
 	},
 	_:  {
-	first: cache.c1(5,22),
-	second: cache.c1(17,24),
-	third: cache.c1(5,22)
+		first: cache.c1(ff(5,22)),
+		second: cache.c1(ff(17,24)),
+		third: cache.c1(ff(7,31)),
+		fourth: cache.c1(ff(),17,24)
 	},
+	ff: ['item',$1,$2],
+	x: cache.c1(ff($1,$2))
 	items: . nor db.query(copy("select * from items where parentid = ? ",count())/join(" UNION "),$_)
 }

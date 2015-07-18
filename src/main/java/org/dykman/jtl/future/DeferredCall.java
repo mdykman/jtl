@@ -21,7 +21,11 @@ public class DeferredCall implements InstructionFuture<JSON> {
 		this.pcontext = context;
 		this.data = t;
 	}
-
+	
+//   @Override
+	public AsyncExecutionContext<JSON> getContext() {
+	   return pcontext;
+	}
 	@Override
 	public InstructionFuture<JSON> unwrap(final AsyncExecutionContext<JSON> context) {
 		//return inst.unwrap(context);

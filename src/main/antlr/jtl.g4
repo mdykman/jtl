@@ -148,32 +148,49 @@ recurs
 	: '**'
     | '...'
     ;
-            
+
+
 func
-     : id '(' ')'
-     | id '(' value (',' value )* ')' 
+	: ff
+	| ident '.' ff
+	;
+            
+ff
+     : ident '(' ')'
+     | ident '(' value (',' value )* ')' 
      ;
 
+	
 variable
       : '$' ident 
+      |  ident '.' '$' ident 
       | '$' INTEGER
       ;
 
 
-number
-      : INTEGER 
-      | FLOAT 
-      ;
+//number
+//      : INTEGER 
+//      | FLOAT 
+//      ;
 
 ident 
 	: ID
 	;
+
+
+key  
+	: ident
+	| '!' ident
+	| '$' ident
+	| string
+	;
+	
 	
 id 
      : ident
      | id '.' ident
-     | '!' id
-     | '$' id
+//     | '!' id
+//     | '$' id
      ;
  
  

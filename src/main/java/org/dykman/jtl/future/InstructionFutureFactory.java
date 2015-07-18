@@ -491,6 +491,7 @@ public class InstructionFutureFactory {
                final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
             AsyncExecutionContext<JSON> context = ctx.createChild(true, data);
             context.define("0", value(context.builder().value(name)));
+            context.define("_", value(data));
             int cc = 1;
             for(InstructionFuture<JSON> i : iargs) {
                // the arguments themselves should be evaluated
@@ -509,7 +510,16 @@ public class InstructionFutureFactory {
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
                throws ExecutionException {
-            InstructionFuture<JSON> func = context.getdef(name);
+            String[] ss = name.split("[.]", 2);
+            InstructionFuture<JSON> func;
+            if(ss.length == 1) func = context.getdef(name);
+            else {
+               AsyncExecutionContext<JSON> ctx = context.getNamedContext(ss[0]);
+               if(ctx == null) {
+                  return immediateFailedCheckedFuture(new ExecutionException("unable to load named context " + ss[0]));
+              }
+               func = ctx.getdef(ss[1]);
+            }
             if(func == null) {
                // System.err.println("function '" + name + "' not found.");
                return immediateFailedCheckedFuture(new ExecutionException("no function found named " + name));
@@ -867,6 +877,8 @@ public class InstructionFutureFactory {
                return builder.value(((JSONArray) j).collection().size());
             case OBJECT:
                return builder.value(((JSONObject) j).map().size());
+            case STRING:
+               return builder.value(((JSONValue) j).stringValue().length());
             default:
                return builder.value(1);
             }
@@ -2084,7 +2096,7 @@ public class InstructionFutureFactory {
                         JSON param = src.get(ks);
                         if(param == null)
                            param = context.builder().value();
-                        return transform(ai.call(context, immediateCheckedFuture(param)),
+                        return transform(ai.call(context, immediateCheckedFuture(inp)),
                               new KeyedAsyncFunction<JSON, JSON, String>(ks) {
 
                                  @Override
