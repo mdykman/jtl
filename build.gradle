@@ -65,10 +65,7 @@ antlr4 {
 }
 
 
-// In this section you declare the dependencies for your production and test code
 dependencies {
-    // The production code uses the SLF4J logging API at compile time
-//	 compile "https://github.com/eclipse/jetty.project/blob/master/tests/test-webapps/test-mock-resources/pom.xml"
     compile 'org.slf4j:slf4j-api:1.7.7'
     
     compile 'com.google.guava:guava:18.0'
@@ -94,11 +91,9 @@ dependencies {
 
 	compile 'org.eclipse.jetty:jetty-server:9.3.1.v20150714'
 	compile 'org.eclipse.jetty:jetty-servlet:9.3.1.v20150714'
-//	runtime 'org.eclipse.jetty:example-jetty-embedded:9.3.1.v20150714'
+	runtime 'org.eclipse.jetty:jetty-servlet:9.3.1.v20150714'
 
 
-//	compile 'de.ailis.pherialize:pherialize:1.2.1'
-    
     testCompile "junit:junit:4.11"
 }
 
@@ -130,12 +125,20 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
 
+	def jtl = System.getProperty("script")
+	def conf = System.getProperty("config") 
+	conf = conf == null ? "src/test/resources/config.json" : conf
+	def data = System.getProperty("data") 
+	data = data == null ? "src/test/resources/generated.json" : data
+	
    main = "SimpleJtlTest"
 
- //main = "org.dykman.jtl.core.JtlMain"
+	args jtl
+	args data
+	args conf
 
-   args "src/test/resources/sx.jtl"  
-   args "src/test/resources/data.json"
+//   args "src/test/resources/sx.jtl"  
+//   args "src/test/resources/data.json"
 
 //   args "src/test/resources/simple.jtl"  
 //   args "src/test/resources/data.json"
@@ -158,6 +161,6 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 //   args "src/test/resources/sqlite.jtl"  
 //   args "src/test/resources/generated.json"
 
-   args "src/test/resources/config.json"
+//   args "src/test/resources/config.json"
 }
 

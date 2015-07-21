@@ -88,6 +88,10 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	}
 	@Override
 	public DataValue<JSON> visitKey(KeyContext ctx) {
+		StringContext sc = ctx.string();
+		if(sc!=null) {
+			return new DataValue<JSON>(visitString(sc).str);
+		}
 		return new DataValue<JSON>(ctx.ID().getText());
 	}
 
