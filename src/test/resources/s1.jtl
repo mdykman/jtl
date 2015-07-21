@@ -6,14 +6,13 @@
       })
 	},
 	_:  {
-		a: [2,4,6]/items(),
-		b: [2,4,6]/tt(),
-		c: [2,4,6]/tu()
+		a: [2,4,6]/items()
 	},
 	start: ff([$1]),
 	ff: $1/items()/amend("children",ff(*/id)),
 //	items: . nor db.query(copy("select * from items where parentid = ? ",count())/join(" UNION "), . )
 	items: "select * from items where parentid = ? "/copy(count($_))/join(" UNION "),
+//	items: "select * from items where parentid = ? "/copy(count($_)),
 	tt: .,
 	tu: $_
 }

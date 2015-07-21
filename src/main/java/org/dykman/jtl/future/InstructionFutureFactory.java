@@ -850,8 +850,8 @@ public class InstructionFutureFactory {
                               sb.append(sep);
                            else {
                               first = false;
-                              sb.append(stringValue(j));
                            }
+                           sb.append(stringValue(j));
                         }
                         return immediateCheckedFuture(context.builder().value(sb.toString()));
                      }
