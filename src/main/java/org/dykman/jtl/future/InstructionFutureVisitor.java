@@ -215,16 +215,6 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
       }
       return new InstructionFutureValue<JSON>(function(name, ins));
 	}
-	/*
-   @Override
-   public InstructionFutureValue<JSON> visitFf(FfContext ctx) {
-		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
-		for (ValueContext jc : ctx.value()) {
-			InstructionFutureValue<JSON> vv = visitValue(jc);
-			ins.add(vv.inst);
-		}
-		return new InstructionFutureValue<JSON>(function(ctx.getChild(0).getText(), ins));
-	}*/
 
 	@Override
 	public InstructionFutureValue<JSON> visitVariable(VariableContext ctx) {

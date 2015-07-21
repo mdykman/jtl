@@ -32,6 +32,7 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'application'
 apply plugin: 'me.champeau.gradle.antlr4'
 
 compileJava {
@@ -39,6 +40,7 @@ compileJava {
 	targetCompatibility=1.8
 }
 
+mainClassName = "org.dykman.jtl.JtlMain"
 
 sourceSets {
     main {
@@ -66,6 +68,7 @@ antlr4 {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
+//	 compile "https://github.com/eclipse/jetty.project/blob/master/tests/test-webapps/test-mock-resources/pom.xml"
     compile 'org.slf4j:slf4j-api:1.7.7'
     
     compile 'com.google.guava:guava:18.0'
@@ -88,6 +91,10 @@ dependencies {
    compile 'commons-httpclient:commons-httpclient:3.1'
 	compile 'org.apache.solr:solr-solrj:5.2.1'
 
+
+	compile 'org.eclipse.jetty:jetty-server:9.3.1.v20150714'
+	compile 'org.eclipse.jetty:jetty-servlet:9.3.1.v20150714'
+//	runtime 'org.eclipse.jetty:example-jetty-embedded:9.3.1.v20150714'
 
 
 //	compile 'de.ailis.pherialize:pherialize:1.2.1'

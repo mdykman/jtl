@@ -31,12 +31,12 @@ public class JtlCompiler {
 	boolean trace;
 	boolean profile;
 	boolean imported;
-/*
+
 	public JtlCompiler(JSONBuilder jsonBuilder) {
 		this(jsonBuilder,false,false,false);
 	}
 	
-	*/
+	
 	public JtlCompiler(JSONBuilder jsonBuilder,boolean trace, boolean profile,boolean imported) {
 		this.jsonBuilder = jsonBuilder;
 		this.trace= trace;
