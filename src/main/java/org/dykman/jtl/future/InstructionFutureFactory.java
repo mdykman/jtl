@@ -603,10 +603,9 @@ public class InstructionFutureFactory {
       };
    }
 
-   // rank item
    public static InstructionFuture<JSON> dyadic(InstructionFuture<JSON> left, InstructionFuture<JSON> right,
          DyadicAsyncFunction<JSON> f) {
-      return items(new AbstractInstructionFuture() {
+      return new AbstractInstructionFuture() {
 
          @SuppressWarnings("unchecked")
          @Override
@@ -631,7 +630,7 @@ public class InstructionFutureFactory {
                      }
                   });
          }
-      });
+      };
 
    }
 
@@ -818,6 +817,7 @@ public class InstructionFutureFactory {
          }
       };
    }
+   
    public static InstructionFuture<JSON> join() {
       return new AbstractInstructionFuture() {
 

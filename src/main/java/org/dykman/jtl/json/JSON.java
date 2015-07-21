@@ -13,10 +13,10 @@ public interface JSON extends Comparable<JSON> {
 	public JSON setParent(JSON p);
 	public void lock();
 	public JSONType getType();
-	boolean isValue();
+	public boolean isValue();
 	public boolean isTrue();
-
 	public boolean isNumber();
+	
 	public JSON cloneJSON();
 	public boolean equals(JSON r);
 	public int compareTo(JSON r);
@@ -25,6 +25,7 @@ public interface JSON extends Comparable<JSON> {
 	public void write(Writer out,int indent,boolean fq)
 		throws IOException;
 	public String toString(boolean fq);
+	
 	void write(Writer out,int indent, int depth,boolean fq)
 			throws IOException;
 	
