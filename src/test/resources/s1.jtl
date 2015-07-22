@@ -7,6 +7,6 @@
 	},
 	_:  wanted/pp()/amend({children:[id]/ii()}),
 	ii: ch()/amend({children:[id]/ii()}),
-	ch: db.query("select * from items where parentid = ?"/copy(count($_))/join(" UNION "),.),
-	pp: db.query("select * from items where id = ?"/copy(count($_))/join(" UNION "),.)
+	ch: db.query("select id,name from items where parentid = ?"/copy(count($_))/join(" UNION "),.),
+	pp: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),.)
 }
