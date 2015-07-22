@@ -398,7 +398,7 @@ public class InstructionFutureFactory {
                   String name = stringValue(jit.next());
                   JSONObject config = (JSONObject) (jit.hasNext() ? jit.next() : null);
                   ModuleLoader ml = ModuleLoader.getInstance(context.builder(), conf);
-                  AsyncExecutionContext<JSON> modctx = context.getMasterContext().getNamedContext(key);
+                  AsyncExecutionContext<JSON> modctx = context.getMasterContext().getNamedContext(key,true);
                   int n = ml.create(name, modctx, config);
                   return immediateCheckedFuture(context.builder().value(n));
                }
@@ -2078,7 +2078,7 @@ public class InstructionFutureFactory {
                ai = vi.unwrap(context);
                ll.add(ki.call(context, data));
             } else if(ki != null) {
-               ai = vi.unwrap(context);
+               ai = ki.unwrap(context);
             } else {
                ai = null;
             }

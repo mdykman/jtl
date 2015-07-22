@@ -1,5 +1,6 @@
 {
    domain: 'viafoura.com',
+	wanted: [1,2],
 	data: {
 		people: [
 			{

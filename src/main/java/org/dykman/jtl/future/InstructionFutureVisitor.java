@@ -29,11 +29,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jtlBaseVisitor;
+import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.jtlParser.Abs_pathContext;
 import org.dykman.jtl.jtlParser.Add_exprContext;
 import org.dykman.jtl.jtlParser.And_exprContext;
@@ -168,6 +170,19 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 		InstructionFutureValue<JSON> v = visitValue(ctx.value());
 		return new InstructionFutureValue<JSON>(ks, v.inst);
+	}
+
+	@Override 
+	public InstructionFutureValue<JSON> visitKey(KeyContext ctx) {
+	   IdentContext ic = ctx.ident();
+	   if(ic!=null) {
+	      String s = visitIdent(ic).string;
+	      if(ctx.getChildCount() > 1) {
+	         return new InstructionFutureValue<JSON>(ctx.getChild(0).getText() + s);
+	      }
+         return new InstructionFutureValue<JSON>(s);
+	   }
+	   return new InstructionFutureValue<JSON>(visitString(ctx.string()).string);
 	}
 
 	@Override

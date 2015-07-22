@@ -5,14 +5,8 @@
          driver:"org.sqlite.JDBC"
       })
 	},
-	_:  {
-		a: [2,4,6]/items()
-	},
-	start: ff([$1]),
-	ff: $1/items()/amend("children",ff(*/id)),
-//	items: . nor db.query(copy("select * from items where parentid = ? ",count())/join(" UNION "), . )
-	items: "select * from items where parentid = ? "/copy(count($_))/join(" UNION "),
-//	items: "select * from items where parentid = ? "/copy(count($_)),
-	tt: .,
-	tu: $_
+	_:  wanted/pp()/amend({children:[id]/ii()}),
+	ii: ch()/amend({children:[id]/ii()}),
+	ch: db.query("select * from items where parentid = ?"/copy(count($_))/join(" UNION "),.),
+	pp: db.query("select * from items where id = ?"/copy(count($_))/join(" UNION "),.)
 }

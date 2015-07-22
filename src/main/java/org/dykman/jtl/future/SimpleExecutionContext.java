@@ -77,7 +77,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 	@Override
 	public AsyncExecutionContext<JSON> getNamedContext(String label) {
-		return getNamedContext(label, true);
+		return getNamedContext(label, false);
 	}
 
 	public AsyncExecutionContext<JSON> getNamedContext(String label,
