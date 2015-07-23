@@ -2092,21 +2092,18 @@ public class InstructionFutureFactory {
                   if(kj != null) {
                      final String ks = stringValue(kj);
                      if(ai != null && inp.getType() == JSONType.OBJECT) {
-                        final JSONObject src = (JSONObject) inp;
-                        JSON param = src.get(ks);
-                        if(param == null)
-                           param = context.builder().value();
                         return transform(ai.call(context, immediateCheckedFuture(inp)),
                               new KeyedAsyncFunction<JSON, JSON, String>(ks) {
 
                                  @Override
                                  public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                                	 
                                     final JSONObject obj = context.builder().object(inp.getParent());
                                     for(Pair<String, JSON> pp : (JSONObject) inp) {
                                        if(!pp.f.equals(kj))
                                           obj.put(pp.f, pp.s);
                                     }
-                                    obj.put(k, input);
+                                    if(input.getType() != JSONType.NULL) obj.put(k, input);
                                     return immediateCheckedFuture(obj);
                                  }
                               });
