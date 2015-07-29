@@ -17,11 +17,16 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class FramingInstructionFuture extends AbstractInstructionFuture {
+FramingInstructionFuture(int line, String code) {
+      super(line, code);
+   }
 
+
+   /*
 	public FramingInstructionFuture() {
 		// TODO Auto-generated constructor stub
 	}
-
+*/
 	public abstract ListenableFuture<JSON> callItem(AsyncExecutionContext<JSON> context,
 			ListenableFuture<JSON> data) throws ExecutionException;
 	

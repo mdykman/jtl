@@ -1,0 +1,21 @@
+{
+	!init: {
+      db: module("jdbc",{
+         uri:"jdbc:sqlite:src/test/resources/recurse.db",
+         driver:"org.sqlite.JDBC"
+      }),
+		cache: module("cache",{
+			c1: {
+				max: 500,
+				update: "read", // one of "read","access"
+				ttl: 30000
+			}
+		})
+	},
+	_:  [wanted]/*/pp()/amend("children",id/ii() or null),
+	ii: ch(.)/amend("children",id/ii() or null),
+//	ii: ch(),
+//	cch: cache.c1(ch(.)),
+	ch: db.query("select id,name from items where parentid = ?",[$1]),
+	pp: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),.)
+}

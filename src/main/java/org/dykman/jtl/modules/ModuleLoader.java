@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
+import org.dykman.jtl.Pair;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
@@ -50,6 +51,7 @@ public class ModuleLoader {
 	}
 	
 	public int create(
+	   Pair<String,Integer> meta,
 		String name,
 		AsyncExecutionContext<JSON> context,
 		JSONObject config) {
@@ -71,7 +73,7 @@ public class ModuleLoader {
 			Constructor<Module> mc = kl.getConstructor(config.getClass());
 			Module o = mc.newInstance(config);
 //			AsyncExecutionContext<JSON> mc = context.createChild(false);
-			o.define(context);
+			o.define(meta,context);
 			return 1;
 		} catch(Exception e) {
 			System.err.println("error loading module " + name + " with class " + klass + ": " + e.getLocalizedMessage());

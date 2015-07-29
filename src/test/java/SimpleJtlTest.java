@@ -23,14 +23,13 @@ public class SimpleJtlTest {
 
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+
+      ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
 			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 			
 			System.err.println("compiling " + args[0]);
-			
-			
 			File inputFile = new File(args[0]);
 			FileInputStream fin = new FileInputStream(inputFile);
 			InstructionFuture<JSON> inst = compiler.parse(fin);
@@ -42,7 +41,6 @@ public class SimpleJtlTest {
 			JSON data = builder.parse(new File(args[1]));
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	
-			ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
 				inputFile.getParentFile(),builder, les);
 			
@@ -50,10 +48,16 @@ public class SimpleJtlTest {
 			PrintWriter pw =new PrintWriter(System.out);
 			j.get().write(pw, 3,false);
 			pw.flush();
-			les.shutdownNow();
-			les.awaitTermination(2, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+         les.shutdownNow();
+         try {
+            les.awaitTermination(2, TimeUnit.SECONDS);
+         } catch (InterruptedException e) {
+            // don't care, just exit
+         }
+		   
 		}
 	}
 }

@@ -45,13 +45,13 @@ public class HttpModule implements Module {
 	}
 
 	@Override
-	public void define(AsyncExecutionContext<JSON> context) {
-		context.define("get", _getInstruction(context.builder()));
-		context.define("post", _postInstruction(context.builder()));
-		context.define("put", _putInstruction(context.builder()));
-		context.define("delete", _deleteInstruction(context.builder()));
-      context.define("patch", _patchInstruction(context.builder()));
-		context.define("form", _formInstruction(context.builder()));
+	public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
+		context.define("get", _getInstruction(meta,context.builder()));
+		context.define("post", _postInstruction(meta,context.builder()));
+		context.define("put", _putInstruction(meta,context.builder()));
+		context.define("delete", _deleteInstruction(meta,context.builder()));
+      context.define("patch", _patchInstruction(meta,context.builder()));
+		context.define("form", _formInstruction(meta,context.builder()));
 
 	}
 
@@ -74,7 +74,7 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _formInstruction(
-			final JSONBuilder builder) {
+	      Pair<String,Integer> meta,final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -90,11 +90,11 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(mf);
+		return httpInstruction(meta,mf);
 	}
 
 	public InstructionFuture<JSON> _getInstruction(
-			final JSONBuilder builder) {
+	      Pair<String,Integer> meta,final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -111,11 +111,11 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(mf);
+		return httpInstruction(meta,mf);
 	}
 
 	public InstructionFuture<JSON> _deleteInstruction(
-			final JSONBuilder builder) {
+	      Pair<String,Integer> meta,final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -132,11 +132,11 @@ public class HttpModule implements Module {
 				return get;
 			}
 		};
-		return httpInstruction(mf);
+		return httpInstruction(meta,mf);
 	}
 
 	public InstructionFuture<JSON> _postInstruction(
-			final JSONBuilder builder) {
+	      Pair<String,Integer> meta,final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -155,11 +155,11 @@ public class HttpModule implements Module {
 				return post;
 			}
 		};
-		return httpInstruction(mf);
+		return httpInstruction(meta,mf);
 	}
 
 	public InstructionFuture<JSON> _putInstruction(
-			final JSONBuilder builder) {
+	      Pair<String,Integer> meta,final JSONBuilder builder) {
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -179,7 +179,7 @@ public class HttpModule implements Module {
 				return put;
 			}
 		};
-		return httpInstruction(mf);
+		return httpInstruction(meta,mf);
 	}
 	static class PatchMethod extends PostMethod {
 	   public PatchMethod(String url) {
@@ -196,7 +196,7 @@ public class HttpModule implements Module {
 	   }
 	}
    public InstructionFuture<JSON> _patchInstruction(
-         final JSONBuilder builder) {
+         Pair<String,Integer> meta,final JSONBuilder builder) {
       MethodFactory mf = new MethodFactory() {
 
          @Override
@@ -213,11 +213,11 @@ public class HttpModule implements Module {
             return patch;
          }
       };
-      return httpInstruction(mf);
+      return httpInstruction(meta,mf);
    }
 	protected InstructionFuture<JSON> httpInstruction(
-			final MethodFactory mf) {
-		return new AbstractInstructionFuture() {
+	      Pair<String,Integer> meta,final MethodFactory mf) {
+		return new AbstractInstructionFuture(meta) {
 
 			JSON read(HttpMethod m,JSONBuilder builder) 
 				throws IOException {

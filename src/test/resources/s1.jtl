@@ -5,8 +5,8 @@
          driver:"org.sqlite.JDBC"
       })
 	},
-	_:  wanted/pp()/amend("children",id/ii() or null),
+	_:  wanted/pp()/amend("children",[id]/ii() or null),
 	ii: ch()/amend("children",id/ii() or null),
-	ch: db.query("select id,name from items where parentid = ?",[.]),
-	pp: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),.)
+	ch: db.query("select id,name from items where parentid = ?",.),
+	pp: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),[.])
 }

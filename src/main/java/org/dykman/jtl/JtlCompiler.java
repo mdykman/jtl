@@ -100,60 +100,60 @@ public class JtlCompiler {
 		SimpleExecutionContext context = new SimpleExecutionContext(builder,
 		      Futures.immediateCheckedFuture(data),config,f);
 		context.setExecutionService(les);
-		
+		Pair<String, Integer> meta = new Pair<>("base", 0);
 		// configurable: import, extend
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");
-			context.define("module", loadModule(modules));
-			context.define("import", importInstruction(config));
+			context.define("module", loadModule(meta,modules));
+			context.define("import", importInstruction(meta,config));
 		}
 		
 		// general
-		context.define("error", defaultError());
-		context.define("params", params());
+		context.define("error", defaultError(meta));
+		context.define("params", params(meta));
 
 		// external data
-		context.define("file", file());
-      context.define("url", url());
-      context.define("write", write());
+		context.define("file", file(meta));
+      context.define("url", url(meta));
+      context.define("write", write(meta));
 
 		
 		// string-oriented
-      context.define("split", split());
-      context.define("join", join());
-      context.define("substr", substr());
+      context.define("split", split(meta));
+      context.define("join", join(meta));
+      context.define("substr", substr(meta));
 		
 		// list-oriented
-		context.define("unique", unique());
-		context.define("count", count());
-		context.define("sort", sort(false));
-		context.define("rsort", sort(true));
-		context.define("filter", filter());
-      context.define("contains", contains());
-      context.define("copy", copy());
+		context.define("unique", unique(meta));
+		context.define("count", count(meta));
+		context.define("sort", sort(meta,false));
+		context.define("rsort", sort(meta,true));
+		context.define("filter", filter(meta));
+      context.define("contains", contains(meta));
+      context.define("copy", copy(meta));
 
 		// object-oriented
-		context.define("group", groupBy());
-		context.define("map", map());
-		context.define("collate", collate());
-		context.define("omap", omap());
-		context.define("amend", amend());
-      context.define("keys", keys());
+		context.define("group", groupBy(meta));
+		context.define("map", map(meta));
+		context.define("collate", collate(meta));
+		context.define("omap", omap(meta));
+		context.define("amend", amend(meta));
+      context.define("keys", keys(meta));
 
 // ??		context.define("apply", apply());
 	
 		// boolean type test only
-      context.define("null", isNull());
-      context.define("value", isValue());
-		context.define("object", isObject());
+      context.define("null", isNull(meta));
+      context.define("value", isValue(meta));
+		context.define("object", isObject(meta));
 
 		// with 0 args, they return boolean type test
 		// with 1 arg, attempts to coerce to the specified type
-		context.define("array", isArray());
-		context.define("number", isNumber());
-		context.define("string", isString());
-		context.define("boolean", isBoolean());
+		context.define("array", isArray(meta));
+		context.define("number", isNumber(meta));
+		context.define("string", isString(meta));
+		context.define("boolean", isBoolean(meta));
 
 		
 		return context;

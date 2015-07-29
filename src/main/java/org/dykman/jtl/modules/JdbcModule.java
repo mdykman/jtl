@@ -17,10 +17,12 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.Pair;
 //import org.codehaus.jettison.json.JSONArray;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.Frame;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
@@ -96,9 +98,9 @@ public class JdbcModule implements Module {
 			return connection;
 		}
 
-		public InstructionFuture<JSON> query(Executor exec) {
+		public InstructionFuture<JSON> query(Pair<String,Integer> meta,Executor exec) {
 			// Connection c = getConnection();
-			return new AbstractInstructionFuture() {
+			return InstructionFutureFactory.items(meta,new AbstractInstructionFuture(meta) {
 				@Override
 				public ListenableFuture<JSON> call(
 						final AsyncExecutionContext<JSON> context,
@@ -133,6 +135,7 @@ public class JdbcModule implements Module {
 													.prepareStatement(stringValue(qq));
 											if (pp != null) {
 												switch (pp.getType()) {
+                                    case FRAME:
 												case ARRAY:
 													JSONArray arr = (JSONArray) pp;
 													int i = 1;
@@ -143,6 +146,7 @@ public class JdbcModule implements Module {
 																			+ i
 																			+ " is not a scalar value: "
 																			+ j.toString());
+														
 														prep.setObject(i++,
 																((JSONValue) j)
 																		.get());
@@ -174,15 +178,15 @@ public class JdbcModule implements Module {
 								}
 							});
 				}
-			};
+			});
 		}
 	}
 
 	@Override
-	public void define(AsyncExecutionContext<JSON> context) {
+	public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
 		ListeningExecutorService les = context.executor();
 		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
-		context.define("query", wrapper.query(new Executor() {
+		context.define("query", wrapper.query(meta,new Executor() {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {
@@ -202,7 +206,7 @@ public class JdbcModule implements Module {
 			}
 		}));
 
-		context.define("execute", wrapper.query(new Executor() {
+		context.define("execute", wrapper.query(meta,new Executor() {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {

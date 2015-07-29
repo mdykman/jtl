@@ -3,7 +3,7 @@ package org.dykman.jtl.future;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
-import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
+//import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
 
 import java.io.File;
@@ -47,8 +47,8 @@ public class InstructionFutureFactory {
    protected static final String JTL_INTERNAL_KEY = JTL_INTERNAL + "key_";
 
    // rank all
-   public static InstructionFuture<JSON> memo(final InstructionFuture<JSON> inst) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> memo(Pair<String, Integer> meta,final InstructionFuture<JSON> inst) {
+      return new AbstractInstructionFuture(meta) {
          private ListenableFuture<JSON> result = null;
          private boolean fired = false;
 
@@ -77,8 +77,8 @@ public class InstructionFutureFactory {
     * public JSONBuilder builder() { return builder; }
     */
    // rank: all
-   public static InstructionFuture<JSON> file() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> file(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -125,8 +125,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> items(final InstructionFuture<JSON> inst) {
-      return new AbstractInstructionFuture() {
+   public static  InstructionFuture<JSON> items(Pair<String, Integer> meta,final InstructionFuture<JSON> inst) {
+      return new AbstractInstructionFuture(meta) {
 
          protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
             for(JSON j : ij) {
@@ -167,8 +167,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> url() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> url(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -196,8 +196,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> map() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> map(Pair<String,Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -221,8 +221,8 @@ public class InstructionFutureFactory {
 
                      for(Pair<String, JSON> pp : obj) {
                         AsyncExecutionContext<JSON> ctx = context.createChild(true, data);
-                        ctx.define("0", value(context.builder().value("map")));
-                        InstructionFuture<JSON> ki = value(context.builder().value(pp.f));
+                        ctx.define("0", value(context.builder().value("map"),getMeta()));
+                        InstructionFuture<JSON> ki = value(context.builder().value(pp.f),getMeta());
                         ctx.define(JTL_INTERNAL_KEY, ki);
                         ctx.define("key", ki);
                         final String kk = pp.f;
@@ -259,8 +259,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> groupBy() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> groupBy(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -294,6 +294,25 @@ public class InstructionFutureFactory {
 
                   }
                   return transform(allAsList(ll), new AsyncFunction<List<Pair<JSON, JSON>>, JSON>() {
+
+                     @Override
+                     public ListenableFuture<JSON> apply(List<Pair<JSON, JSON>> input) throws Exception {
+                        JSONObject obj = context.builder().object(null);
+                        for(Pair<JSON, JSON> pp : input) {
+                           String s = stringValue(pp.s);
+                           JSONArray a = (JSONArray) obj.get(s);
+                           if(a == null) {
+                              a = context.builder().array(obj);
+                              obj.put(s, a, true);
+                           }
+                           a.add(pp.f);
+                        }
+                        return immediateCheckedFuture(obj);                        
+                        // TODO Auto-generated method stub
+                        //return null;
+                     }
+                     
+                     /*
                      @Override
                      public ListenableFuture<JSON> apply(List<Pair<JSON, JSON>> input) throws Exception {
                         JSONObject obj = context.builder().object(null);
@@ -308,6 +327,7 @@ public class InstructionFutureFactory {
                         }
                         return immediateCheckedFuture(obj);
                      }
+                     */
                   });
                }
             });
@@ -316,8 +336,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all, probably
-   public static InstructionFuture<JSON> importInstruction(JSON conf) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> importInstruction(Pair<String,Integer> meta,JSON conf) {
+      return new AbstractInstructionFuture(meta) {
 
          protected ListenableFuture<JSON> loadJtl(final AsyncExecutionContext<JSON> context, final String file) {
             Callable<JSON> cc = new Callable<JSON>() {
@@ -369,8 +389,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> loadModule(final JSONObject conf) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> loadModule(Pair<String,Integer> meta,final JSONObject conf) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -398,8 +418,8 @@ public class InstructionFutureFactory {
                   String name = stringValue(jit.next());
                   JSONObject config = (JSONObject) (jit.hasNext() ? jit.next() : null);
                   ModuleLoader ml = ModuleLoader.getInstance(context.builder(), conf);
-                  AsyncExecutionContext<JSON> modctx = context.getMasterContext().getNamedContext(key,true);
-                  int n = ml.create(name, modctx, config);
+                  AsyncExecutionContext<JSON> modctx = context.getMasterContext().getNamedContext(key, true);
+                  int n = ml.create(meta,name, modctx, config);
                   return immediateCheckedFuture(context.builder().value(n));
                }
             });
@@ -409,9 +429,9 @@ public class InstructionFutureFactory {
 
    }
 
-   public static InstructionFuture<JSON> reMatch(final String p, final InstructionFuture<JSON> d) {
+   public static InstructionFuture<JSON> reMatch(Pair<String,Integer> meta,final String p, final InstructionFuture<JSON> d) {
       final Pattern pattern = Pattern.compile(p);
-      return items(new AbstractInstructionFuture() {
+      return items(meta,new AbstractInstructionFuture(meta) {
 
          private JSON applyRegex(Pattern p, JSON j, AsyncExecutionContext<JSON> context) {
             switch(j.getType()) {
@@ -479,26 +499,27 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> deferred(InstructionFuture<JSON> inst, AsyncExecutionContext<JSON> context,
+   public static InstructionFuture<JSON> deferred(Pair<String,Integer> meta,InstructionFuture<JSON> inst, AsyncExecutionContext<JSON> context,
          final ListenableFuture<JSON> t) {
-      return memo(new DeferredCall(inst, context, t));
+      return memo(meta,new DeferredCall(inst, context, t));
    }
 
    // rank all
-   public static InstructionFuture<JSON> function(final String name, final List<InstructionFuture<JSON>> iargs) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> function(final String name, final List<InstructionFuture<JSON>> iargs,
+         Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta.s, meta.f) {
          protected AsyncExecutionContext<JSON> setupArguments(AsyncExecutionContext<JSON> ctx, final String name,
                final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
             AsyncExecutionContext<JSON> context = ctx.createChild(true, data);
-            context.define("0", value(context.builder().value(name)));
-            context.define("_", value(data));
+            context.define("0", value(context.builder().value(name),meta));
+            context.define("_", value(data, meta));
             int cc = 1;
             for(InstructionFuture<JSON> i : iargs) {
                // the arguments themselves should be evaluated
                // with the parent context
                // instructions can be unwrapped if the callee wants a
                // a function, rather than a value from the arument list
-               InstructionFuture<JSON> inst = deferred(i, ctx, data);
+               InstructionFuture<JSON> inst = deferred(meta,i, context, data);
                // but define the argument in the child context
 
                // this strategy allows numbered argument (ie.) $1 to be used
@@ -512,12 +533,13 @@ public class InstructionFutureFactory {
                throws ExecutionException {
             String[] ss = name.split("[.]", 2);
             InstructionFuture<JSON> func;
-            if(ss.length == 1) func = context.getdef(name);
+            if(ss.length == 1)
+               func = context.getdef(name);
             else {
                AsyncExecutionContext<JSON> ctx = context.getNamedContext(ss[0]);
                if(ctx == null) {
                   return immediateFailedCheckedFuture(new ExecutionException("unable to load named context " + ss[0]));
-              }
+               }
                func = ctx.getdef(ss[1]);
             }
             if(func == null) {
@@ -531,8 +553,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(final ListenableFuture<JSON> o) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> value(final ListenableFuture<JSON> o, Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta.s, meta.f) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -543,45 +565,46 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(JSON o) {
-      return value(immediateCheckedFuture(o));
+   public static InstructionFuture<JSON> value(JSON o, Pair<String, Integer> meta) {
+      return value(immediateCheckedFuture(o), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(JSONBuilder builder) {
-      return value(builder.value());
+   public static InstructionFuture<JSON> value(JSONBuilder builder, Pair<String, Integer> meta) {
+      return value(builder.value(), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(final Boolean val, JSONBuilder builder) {
-      return value(builder.value(val));
+   public static InstructionFuture<JSON> value(final Boolean val, JSONBuilder builder, Pair<String, Integer> meta) {
+      return value(builder.value(val), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(final Long val, JSONBuilder builder) {
-      return value(builder.value(val));
+   public static InstructionFuture<JSON> value(final Long val, JSONBuilder builder, Pair<String, Integer> meta) {
+      return value(builder.value(val), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(final Double val, JSONBuilder builder) {
-      return value(builder.value(val));
+   public static InstructionFuture<JSON> value(final Double val, JSONBuilder builder, Pair<String, Integer> meta) {
+      return value(builder.value(val), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> value(final String val, JSONBuilder builder) {
-      return value(builder.value(val));
+   public static InstructionFuture<JSON> value(final String val, JSONBuilder builder, Pair<String, Integer> meta) {
+      return value(builder.value(val), meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> number(TerminalNode i, TerminalNode d, JSONBuilder builder) {
+   public static InstructionFuture<JSON> number(TerminalNode i, TerminalNode d, JSONBuilder builder,
+         Pair<String, Integer> meta) {
       if(i != null)
-         return value(Long.parseLong(i.getText()), builder);
-      return value(Double.parseDouble(d.getText()), builder);
+         return value(Long.parseLong(i.getText()), builder, meta);
+      return value(Double.parseDouble(d.getText()), builder, meta);
    }
 
    // rank all
-   public static InstructionFuture<JSON> array(final List<InstructionFuture<JSON>> ch) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> array(final List<InstructionFuture<JSON>> ch, Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta.s, meta.f) {
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> t)
                throws ExecutionException {
@@ -603,9 +626,9 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> dyadic(InstructionFuture<JSON> left, InstructionFuture<JSON> right,
-         DyadicAsyncFunction<JSON> f) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> dyadic(Pair<String, Integer> meta,InstructionFuture<JSON> left, InstructionFuture<JSON> right,
+         DyadicAsyncFunction<JSON> f ) {
+      return new AbstractInstructionFuture(meta.s, meta.f) {
 
          @SuppressWarnings("unchecked")
          @Override
@@ -625,7 +648,7 @@ public class InstructionFutureFactory {
                         try {
                            return immediateCheckedFuture(k.invoke(context, l, r));
                         } catch (ExecutionException e) {
-                           return immediateFailedFuture(e);
+                           return immediateFailedCheckedFuture(e);
                         }
                      }
                   });
@@ -635,8 +658,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> unique() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> unique(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta.s, meta.f) {
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -666,8 +689,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> substr() {
-      return items(new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> substr(Pair<String, Integer> meta) {
+      return items(meta,new AbstractInstructionFuture(meta.s, meta.f) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -693,7 +716,7 @@ public class InstructionFutureFactory {
                   if(p1.isNumber() && (p2 == null || p2.isNumber())) {
                      if(str.getType() == JSONType.STRING) {
                         String s = stringValue(str);
-                        if(p2!=null) {
+                        if(p2 != null) {
                            s = s.substring(longValue(p1).intValue(), longValue(p2).intValue());
                         } else {
                            s = s.substring(longValue(p1).intValue());
@@ -709,8 +732,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> split() {
-      return items(new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> split(Pair<String, Integer> meta) {
+      return items(meta,new AbstractInstructionFuture(meta.s, meta.f) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -747,20 +770,20 @@ public class InstructionFutureFactory {
          }
       });
    }
-   public static InstructionFuture<JSON> write() {
-      return new AbstractInstructionFuture() {
+
+   public static InstructionFuture<JSON> write(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
-         public ListenableFuture<JSON> call(
-               final AsyncExecutionContext<JSON> context, 
-               final ListenableFuture<JSON> data)
+         public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
                throws ExecutionException {
             final InstructionFuture<JSON> arg = context.getdef("1");
-            if(arg==null) return immediateFailedCheckedFuture(new ExecutionException("write() requires a filename argument"));
+            if(arg == null)
+               return immediateFailedCheckedFuture(new ExecutionException("write() requires a filename argument"));
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
             ll.add(data);
-            ll.add(arg.call(  context, data));
-            return transform(allAsList(ll),new AsyncFunction<List<JSON>, JSON>() {
+            ll.add(arg.call(context, data));
+            return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
                @Override
                public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
@@ -772,7 +795,7 @@ public class InstructionFutureFactory {
 
                      @Override
                      public JSON call() throws Exception {
-                        FileWriter fw=new FileWriter(l);
+                        FileWriter fw = new FileWriter(l);
                         d.write(fw, 3, true);
                         fw.flush();
                         fw.close();
@@ -785,17 +808,19 @@ public class InstructionFutureFactory {
          }
       };
    }
-   public static InstructionFuture<JSON> copy() {
-      return new AbstractInstructionFuture() {
+
+   public static InstructionFuture<JSON> copy(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
             final InstructionFuture<JSON> arg = context.getdef("1");
-            if(arg==null) return immediateFailedCheckedFuture(new ExecutionException("copy() requires a numeric argument"));
+            if(arg == null)
+               return immediateFailedCheckedFuture(new ExecutionException("copy() requires a numeric argument"));
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
             ll.add(data);
-            ll.add(arg.call(  context, data));
+            ll.add(arg.call(context, data));
             return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
                @Override
@@ -805,8 +830,8 @@ public class InstructionFutureFactory {
                   JSON a = jit.next();
                   Long l = longValue(a);
                   JSONArray arr = context.builder().array(d.getParent());
-                  if(l!=null) {
-                     for(int i=0;i<l.intValue();++i) {
+                  if(l != null) {
+                     for(int i = 0; i < l.intValue(); ++i) {
                         arr.add(d.cloneJSON());
                      }
                      return immediateCheckedFuture(arr);
@@ -817,9 +842,9 @@ public class InstructionFutureFactory {
          }
       };
    }
-   
-   public static InstructionFuture<JSON> join() {
-      return new AbstractInstructionFuture() {
+
+   public static InstructionFuture<JSON> join(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -864,8 +889,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> count() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> count(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
          JSON cnt(JSON j, JSONBuilder builder) {
             switch(j.getType()) {
             case FRAME:
@@ -904,8 +929,8 @@ public class InstructionFutureFactory {
 
    // rank all
    public static InstructionFuture<JSON> conditional(final InstructionFuture<JSON> test,
-         final InstructionFuture<JSON> trueI, final InstructionFuture<JSON> falseI) {
-      return new AbstractInstructionFuture() {
+         final InstructionFuture<JSON> trueI, final InstructionFuture<JSON> falseI, Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -927,7 +952,7 @@ public class InstructionFutureFactory {
 
    // rank all
    @SafeVarargs
-   public static InstructionFuture<JSON> chain(final InstructionFuture<JSON>... inst) {
+   public static InstructionFuture<JSON> chain(Pair<String, Integer> meta, final InstructionFuture<JSON>... inst) {
 
       InstructionFuture<JSON> chain = null;
       for(InstructionFuture<JSON> ii : inst) {
@@ -935,7 +960,7 @@ public class InstructionFutureFactory {
             chain = ii;
          } else {
             final InstructionFuture<JSON> pp = chain;
-            chain = new AbstractInstructionFuture() {
+            chain = new AbstractInstructionFuture(meta) {
 
                @Override
                public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -950,8 +975,8 @@ public class InstructionFutureFactory {
 
    // rank all
    @SafeVarargs
-   public static InstructionFuture<JSON> sequence(final InstructionFuture<JSON>... inst) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> sequence(Pair<String, Integer> meta, final InstructionFuture<JSON>... inst) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -979,8 +1004,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> params() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> params(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @SuppressWarnings("unchecked")
          @Override
@@ -997,7 +1022,7 @@ public class InstructionFutureFactory {
                   ll.add(ci);
                }
             }
-            return sequence((InstructionFuture<JSON>[]) ll.toArray(new InstructionFuture[ll.size()])).call(context,
+            return sequence(meta,(InstructionFuture<JSON>[]) ll.toArray(new InstructionFuture[ll.size()])).call(context,
                   data);
          }
 
@@ -1006,8 +1031,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> defaultError() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> defaultError(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1059,10 +1084,8 @@ public class InstructionFutureFactory {
       // protected Set<String> keys = new HashSet<>();
       final List<Pair<String, InstructionFuture<JSON>>> ll;
 
-      public ObjectInstructionFuture(
-      // InstructionFutureFactory factory,
-            final List<Pair<String, InstructionFuture<JSON>>> ll) {
-         // this.factory = factory;
+      public ObjectInstructionFuture(Pair<String, Integer> meta, final List<Pair<String, InstructionFuture<JSON>>> ll) {
+         super(meta);
          this.ll = ll;
       }
 
@@ -1072,7 +1095,7 @@ public class InstructionFutureFactory {
          for(Pair<String, InstructionFuture<JSON>> ii : ll) {
             final String kk = ii.f;
             final AsyncExecutionContext<JSON> newc = context.createChild(false, data);
-            InstructionFuture<JSON> ki = value(kk, context.builder());
+            InstructionFuture<JSON> ki = value(kk, context.builder(),getMeta());
             newc.define(JTL_INTERNAL_KEY, ki);
             newc.define("key", ki);
             ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(newc, data),
@@ -1114,9 +1137,11 @@ public class InstructionFutureFactory {
       final boolean imported;
 
       public ContextObjectInstructionFuture(
+            Pair<String, Integer> meta,
       // InstructionFutureFactory factory,
             final List<Pair<String, InstructionFuture<JSON>>> ll, boolean imported) {
          // this.factory = factory;
+         super(meta);
          this.ll = ll;
          this.imported = imported;
       }
@@ -1133,18 +1158,18 @@ public class InstructionFutureFactory {
             final InstructionFuture<JSON> inst = ii.s;
 
             if(k.equals("!init")) {
-               init = memo(inst);
+               init = memo(new Pair<String,Integer>(code, line),inst);
                context.define("init", inst);
             } else if(k.equals("_")) {
                defaultInstruction = inst;
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
-               InstructionFuture<JSON> imp = memo(inst);
+               InstructionFuture<JSON> imp = memo(new Pair<String,Integer>(code, line),inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
                // variable, deferred evaluation
-               context.define(k.substring(1), deferred(inst, context, data));
+               context.define(k.substring(1), deferred(new Pair<String,Integer>(code, line),inst, context, data));
             } else {
                // define a function
                context.define(k, inst);
@@ -1198,9 +1223,9 @@ public class InstructionFutureFactory {
                throw new RuntimeException("WTF!!!!???? no error handler is defined!");
             }
             AsyncExecutionContext<JSON> ec = context.createChild(true, data);
-            ec.define("0", value("error", context.builder()));
-            ec.define("1", value(500L, context.builder()));
-            ec.define("2", value(e.getLocalizedMessage(), context.builder()));
+            ec.define("0", value("error", context.builder(),new Pair<String,Integer>(code, line)));
+            ec.define("1", value(500L, context.builder(),new Pair<String,Integer>(code, line)));
+            ec.define("2", value(e.getLocalizedMessage(), context.builder(),new Pair<String,Integer>(code, line)));
             return error.call(ec, data);
          }
       }
@@ -1214,7 +1239,7 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> object(final List<Pair<String, InstructionFuture<JSON>>> ll,
+   public static InstructionFuture<JSON> object(Pair<String, Integer> meta,final List<Pair<String, InstructionFuture<JSON>>> ll,
          boolean forceContext) throws ExecutionException {
       boolean isContext = forceContext;
       if(isContext == false)
@@ -1224,13 +1249,13 @@ public class InstructionFutureFactory {
                break;
             }
          }
-      return isContext ? items(new ContextObjectInstructionFuture(ll, forceContext))
-            : items(new ObjectInstructionFuture(ll));
+      return isContext ? items(meta,new ContextObjectInstructionFuture(meta,ll, forceContext))
+            : items(meta,new ObjectInstructionFuture(meta,ll));
    }
 
    // rank: all
-   public static InstructionFuture<JSON> stepParent() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> stepParent(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -1247,8 +1272,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> filter() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> filter(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          KeyedAsyncFunction<JSON, JSON, JSON> function(JSON j, JSONBuilder builder) {
             return new KeyedAsyncFunction<JSON, JSON, JSON>(j) {
@@ -1316,8 +1341,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> collate() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> collate(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1364,8 +1389,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> sort(boolean reverse) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> sort(Pair<String, Integer> meta,boolean reverse) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1434,8 +1459,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> stepSelf() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> stepSelf(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1452,8 +1477,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: item
-   public static InstructionFuture<JSON> recursDown() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> recursDown(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          protected void recurse(JSONArray unbound, JSON j) {
             // JSONType type = j.getType();
@@ -1521,8 +1546,8 @@ public class InstructionFutureFactory {
 
    // rank all: I don't want to confuse the relationship by considering
    // children
-   public static InstructionFuture<JSON> recursUp() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> recursUp(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -1548,8 +1573,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> mapChildren() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> mapChildren(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -1585,9 +1610,9 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> stepChildren() {
+   public static InstructionFuture<JSON> stepChildren(Pair<String, Integer> meta) {
 
-      return new AbstractInstructionFuture() {
+      return new AbstractInstructionFuture(meta) {
 
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -1657,8 +1682,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> get(final String label) {
-      return items(new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> get(Pair<String, Integer> meta,final String label) {
+      return items(meta,new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1720,9 +1745,9 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> ternary(final InstructionFuture<JSON> c, final InstructionFuture<JSON> a,
+   public static InstructionFuture<JSON> ternary(Pair<String, Integer> meta,final InstructionFuture<JSON> c, final InstructionFuture<JSON> a,
          final InstructionFuture<JSON> b) {
-      return new AbstractInstructionFuture() {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1738,29 +1763,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   static Long longValue(JSON j) {
-      switch(j.getType()) {
-      case LONG:
-      case DOUBLE:
-      case STRING:
-         return ((JSONValue) j).longValue();
-      default:
-      }
-      return null;
-   }
-
-   static Double doubleValue(JSON j) {
-      switch(j.getType()) {
-      case LONG:
-      case DOUBLE:
-      case STRING:
-         return ((JSONValue) j).doubleValue();
-      default:
-      }
-      return null;
-   }
-
-   static String stringValue(JSON j) {
+/*
+    String stringValue(JSON j) {
       switch(j.getType()) {
       case LONG:
       case DOUBLE:
@@ -1770,10 +1774,10 @@ public class InstructionFutureFactory {
       }
       return null;
    }
-
+*/
    // rank: all
-   public static InstructionFuture<JSON> relpath(final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> relpath(Pair<String, Integer> meta,final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1784,8 +1788,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> strc(final List<InstructionFuture<JSON>> ii) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> strc(Pair<String, Integer> meta,final List<InstructionFuture<JSON>> ii) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1811,8 +1815,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> abspath(InstructionFuture<JSON> inst) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> abspath(Pair<String,Integer> meta,InstructionFuture<JSON> inst) {
+      return new AbstractInstructionFuture(meta) {
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
@@ -1828,8 +1832,8 @@ public class InstructionFutureFactory {
    }
 
    // rank all
-   public static InstructionFuture<JSON> union(final List<InstructionFuture<JSON>> seq) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> union(Pair<String,Integer> meta,final List<InstructionFuture<JSON>> seq) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1855,8 +1859,8 @@ public class InstructionFutureFactory {
    }
 
    // rank: all
-   public static InstructionFuture<JSON> dereference(final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> dereference(Pair<String,Integer> meta,final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
+      return new AbstractInstructionFuture(meta) {
 
          @SuppressWarnings("unchecked")
          @Override
@@ -2007,8 +2011,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> apply() {
-      return items(new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> apply(Pair<String,Integer> meta) {
+      return items(meta,new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -2063,8 +2067,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> amend() {
-      return items(new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> amend(Pair<String,Integer> meta) {
+      return items(meta,new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -2097,13 +2101,14 @@ public class InstructionFutureFactory {
 
                                  @Override
                                  public ListenableFuture<JSON> apply(JSON input) throws Exception {
-                                	 
+
                                     final JSONObject obj = context.builder().object(inp.getParent());
                                     for(Pair<String, JSON> pp : (JSONObject) inp) {
                                        if(!pp.f.equals(kj))
                                           obj.put(pp.f, pp.s);
                                     }
-                                    if(input.getType() != JSONType.NULL) obj.put(k, input);
+                                    if(input.getType() != JSONType.NULL)
+                                       obj.put(k, input);
                                     return immediateCheckedFuture(obj);
                                  }
                               });
@@ -2134,8 +2139,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> omap() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> omap(Pair<String,Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -2151,7 +2156,7 @@ public class InstructionFutureFactory {
                      List<ListenableFuture<Pair<JSON, JSON>>> ll = new ArrayList<>();
                      for(JSON j : (JSONArray) input) {
                         AsyncExecutionContext<JSON> cc = context.createChild(true, data);
-                        cc.define("key", value(j));
+                        cc.define("key", value(j,meta));
                         ListenableFuture<JSON> jif = immediateCheckedFuture(j);
                         ll.add(transform(allAsList(jif, mf.call(cc, data)),
                               new AsyncFunction<List<JSON>, Pair<JSON, JSON>>() {
@@ -2187,8 +2192,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> contains() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> contains(Pair<String,Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @SuppressWarnings("unchecked")
          @Override
@@ -2212,8 +2217,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> addInstruction(InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
-      return dyadic(a, b, new DefaultPolymorphicOperator() {
+   public static InstructionFuture<JSON> addInstruction(Pair<String,Integer> meta,InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
+      return dyadic(meta,a, b, new DefaultPolymorphicOperator() {
          @Override
          public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
             return l + r;
@@ -2273,8 +2278,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> subInstruction(InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
-      return dyadic(a, b, new DefaultPolymorphicOperator() {
+   public static InstructionFuture<JSON> subInstruction(Pair<String, Integer> meta,InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
+      return dyadic(meta,a, b, new DefaultPolymorphicOperator() {
          @Override
          public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
             return l - r;
@@ -2336,8 +2341,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> mulInstruction(InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
-      return dyadic(a, b, new DefaultPolymorphicOperator() {
+   public static InstructionFuture<JSON> mulInstruction(Pair<String, Integer> meta,InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
+      return dyadic(meta,a, b, new DefaultPolymorphicOperator() {
          @Override
          public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
             return l * r;
@@ -2352,8 +2357,8 @@ public class InstructionFutureFactory {
 
    }
 
-   public static InstructionFuture<JSON> divInstruction(InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
-      return dyadic(a, b, new DefaultPolymorphicOperator() {
+   public static InstructionFuture<JSON> divInstruction(Pair<String, Integer> meta,InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
+      return dyadic(meta,a, b, new DefaultPolymorphicOperator() {
          @Override
          public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
             return l / r;
@@ -2367,8 +2372,8 @@ public class InstructionFutureFactory {
 
    }
 
-   public static InstructionFuture<JSON> modInstruction(InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
-      return dyadic(a, b, new DefaultPolymorphicOperator() {
+   public static InstructionFuture<JSON> modInstruction(Pair<String, Integer> meta,InstructionFuture<JSON> a, InstructionFuture<JSON> b) {
+      return dyadic(meta,a, b, new DefaultPolymorphicOperator() {
          @Override
          public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
             return l % r;
@@ -2381,8 +2386,8 @@ public class InstructionFutureFactory {
       });
    }
 
-   public static InstructionFuture<JSON> isValue() {
-      return isType(null, JSONType.NULL, JSONType.DOUBLE, JSONType.LONG, JSONType.STRING);
+   public static InstructionFuture<JSON> isValue(Pair<String, Integer> meta) {
+      return isType(meta,null, JSONType.NULL, JSONType.DOUBLE, JSONType.LONG, JSONType.STRING);
    }
 
    static abstract class ConverterFunction implements AsyncFunction<JSON, JSON> {
@@ -2396,8 +2401,8 @@ public class InstructionFutureFactory {
       }
    }
 
-   public static InstructionFuture<JSON> isString() {
-      return isType(new ConverterFunction() {
+   public static InstructionFuture<JSON> isString(Pair<String, Integer> meta) {
+      return isType(meta,new ConverterFunction() {
 
          @Override
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
@@ -2408,8 +2413,8 @@ public class InstructionFutureFactory {
       }, JSONType.STRING);
    }
 
-   public static InstructionFuture<JSON> isNumber() {
-      return isType(new ConverterFunction() {
+   public static InstructionFuture<JSON> isNumber(Pair<String, Integer> meta) {
+      return isType(meta,new ConverterFunction() {
 
          @Override
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
@@ -2452,8 +2457,8 @@ public class InstructionFutureFactory {
       }, JSONType.LONG, JSONType.DOUBLE);
    }
 
-   public static InstructionFuture<JSON> isBoolean() {
-      return isType(new ConverterFunction() {
+   public static InstructionFuture<JSON> isBoolean(Pair<String, Integer> meta) {
+      return isType(meta,new ConverterFunction() {
 
          @Override
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
@@ -2462,13 +2467,13 @@ public class InstructionFutureFactory {
       }, JSONType.BOOLEAN);
    }
 
-   public static InstructionFuture<JSON> isNull() {
-      return isType(null, JSONType.NULL);
+   public static InstructionFuture<JSON> isNull(Pair<String, Integer> meta) {
+      return isType(meta,null, JSONType.NULL);
    }
 
-   public static InstructionFuture<JSON> isArray() {
+   public static InstructionFuture<JSON> isArray(Pair<String, Integer> meta) {
       final JSONType[] types = { JSONType.ARRAY, JSONType.FRAME };
-      return isType(new ConverterFunction() {
+      return isType(meta,new ConverterFunction() {
 
          @Override
          public ListenableFuture<JSON> apply(final JSON input) throws Exception {
@@ -2494,12 +2499,12 @@ public class InstructionFutureFactory {
       }, types);
    }
 
-   public static InstructionFuture<JSON> isObject() {
-      return isType(null, JSONType.OBJECT);
+   public static InstructionFuture<JSON> isObject(Pair<String, Integer> meta) {
+      return isType(meta,null, JSONType.OBJECT);
    }
 
-   protected static InstructionFuture<JSON> isType(ConverterFunction conv, JSONType... types) {
-      return new AbstractInstructionFuture() {
+   protected static InstructionFuture<JSON> isType(Pair<String, Integer> meta,ConverterFunction conv, JSONType... types) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
@@ -2530,8 +2535,8 @@ public class InstructionFutureFactory {
       };
    }
 
-   public static InstructionFuture<JSON> keys() {
-      return new AbstractInstructionFuture() {
+   public static InstructionFuture<JSON> keys(Pair<String, Integer> meta) {
+      return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)

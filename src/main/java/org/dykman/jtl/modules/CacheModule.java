@@ -69,10 +69,10 @@ public class CacheModule implements Module {
    }
 
    @Override
-   public void define(AsyncExecutionContext<JSON> context) {
+   public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
       CacheHolder ch = new CacheHolder(context.builder());
       for(Pair<String, JSON> pp : config) {
-         context.define(pp.f, new AbstractInstructionFuture() {
+         context.define(pp.f, new AbstractInstructionFuture(meta) {
             final JSONObject c = (JSONObject) pp.s;
 
 

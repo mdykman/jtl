@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
+import org.dykman.jtl.Pair;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.json.JSON;
@@ -95,11 +96,11 @@ public class JtlServer {
       protected AsyncExecutionContext<JSON> servletContext(HttpServletRequest req,JSON data) {
          AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, servletRoot, builder,
                les);
-         
+         Pair<String,Integer> meta = new Pair<String, Integer>("http service", 0);
          String [] pp = req.getPathInfo().split("[/]");
-         context.define("0", value(base.getPath(),builder));
+         context.define("0", value(base.getPath(),builder,meta));
          for(int i = 1; i < pp.length; ++i) {
-            context.define(Integer.toString(i), value(pp[i],builder));
+            context.define(Integer.toString(i), value(pp[i],builder,meta));
          }
          JSONObject object = builder.object(null);
          for(Map.Entry<String,String[]> el : req.getParameterMap().entrySet()) {
@@ -109,7 +110,7 @@ public class JtlServer {
             }
             object.put(el.getKey(), arr);
          }
-         context.define("params", value(object));
+         context.define("params", value(object,meta));
 
          object= builder.object(null);
          Enumeration<String> hk = req.getHeaderNames();
@@ -117,7 +118,7 @@ public class JtlServer {
             String k = hk.nextElement();
             object.put(k, builder.value(req.getHeader(k)));
          }
-         context.define("headers", value(object));
+         context.define("headers", value(object,meta));
          return context;
       }
       
