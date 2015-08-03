@@ -4,10 +4,14 @@ import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFu
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 
@@ -25,20 +29,23 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	File currentDirectory = new File(".");
 	JSONBuilder builder = null;
+	
+	boolean debug = false;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder ,
-		ListenableFuture<JSON> data,JSON conf, File f, boolean fc) {
+		ListenableFuture<JSON> data,JSON conf, File f, boolean fc,boolean debug) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
 		this.conf = conf;
 		this.data = data;
 		this.currentDirectory = f;
+		this.debug = debug;
 //		if(fc && data!=null) define("_",InstructionFutureFactory.value(data));
 	}
 	public SimpleExecutionContext(JSONBuilder builder,ListenableFuture<JSON> data,JSON conf,File f) {
-		this(null,builder, data,conf, f,false);
+		this(null,builder, data,conf, f,false,false);
 	}
 
 	public ListenableFuture<JSON> dataContext() {
@@ -60,7 +67,25 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return r;
 		
 	}
-
+	Map<String, AtomicInteger> counterMap = Collections.synchronizedMap(new HashMap<>());
+	
+	@Override 
+	public synchronized int counter(String label,int interval) {
+	   AtomicInteger ai = counterMap.get(label);
+	   if(ai == null) {
+	      ai = new AtomicInteger();
+	      counterMap.put(label,ai);
+	   }
+	   return ai.addAndGet(interval);
+	}
+	@Override
+	public boolean debug() {
+	   return debug;
+	}
+   @Override
+   public boolean debug(boolean d) {
+      return debug = d;
+   }
 	@Override
 	public AsyncExecutionContext<JSON> getParent() {
 		return parent;
@@ -77,23 +102,23 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 	@Override
 	public AsyncExecutionContext<JSON> getNamedContext(String label) {
-		return getNamedContext(label, false);
+		return getNamedContext(label, false,null);
 	}
 
 	public AsyncExecutionContext<JSON> getNamedContext(String label,
-			boolean create) {
+			boolean create,SourceInfo info) {
 		AsyncExecutionContext<JSON> c = namedContexts.get(label);
 		if (c == null) {
 			synchronized (this) {
 				c = namedContexts.get(label);
 				if (c == null) {
 					if (parent != null) {
-						c = parent.getNamedContext(label, false);
+						c = parent.getNamedContext(label, false,info);
 						if (c != null)
 							return c;
 					}
 					if (create) {
-						c = this.createChild(false,null);
+						c = this.createChild(false,null,info);
 						namedContexts.put(label, c);
 					}
 				}
@@ -109,8 +134,10 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 
 	@Override
-	public AsyncExecutionContext<JSON> createChild(boolean fc,ListenableFuture<JSON> data) {
-		return new SimpleExecutionContext(this,null,data,null,currentDirectory(), fc);
+	public AsyncExecutionContext<JSON> createChild(boolean fc,ListenableFuture<JSON> data,SourceInfo source) {
+	     AsyncExecutionContext<JSON>  r = new SimpleExecutionContext(this,null,data,null,currentDirectory(), fc,debug);
+ //       if(fc && data!=null) r.define("_",InstructionFutureFactory.value(data,source));
+        return r;
 	}
 
 

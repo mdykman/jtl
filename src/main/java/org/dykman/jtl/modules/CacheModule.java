@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.DeferredCall;
@@ -69,10 +70,12 @@ public class CacheModule implements Module {
    }
 
    @Override
-   public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
+   public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
       CacheHolder ch = new CacheHolder(context.builder());
       for(Pair<String, JSON> pp : config) {
-         context.define(pp.f, new AbstractInstructionFuture(meta) {
+         SourceInfo si = meta.clone();
+         si.name="cache:"+pp.f;
+         context.define(pp.f, new AbstractInstructionFuture(si) {
             final JSONObject c = (JSONObject) pp.s;
 
 
@@ -118,7 +121,7 @@ public class CacheModule implements Module {
             }
 
             @Override
-            public ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+            public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                   throws org.dykman.jtl.ExecutionException {
                InstructionFuture<JSON> ff = context.getdef("1");
                final InstructionFuture<JSON> func = ff.unwrap(context);

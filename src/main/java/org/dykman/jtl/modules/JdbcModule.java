@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 //import org.codehaus.jettison.json.JSONArray;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
@@ -98,11 +99,11 @@ public class JdbcModule implements Module {
 			return connection;
 		}
 
-		public InstructionFuture<JSON> query(Pair<String,Integer> meta,Executor exec) {
+		public InstructionFuture<JSON> query(SourceInfo meta,Executor exec) {
 			// Connection c = getConnection();
-			return InstructionFutureFactory.items(meta,new AbstractInstructionFuture(meta) {
+			return new AbstractInstructionFuture(meta) {
 				@Override
-				public ListenableFuture<JSON> call(
+				public ListenableFuture<JSON> _call(
 						final AsyncExecutionContext<JSON> context,
 						final ListenableFuture<JSON> data)
 						throws ExecutionException {
@@ -178,15 +179,16 @@ public class JdbcModule implements Module {
 								}
 							});
 				}
-			});
+			};
 		}
 	}
 
 	@Override
-	public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
-		ListeningExecutorService les = context.executor();
+	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
 		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
-		context.define("query", wrapper.query(meta,new Executor() {
+		SourceInfo si = meta.clone();
+		si.name = "query";
+		context.define("query", wrapper.query(si,new Executor() {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {
@@ -206,7 +208,35 @@ public class JdbcModule implements Module {
 			}
 		}));
 
-		context.define("execute", wrapper.query(meta,new Executor() {
+      si = meta.clone();
+      si.name = "cquery";
+	    context.define("cquery", wrapper.query(si,new Executor() {
+	         @Override
+	         public JSON process(PreparedStatement stat, JSONBuilder builder)
+	               throws SQLException {
+	            ResultSet rs = stat.executeQuery();
+	            ResultSetMetaData rsm = rs.getMetaData();
+	            int n = rsm.getColumnCount();
+               JSONObject obj = builder.object(null);
+               JSONArray[] aar = new JSONArray[n];
+               for(int i  = 1;i <= n;++i) {
+                  JSONArray arr = builder.array(obj);
+                  aar[i-1] = arr;
+                  obj.put(rsm.getColumnName(i),arr);
+               }
+	            while (rs.next()) {
+	               for (int i = 1; i <= n; ++i) {
+	                  aar[i-1].add(builder.value(rs.getObject(i)));
+	               }
+	            }
+	            return obj;
+	         }
+	      }));
+
+	   si = meta.clone();
+	   si.name = "execute";
+
+		context.define("execute", wrapper.query(si,new Executor() {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {

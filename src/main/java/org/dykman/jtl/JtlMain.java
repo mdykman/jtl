@@ -188,7 +188,7 @@ public class JtlMain {
    }
 
    public InstructionFuture<JSON> compile(String f) throws IOException {
-      return compiler.parse(f);
+      return compiler.parse("eval",f);
    }
 
    public JSON parse(File f) throws IOException {

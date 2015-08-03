@@ -7,6 +7,7 @@ import java.io.InputStream;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.json.JSON;
@@ -22,6 +23,7 @@ import org.dykman.jtl.future.InstructionFutureVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import static org.dykman.jtl.future.InstructionFutureFactory.*;
@@ -44,40 +46,40 @@ public class JtlCompiler {
 		this.imported = imported;
 	}
 	
-	public InstructionFuture<JSON> parse(InputStream in) 
+	public InstructionFuture<JSON> parse(String src,InputStream in) 
 		throws IOException {
-		return parse(in, trace, profile);
+		return parse(src,in, trace, profile);
 	}
 	
-	public InstructionFuture<JSON> parse(InputStream in,boolean trace,boolean profile) 
+	public InstructionFuture<JSON> parse(String src,InputStream in,boolean trace,boolean profile) 
 			throws IOException {
-			return parse( new jtlLexer(new ANTLRInputStream(in)),trace,profile);
+			return parse(src, new jtlLexer(new ANTLRInputStream(in)),trace,profile);
 		}
 	
-	public InstructionFuture<JSON> parse(File in,boolean trace,boolean profile) 
+	public InstructionFuture<JSON> parse(String src,File in,boolean trace,boolean profile) 
 			throws IOException {
-		return parse(new FileInputStream(in),trace,profile);
+		return parse(src,new FileInputStream(in),trace,profile);
 		}
 	public InstructionFuture<JSON> parse(File in) 
 		throws IOException {
-		return parse(in, trace, profile);
+		return parse(in.getName(),in, trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(String in) 
+	public InstructionFuture<JSON> parse(String src,String in) 
 		throws IOException {
-		return parse(in, trace, profile);
+		return parse(src,in, trace, profile);
 	}
 	
-	public InstructionFuture<JSON> parse(String in,boolean trace,boolean profile) 
+	public InstructionFuture<JSON> parse(String src,String in,boolean trace,boolean profile) 
 			throws IOException {
-			return parse( new jtlLexer(new ANTLRInputStream(in)),trace,profile);
+			return parse(src, new jtlLexer(new ANTLRInputStream(in)),trace,profile);
 		}
-	protected InstructionFuture<JSON> parse(jtlLexer lexer) 
+	protected InstructionFuture<JSON> parse(String src,jtlLexer lexer) 
 		throws IOException {
-		return parse(lexer, trace, profile);
+		return parse(src,lexer, trace, profile);
 	}
 	
-	protected InstructionFuture<JSON> parse(jtlLexer lexer,boolean trace,boolean profile) 
+	protected InstructionFuture<JSON> parse(String file,jtlLexer lexer,boolean trace,boolean profile) 
 			throws IOException {
 	//	lexer.
 			jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
@@ -85,23 +87,45 @@ public class JtlCompiler {
 			parser.setProfile(profile);
 //			parser.getCurrentToken();
 			JtlContext tree = parser.jtl();
-			InstructionFutureVisitor visitor = new InstructionFutureVisitor(jsonBuilder,imported);
+			InstructionFutureVisitor visitor = new InstructionFutureVisitor(file,jsonBuilder,imported);
 			InstructionFutureValue<JSON> v = visitor.visit(tree);
 			return v.inst;
 		}
 
-	public static AsyncExecutionContext<JSON> createInitialContext(
+	
+	
+	
+	public static SourceInfo getSource(String source,ParserRuleContext ctx,String name) {
+      SourceInfo info = new SourceInfo();
+      info.line = ctx.start.getLine();
+      info.position = ctx.start.getCharPositionInLine();
+      info.endline = ctx.stop.getLine();
+      info.endposition = ctx.stop.getCharPositionInLine() + ctx.stop.getText().length();
+      info.code = ctx.getText();
+      info.source = source == null ? ctx.start.getTokenSource().getSourceName() : source;
+      info.name = name;
+      return info;
+   }
+
+
+   public static AsyncExecutionContext<JSON> createInitialContext(
 			JSON data,
 			JSON config,
 			File f,
 			JSONBuilder builder,
 			ListeningExecutorService les ) {
 
+      ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
 		SimpleExecutionContext context = new SimpleExecutionContext(builder,
-		      Futures.immediateCheckedFuture(data),config,f);
+		      df,config,f);
 		context.setExecutionService(les);
-		Pair<String, Integer> meta = new Pair<>("base", 0);
+		
+		SourceInfo meta = new SourceInfo();
+		meta.code = "*internal*";
+		meta.source=meta.code;
+		meta.line=meta.position=0;
 		// configurable: import, extend
+      context.define("_", InstructionFutureFactory.value(df,meta));
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");

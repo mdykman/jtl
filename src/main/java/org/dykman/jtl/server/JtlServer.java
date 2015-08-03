@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.json.JSON;
@@ -96,7 +97,10 @@ public class JtlServer {
       protected AsyncExecutionContext<JSON> servletContext(HttpServletRequest req,JSON data) {
          AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, servletRoot, builder,
                les);
-         Pair<String,Integer> meta = new Pair<String, Integer>("http service", 0);
+//         Pair<String,Integer> meta = new Pair<String, Integer>("http service", 0);
+         SourceInfo meta = new SourceInfo();
+         meta.source=meta.code="http service";
+         meta.position=meta.line=0;
          String [] pp = req.getPathInfo().split("[/]");
          context.define("0", value(base.getPath(),builder,meta));
          for(int i = 1; i < pp.length; ++i) {

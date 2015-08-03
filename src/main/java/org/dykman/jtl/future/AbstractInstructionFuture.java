@@ -2,6 +2,7 @@ package org.dykman.jtl.future;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONValue;
 
@@ -9,15 +10,35 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class AbstractInstructionFuture implements
 		InstructionFuture<JSON> {
-
-   public AbstractInstructionFuture(Pair<String,Integer> meta) {
-      this(meta.s,meta.f);
+   protected SourceInfo source;
+   public AbstractInstructionFuture(SourceInfo meta) {
+      source=meta;
+   }
+   
+   @Override
+   public SourceInfo getSourceInfo() {
+      return source;
    }
 
-   public AbstractInstructionFuture(int line,String code) {
-      this.line = line;
-      this.code = code;
+   @Override 
+   public final ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+         throws ExecutionException {
+      boolean debug = context.debug();
+ //     AsyncExecutionContext<JSON> master = null;
+      if(debug) {
+         System.err.print(source.toString(context));
+         System.err.println();
+      }
+      ListenableFuture<JSON> r =  _call(context,data);
+      if(debug) {
+         int n = context.getMasterContext().counter("trace",-1);
+      }
+      return r;
    }
+
+   public abstract ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+         throws ExecutionException;
+
    protected int line;
    protected String code;
    
@@ -25,10 +46,11 @@ public abstract class AbstractInstructionFuture implements
 	public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
 		return this;
 	}
-
+/*
 	protected Pair<String, Integer> getMeta() {
 	   return new Pair<>(code,line);
 	}
+	*/
    protected static Long longValue(JSON j) {
       switch(j.getType()) {
       case LONG:
@@ -63,9 +85,9 @@ public abstract class AbstractInstructionFuture implements
 			return null;
 		}
 	}
-
+/*
 	public abstract ListenableFuture<JSON> call(
 			AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 			throws ExecutionException;
-
+*/
 }

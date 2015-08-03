@@ -32,7 +32,7 @@ public class SimpleJtlTest {
 			System.err.println("compiling " + args[0]);
 			File inputFile = new File(args[0]);
 			FileInputStream fin = new FileInputStream(inputFile);
-			InstructionFuture<JSON> inst = compiler.parse(fin);
+			InstructionFuture<JSON> inst = compiler.parse(args[0],fin);
 			if(inst == null) {
 				System.err.println("no program");
 				System.exit(1);
@@ -43,7 +43,7 @@ public class SimpleJtlTest {
 	
 			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
 				inputFile.getParentFile(),builder, les);
-			
+//			context.debug(true);
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
 			PrintWriter pw =new PrintWriter(System.out);
 			j.get().write(pw, 3,false);

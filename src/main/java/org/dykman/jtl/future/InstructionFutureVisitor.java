@@ -30,15 +30,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenSource;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.jtlBaseVisitor;
-import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.jtlParser.Abs_pathContext;
 import org.dykman.jtl.jtlParser.Add_exprContext;
 import org.dykman.jtl.jtlParser.And_exprContext;
@@ -85,12 +82,17 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	final JSONBuilder builder;
 	volatile boolean imported = false;
-	public InstructionFutureVisitor(JSONBuilder builder) {
-		this(builder,false);
+	final String source;
+	public InstructionFutureVisitor(String source,JSONBuilder builder) {
+		this(source,builder,false);
 	}
-	public InstructionFutureVisitor(JSONBuilder builder, boolean imported) {
+   public InstructionFutureVisitor(JSONBuilder builder) {
+      this(null,builder,false);
+   }
+	public InstructionFutureVisitor(String source,JSONBuilder builder, boolean imported) {
 		this.builder = builder;
 		this.imported = imported;
+		this.source = source;
 	}
 
 	@Override
@@ -148,10 +150,10 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 				imported = false;
 				_import = true;
 			}
-			return new InstructionFutureValue<JSON>(object(getMeta(ctx),ins,_import));
+			return new InstructionFutureValue<JSON>(object(getSource(ctx),ins,_import));
 		} catch (ExecutionException e) {
 			return new InstructionFutureValue<JSON>(value("ExecutionException during visitObject: "
-				+ e.getLocalizedMessage(),builder,getMeta(ctx)));
+				+ e.getLocalizedMessage(),builder,getSource(ctx)));
 		}
 	}
 
@@ -194,7 +196,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		for (ValueContext vc : ctx.value()) {
 			ins.add(visitValue(vc).inst);
 		}
-		return new InstructionFutureValue<JSON>(array(ins,getMeta(ctx)));
+		return new InstructionFutureValue<JSON>(array(ins,getSource(ctx)));
 	}
 
 	@Override
@@ -231,7 +233,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
          InstructionFutureValue<JSON> vv = visitValue(jc);
          ins.add(vv.inst);
       }
-      return new InstructionFutureValue<JSON>(function(name, ins,getMeta(ctx)));
+      return new InstructionFutureValue<JSON>(function(getSource(ctx),name, ins));
 	}
 
 	@Override
@@ -247,17 +249,16 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	   if(n ==4 ) {
 	     name = visitIdent(iit.get(0)).string + '.' + name;
 	   }
-	   ctx.getStart();
-		return new InstructionFutureValue<JSON>(function(name, new ArrayList<>(),getMeta(ctx)));
+		return new InstructionFutureValue<JSON>(function(getSource(ctx),name, new ArrayList<>()));
 	}
-
-	  protected static Pair<String,Integer> getMeta(ParserRuleContext ctx) {
+/*
+	  protected static Pair<String,Integer> getSource(ParserRuleContext ctx) {
 	     Token start = ctx.getStart();
 //	     Token stop = ctx.getStop();
 	     TokenSource ts = start.getTokenSource();
 	     return new Pair<>(ctx.toString(),ts.getLine());
 	  }
-	
+	*/
 	@Override
 	public InstructionFutureValue<JSON> visitId(IdContext ctx) {
 		IdentContext ic = ctx.ident();
@@ -289,7 +290,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitNumber(NumberContext ctx) {
-		return new InstructionFutureValue<JSON>(number(ctx.INTEGER(), ctx.FLOAT(),builder,getMeta(ctx)));
+		return new InstructionFutureValue<JSON>(number(ctx.INTEGER(), ctx.FLOAT(),builder,getSource(ctx)));
 	}
 
 	@Override
@@ -305,7 +306,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			return visitTern_expr(tc);
 		InstructionFutureValue<JSON> a = visitRe_expr(ctx.re_expr());
 		String s = visitString(ctx.string()).string;
-		return new InstructionFutureValue<>(reMatch(getMeta(ctx),s, a.inst));
+		return new InstructionFutureValue<>(reMatch(getSource(ctx),s, a.inst));
 	}
 
 	@Override
@@ -318,7 +319,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		ValueContext va = vit.next();
 		ValueContext vb = vit.next();
 		return new InstructionFutureValue<>(conditional(visitTern_expr(tc).inst, visitValue(va).inst,
-			visitValue(vb).inst,getMeta(ctx)));
+			visitValue(vb).inst,getSource(ctx)));
 	}
 
 	@Override
@@ -327,7 +328,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		Or_exprContext c = ctx.or_expr();
 		if (c != null) {
 			final boolean or = ctx.getChild(1).getText().equals("or");
-			return new InstructionFutureValue<JSON>(dyadic(getMeta(ctx),visitOr_expr(c).inst,
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),visitOr_expr(c).inst,
 				a.inst, new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
@@ -347,7 +348,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> a = visitEq_expr(ctx.eq_expr());
 		And_exprContext c = ctx.and_expr();
 		if (c != null) {
-			return new InstructionFutureValue<JSON>(dyadic(getMeta(ctx),a.inst, visitAnd_expr(c).inst,
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitAnd_expr(c).inst,
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
@@ -371,7 +372,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 		if (c != null) {
 			final boolean inv = ctx.getChild(1).getText().equals("!=");
-			return new InstructionFutureValue<JSON>(dyadic(getMeta(ctx),a.inst, visitEq_expr(c).inst,
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitEq_expr(c).inst,
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
@@ -425,7 +426,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					};
 					break;
 			}
-			return new InstructionFutureValue<JSON>(dyadic(getMeta(ctx),a.inst, visitRel_expr(c).inst, df));
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitRel_expr(c).inst, df));
 		} else {
 			return a;
 		}
@@ -440,9 +441,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 				case "+":
-					return new InstructionFutureValue<JSON>(addInstruction(getMeta(ctx),bv.inst,a.inst ));
+					return new InstructionFutureValue<JSON>(addInstruction(getSource(ctx),bv.inst,a.inst ));
 				case "-":
-					return new InstructionFutureValue<>(subInstruction(getMeta(ctx),bv.inst,a.inst));
+					return new InstructionFutureValue<>(subInstruction(getSource(ctx),bv.inst,a.inst));
 			}
 		}
 		return a;
@@ -458,11 +459,11 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			String sop = ctx.getChild(1).getText();
 			switch (sop) {
 				case "*":
-					return new InstructionFutureValue<>(mulInstruction(getMeta(ctx),bv.inst,a.inst));
+					return new InstructionFutureValue<>(mulInstruction(getSource(ctx),bv.inst,a.inst));
 				case "div":
-					return new InstructionFutureValue<>(divInstruction(getMeta(ctx),bv.inst, a.inst));
+					return new InstructionFutureValue<>(divInstruction(getSource(ctx),bv.inst, a.inst));
 				case "%":
-					return new InstructionFutureValue<>(modInstruction(getMeta(ctx),bv.inst, a.inst));
+					return new InstructionFutureValue<>(modInstruction(getSource(ctx),bv.inst, a.inst));
 			}
 		}
 		return a;
@@ -474,7 +475,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		if (uc != null)
 			return visitUnion_expr(uc);
 		InstructionFutureValue<JSON> a = visitUnary_expr(ctx.unary_expr());
-		return new InstructionFutureValue<JSON>(negate(a.inst));
+		return new InstructionFutureValue<JSON>(negate(getSource(ctx),a.inst));
 	}
 
 	@Override
@@ -487,7 +488,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			for (Filter_pathContext fp : fps) {
 				seq.add(visitFilter_path(fp).inst);
 			}
-			return new InstructionFutureValue<>(union(getMeta(ctx),seq));
+			return new InstructionFutureValue<>(union(getSource(ctx),seq));
 		}
 	}
 
@@ -498,7 +499,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			return visitPath(pc);
 		InstructionFutureValue<JSON> a = visitFilter_path(ctx.filter_path());
 		InstructionFutureValue<JSON> b = visitValue(ctx.value());
-		return new InstructionFutureValue<>(dereference(getMeta(ctx),a.inst, b.inst));
+		return new InstructionFutureValue<>(dereference(getSource(ctx),a.inst, b.inst));
 	}
 
 	@Override
@@ -511,7 +512,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	public InstructionFutureValue<JSON> visitAbs_path(Abs_pathContext ctx) {
 		final InstructionFutureValue<JSON> a = visitRel_path(ctx.rel_path());
 		if (1 < ctx.getChildCount()) {
-			return new InstructionFutureValue<>(abspath(getMeta(ctx),a.inst));
+			return new InstructionFutureValue<>(abspath(getSource(ctx),a.inst));
 		}
 		return a;
 	}
@@ -522,7 +523,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		Rel_pathContext rp = ctx.rel_path();
 		if (rp != null) {
 			final InstructionFutureValue<JSON> c = visitRel_path(rp);
-			return new InstructionFutureValue<JSON>(relpath(getMeta(ctx),c.inst, a.inst));
+			return new InstructionFutureValue<JSON>(relpath(getSource(ctx),c.inst, a.inst));
 		}
 		return a;
 	}
@@ -537,7 +538,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> pif = visitPathelement(pc);
 		InstructionFutureValue<JSON> vif = visitPathindex(ctx.pathindex());
 
-		return new InstructionFutureValue<JSON>(dereference(getMeta(ctx),pif.inst, vif.inst));
+		return new InstructionFutureValue<JSON>(dereference(getSource(ctx),pif.inst, vif.inst));
 	}
 
 	@Override
@@ -568,7 +569,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		StringContext sc = ctx.string();
 		if (sc != null) {
 			InstructionFutureValue<JSON> dd =  visitString(sc);
-			dd.inst = value(dd.string,builder,getMeta(ctx));
+			dd.inst = value(dd.string,builder,getSource(ctx));
 			return dd;
 		}
 /*
@@ -583,7 +584,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		IdContext ic = ctx.id();
 		if (ic != null) {
 			String id = visitId(ic).string;
-			return new InstructionFutureValue<>(get(getMeta(ctx),id));
+			return new InstructionFutureValue<>(get(getSource(ctx),id));
 		}
 
 		String t = ctx.getText();
@@ -592,17 +593,17 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 //				case "*:*" :
 //					return new InstructionFutureValue<>(mapChildren());
 				case "true":
-					return new InstructionFutureValue<>(value(true,builder,getMeta(ctx)));
+					return new InstructionFutureValue<>(value(true,builder,getSource(ctx)));
 				case "false":
-					return new InstructionFutureValue<>(value(false,builder,getMeta(ctx)));
+					return new InstructionFutureValue<>(value(false,builder,getSource(ctx)));
 				case "null":
-					return new InstructionFutureValue<>(value(builder,getMeta(ctx)));
+					return new InstructionFutureValue<>(value(builder,getSource(ctx)));
 				case "*":
-					return new InstructionFutureValue<>(stepChildren(getMeta(ctx)));
+					return new InstructionFutureValue<>(stepChildren(getSource(ctx)));
 				case ".":
-					return new InstructionFutureValue<>(stepSelf(getMeta(ctx)));
+					return new InstructionFutureValue<>(stepSelf(getSource(ctx)));
 				case "..":
-					return new InstructionFutureValue<>(stepParent(getMeta(ctx)));
+					return new InstructionFutureValue<>(stepParent(getSource(ctx)));
 
 			}
 		}
@@ -614,9 +615,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		String t = ctx.getText();
 		switch (t) {
 			case "**":
-				return new InstructionFutureValue<>(recursDown(getMeta(ctx)));
+				return new InstructionFutureValue<>(recursDown(getSource(ctx)));
 			case "...":
-				return new InstructionFutureValue<>(recursUp(getMeta(ctx)));
+				return new InstructionFutureValue<>(recursUp(getSource(ctx)));
 		}
 		throw new RuntimeException("token " + t + " is not implemented in recurs");
 	}
@@ -647,6 +648,13 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		return new InstructionFutureValue<>(value(ctx.getText()));
 	}
 */
+   protected SourceInfo getSource(ParserRuleContext ctx,String name) {
+      return JtlCompiler.getSource(source, ctx,name);
+   }	
+   protected SourceInfo getSource(ParserRuleContext ctx) {
+      return JtlCompiler.getSource(source, ctx,null);
+   }  
+   
 	@Override
 	public InstructionFutureValue<JSON> visitPathindex(PathindexContext ctx) {
 		return visitIndexlist(ctx.indexlist());
@@ -660,7 +668,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			elements.add(visitIndexl(dxlc).inst);
 			
 		}
-		return new InstructionFutureValue<>(array(elements,getMeta(ctx)));
+		return new InstructionFutureValue<>(array(elements,getSource(ctx)));
 	}
 
 	@Override
@@ -671,7 +679,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			List<InstructionFuture<JSON>> elements = new ArrayList<>();
 			elements.add(inst);
 			elements.add(visitValue(cl.get(1)).inst);
-			return new InstructionFutureValue<>(array(elements,getMeta(ctx)));
+			return new InstructionFutureValue<>(array(elements,getSource(ctx)));
 		} else {
 			return new InstructionFutureValue<>(inst);
 		}

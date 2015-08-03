@@ -23,6 +23,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
@@ -45,7 +46,7 @@ public class HttpModule implements Module {
 	}
 
 	@Override
-	public void define(Pair<String,Integer> meta,AsyncExecutionContext<JSON> context) {
+	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
 		context.define("get", _getInstruction(meta,context.builder()));
 		context.define("post", _postInstruction(meta,context.builder()));
 		context.define("put", _putInstruction(meta,context.builder()));
@@ -74,7 +75,8 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _formInstruction(
-	      Pair<String,Integer> meta,final JSONBuilder builder) {
+	      SourceInfo meta,final JSONBuilder builder) {
+      meta.name="http:form";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -94,7 +96,8 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _getInstruction(
-	      Pair<String,Integer> meta,final JSONBuilder builder) {
+	      SourceInfo meta,final JSONBuilder builder) {
+	   meta.name="http:get";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -115,7 +118,8 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _deleteInstruction(
-	      Pair<String,Integer> meta,final JSONBuilder builder) {
+	      SourceInfo meta,final JSONBuilder builder) {
+      meta.name="http:delete";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -136,7 +140,8 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _postInstruction(
-	      Pair<String,Integer> meta,final JSONBuilder builder) {
+	      SourceInfo meta,final JSONBuilder builder) {
+      meta.name="http:post";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -159,7 +164,9 @@ public class HttpModule implements Module {
 	}
 
 	public InstructionFuture<JSON> _putInstruction(
-	      Pair<String,Integer> meta,final JSONBuilder builder) {
+	      SourceInfo meta,final JSONBuilder builder) {
+	     meta.name="http:put";
+
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -196,7 +203,9 @@ public class HttpModule implements Module {
 	   }
 	}
    public InstructionFuture<JSON> _patchInstruction(
-         Pair<String,Integer> meta,final JSONBuilder builder) {
+         SourceInfo meta,final JSONBuilder builder) {
+      meta.name="http:patch";
+
       MethodFactory mf = new MethodFactory() {
 
          @Override
@@ -216,7 +225,7 @@ public class HttpModule implements Module {
       return httpInstruction(meta,mf);
    }
 	protected InstructionFuture<JSON> httpInstruction(
-	      Pair<String,Integer> meta,final MethodFactory mf) {
+	      SourceInfo meta,final MethodFactory mf) {
 		return new AbstractInstructionFuture(meta) {
 
 			JSON read(HttpMethod m,JSONBuilder builder) 
@@ -227,7 +236,7 @@ public class HttpModule implements Module {
 			return builder.parse(reader);				
 			}
 			@Override
-			public ListenableFuture<JSON> call(
+			public ListenableFuture<JSON> _call(
 					AsyncExecutionContext<JSON> context,
 					ListenableFuture<JSON> data) throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
