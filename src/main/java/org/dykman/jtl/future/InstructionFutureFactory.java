@@ -526,14 +526,13 @@ public class InstructionFutureFactory {
                final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
             AsyncExecutionContext<JSON> context = ctx.createChild(true, data,meta);
             context.define("0", value(context.builder().value(name),meta));
-//            context.define("_", value(data, meta));
             int cc = 1;
             for(InstructionFuture<JSON> i : iargs) {
                // the arguments themselves should be evaluated
                // with the parent context
                // instructions can be unwrapped if the callee wants a
                // a function, rather than a value from the arument list
-               InstructionFuture<JSON> inst = deferred(meta,i, context, data);
+               InstructionFuture<JSON> inst = deferred(meta,i, ctx, data);
                // but define the argument in the child context
 
                // this strategy allows numbered argument (ie.) $1 to be used
@@ -1275,7 +1274,7 @@ public class InstructionFutureFactory {
 
    }
 
-   static InstructionFuture<JSON> fixContextData(final SourceInfo info,final InstructionFuture<JSON> inst) {
+   private static InstructionFuture<JSON> fixContextData(final SourceInfo info,final InstructionFuture<JSON> inst) {
       return new AbstractInstructionFuture(info) {
          
          @Override

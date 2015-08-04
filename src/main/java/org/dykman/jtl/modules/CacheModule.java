@@ -104,7 +104,7 @@ public class CacheModule implements Module {
                         final Long ttl = (j == null) ? null : ((JSONValue) j).longValue();
                         
                         j = c.get("on");
-                        String on = ((JSONValue) j).stringValue();
+                        String on =  j == null ? null : ((JSONValue) j).stringValue();
                         on = getDef(on, "access");
                         if("access".equals(on)) {
                            cache = CacheBuilder.newBuilder().maximumSize(getDef(max, 10000)).initialCapacity(256)
@@ -146,9 +146,11 @@ public class CacheModule implements Module {
                         while(jit.hasNext()) {
                            arr.add(jit.next());
                         }
+                        
                         return Futures.immediateCheckedFuture(getCache().get(arr, new Callable<JSON>() {
                            @Override
                            public JSON call() throws Exception {
+System.out.println("fetching from the cache");                              
                               return func.call(context, data).get();
                            }
                         }));

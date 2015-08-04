@@ -12,10 +12,10 @@
 			}
 		})
 	},
-	_:  [wanted]/*/pp()/amend("children",id/ii() or null),
-	ii: ch(.)/amend("children",id/ii() or null),
-//	ii: ch(),
-//	cch: cache.c1(ch(.)),
-	ch: db.query("select id,name from items where parentid = ?",[$1]),
-	pp: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),.)
+	_:  wanted/pq()/amend("children",id/ii() or null),
+	pq: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),$_),
+	ii: cy(.)/amend("children",id/ii() or null),
+	cy: $1/cache.c1(cx(.)),
+	cx: $1/cq(),
+	cq: db.query("select id,parentid,name from items where parentid = ?",[.])
 }
