@@ -116,24 +116,24 @@ public class JdbcModule implements Module {
 					}
 					return transform(allAsList(ll),
 							new AsyncFunction<List<JSON>, JSON>() {
-
 								@Override
 								public ListenableFuture<JSON> apply(
 										List<JSON> input) throws Exception {
 									Iterator<JSON> jit = input.iterator();
 									final JSON qq = jit.next();
 									if(! qq.isValue()) return Futures.immediateFailedCheckedFuture(
-									      new ExecutionException("query is not a string: " + qq.toString()));
+									      new ExecutionException("query is not a string: " + qq.toString(),meta));
 									final JSON pp = jit.hasNext() ? jit.next()
 											: null;
                            if(pp !=null && ! (pp instanceof JSONArray)) return Futures.immediateFailedCheckedFuture(
-                                 new ExecutionException("parameters are not an array: " + pp.toString()));
+                                 new ExecutionException("parameters are not an array: " + pp.toString(),meta));
 									Callable<JSON> cc = new Callable<JSON>() {
 										@Override
 										public JSON call() throws Exception {
 											Connection connection = getConnection();
 											PreparedStatement prep = connection
 													.prepareStatement(stringValue(qq));
+											System.err.println("query:" + stringValue(qq) + pp.toString());
 											if (pp != null) {
 												switch (pp.getType()) {
                                     case FRAME:
@@ -146,7 +146,7 @@ public class JdbcModule implements Module {
 																	"query parameter "
 																			+ i
 																			+ " is not a scalar value: "
-																			+ j.toString());
+																			+ j.toString(),meta);
 														
 														prep.setObject(i++,
 																((JSONValue) j)
@@ -165,7 +165,7 @@ public class JdbcModule implements Module {
 												default:
 													throw new ExecutionException(
 															"query single parameter is not a scalar value:"
-																	+ pp.toString());
+																	+ pp.toString(),meta);
 												}
 
 											}

@@ -85,23 +85,6 @@ public class DeferredCall implements InstructionFuture<JSON> {
             return pcontext.getParent();
          }
 
-
-
-
-         @Override
-         public ListenableFuture<JSON> lookup(String name,
-               ListenableFuture<JSON> t) throws ExecutionException {
-            ListenableFuture<JSON> l = pcontext.lookup(name, data);
-            if(l == null) 
-               try {
-                  // only look in local context if name is NOT numeric
-                  Integer.parseInt(name);
-               } catch(NumberFormatException e) {
-                  l = context.lookup(name, data);
-               }
-            return l;
-         }
-
          @Override
          public AsyncExecutionContext<JSON> getNamedContext(
                String label) {

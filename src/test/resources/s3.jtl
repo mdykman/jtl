@@ -3,11 +3,26 @@
       db: module("jdbc",{
          uri:"jdbc:sqlite:src/test/resources/recurse.db",
          driver:"org.sqlite.JDBC"
-      })
+      }),
+		cache: module("cache",{
+			c1: {
+				max: 2500,
+				on: "write", // one of "write","access"
+				ttl: 30000
+			}, 
+			p1: {
+				max: 2500,
+				on: "write", // one of "write","access"
+				ttl: 30000
+			}
+		})
 	},
-	_:  wanted/pp(),
-	pp: {
-		$cnt: count(.),
-		_: "select id,name from items where id = ?"/copy(count($_))/join(" UNION ")
-	}
+	_:  array(wanted)/*/py(.)/amend("children",id/ii() or null),
+	py: $1/cache.p1(px([.])),
+	px: $1/pq(),
+	pq: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),$_),
+	ii: cy(.)/amend("children",id/ii() or null),
+	cy: $1/cache.c1(cx(.)),
+	cx: $1/cq(),
+	cq: db.query("select id,parentid,name from items where parentid = ?",[.])
 }

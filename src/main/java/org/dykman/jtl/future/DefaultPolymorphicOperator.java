@@ -1,6 +1,7 @@
 package org.dykman.jtl.future;
 
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
@@ -12,8 +13,9 @@ public class DefaultPolymorphicOperator implements
 // PolymorphicOperator,
 	DyadicAsyncFunction<JSON> {
 	JSONBuilder builder;
-
-	public DefaultPolymorphicOperator() {
+	SourceInfo info;
+	public DefaultPolymorphicOperator(SourceInfo info) {
+	   this.info = info;
 	}
 
 	@Override
@@ -140,7 +142,7 @@ public class DefaultPolymorphicOperator implements
 			case NULL:
 				return builder.value();
 		}
-		throw new ExecutionException("not implemented yet");
+		throw new ExecutionException("not implemented yet",info);
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, JSONArray l, JSONArray r) {

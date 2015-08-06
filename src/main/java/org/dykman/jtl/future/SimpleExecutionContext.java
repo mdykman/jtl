@@ -162,18 +162,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return r;
 	}
 
-	@Override
-	public ListenableFuture<JSON> lookup(String name, ListenableFuture<JSON> t)
-			throws ExecutionException {
-		InstructionFuture<JSON> inst = getdef(name);
-		if (inst != null) {
-			return inst.call(this, t);
-		}
-		// System.err.println("lookup failed: " + name);
-		return immediateFailedCheckedFuture(new ExecutionException(
-				"lookup failed: " + name));
-	}
-
 	public void setExecutionService(ListeningExecutorService s) {
 		executorService = s;
 	}

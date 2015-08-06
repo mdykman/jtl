@@ -31,9 +31,6 @@ public interface AsyncExecutionContext<T> {
 	public int counter(String label, int increment);
 	public InstructionFuture<T> getdef(String name);
 
-	public ListenableFuture<T> lookup(String name,ListenableFuture<T> t)
-		throws ExecutionException;
-	
 	public AsyncExecutionContext<T> getNamedContext(String label);
 	public AsyncExecutionContext<T> getNamedContext(String label,boolean create,SourceInfo info);
 	

@@ -6,13 +6,19 @@
       }),
 		cache: module("cache",{
 			c1: {
-				max: 500,
-				on: "read", // one of "read","access"
+				max: 2500,
+				on: "read", // one of "write","access"
+				ttl: 30000
+			}, 
+			p1: {
+				max: 2500,
+				on: "read", // one of "write","access"
 				ttl: 30000
 			}
 		})
 	},
-	_:  wanted/pq()/amend("children",id/ii() or null),
+	_:  array(wanted)/*/cache.p1(px([.])),
+	px: $1/pq()/amend("children",id/ii() or null),
 	pq: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),$_),
 	ii: cy(.)/amend("children",id/ii() or null),
 	cy: $1/cache.c1(cx(.)),

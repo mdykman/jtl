@@ -3,26 +3,34 @@ package org.dykman.jtl;
 @SuppressWarnings("serial")
 public class ExecutionException extends Exception {
 
-	public ExecutionException(String message, Throwable cause) {
+   SourceInfo info;
+	public ExecutionException(String message, Throwable cause,SourceInfo info) {
 		super(message, cause);
-		// TODO Auto-generated constructor stub
+      this.info = info;
 	}
-	public ExecutionException(String message, java.util.concurrent.ExecutionException cause) {
+	
+	public ExecutionException(String message, java.util.concurrent.ExecutionException cause,SourceInfo info) {
 		super(message, cause.getCause());
+      this.info = info;
 	}
 
-	public ExecutionException(String message) {
+	public ExecutionException(String message,SourceInfo info) {
 		super(message);
+		this.info = info;
 	}
-	public ExecutionException(java.util.concurrent.ExecutionException cause) {
+	
+	public ExecutionException(java.util.concurrent.ExecutionException cause,SourceInfo info) {
 		super(cause.getCause());
+		this.info = info;
 	}
 
-	public ExecutionException(Throwable cause) {
+	public ExecutionException(Throwable cause,SourceInfo info) {
 		super(cause);
+		this.info = info;
 	}
 
-	public ExecutionException() {
+	public ExecutionException(SourceInfo info) {
+      this.info = info;
 	}
 
 }
