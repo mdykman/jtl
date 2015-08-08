@@ -24,6 +24,7 @@ public class SimpleJtlTest {
 
 	public static void main(String[] args) {
 
+	   long start = System.nanoTime();
       ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
@@ -48,6 +49,7 @@ public class SimpleJtlTest {
 			PrintWriter pw =new PrintWriter(System.out);
 			j.get().write(pw, 3,false);
 			pw.flush();
+			System.err.println("execution " + (System.nanoTime() - start) + "ns");
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

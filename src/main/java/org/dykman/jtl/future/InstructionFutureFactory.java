@@ -933,7 +933,7 @@ public class InstructionFutureFactory {
    public static InstructionFuture<JSON> conditional(final InstructionFuture<JSON> test,
          final InstructionFuture<JSON> trueI, final InstructionFuture<JSON> falseI, SourceInfo meta) {
       meta.name = "conditional";
-      return new AbstractInstructionFuture(meta) {
+      return items(meta,new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
@@ -950,7 +950,7 @@ public class InstructionFutureFactory {
                }
             });
          }
-      };
+      });
    }
 
    // rank all
@@ -1767,7 +1767,7 @@ public class InstructionFutureFactory {
    public static InstructionFuture<JSON> ternary(SourceInfo meta, final InstructionFuture<JSON> c,
          final InstructionFuture<JSON> a, final InstructionFuture<JSON> b) {
       meta.name = "ternary";
-      return new AbstractInstructionFuture(meta) {
+      return items(meta, new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -1780,7 +1780,7 @@ public class InstructionFutureFactory {
                }
             });
          }
-      };
+      });
    }
 
    /*

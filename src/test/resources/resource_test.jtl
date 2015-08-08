@@ -1,0 +1,34 @@
+{
+	!init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/tracy",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:"password"
+      }),
+		cache: module("cache",{
+			c1: {
+				max: 500,
+				on: "read", // one of "read","access"
+				ttl: 30000
+			}
+		})
+	},
+	_:  wanted/primaryQuery()/amend("Recipe",thingId/ii() or null),
+	primaryQuery: db.query("select * from things where thingId = ?"/copy(count($_))/join(" UNION "),$_),
+	ii: cy(.)/amend("Recipe",thingId/ii() or null),
+	cy: $1/cache.c1(cx(.)),
+	cx: $1/cq(),
+	cq: db.query("select * from coreRecipe where createId = ?",[.])/*/(resourceId ? 
+		thingQ(resourceId,amount,minQuality) : 
+		categoryQ(category,amount,minQuality)),
+	thingQ: db.query("select * from things where thingId = ?",[$1])/amend({
+		Recipe:thingId/ii() or null,
+		amount: $2,
+		minQuality: $3
+		}),
+	categoryQ: db.query("select * from thingsCategory where catId = ? ",[$1])/amend({
+		amount:$2,
+		minQuality: $3
+	})
+}
