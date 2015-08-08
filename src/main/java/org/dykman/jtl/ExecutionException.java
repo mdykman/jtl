@@ -33,4 +33,7 @@ public class ExecutionException extends Exception {
       this.info = info;
 	}
 
+	public SourceInfo getSourceInfo() {
+	   return info;
+	}
 }

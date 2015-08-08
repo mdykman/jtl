@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
@@ -30,9 +31,10 @@ public class SimpleJtlTest {
 			JSONBuilder builder = new JSONBuilderImpl();
 			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
 			
-			System.err.println("compiling " + args[0]);
 			File inputFile = new File(args[0]);
 			FileInputStream fin = new FileInputStream(inputFile);
+         System.err.println("compiling " + args[0]);
+	      long compile = System.nanoTime();
 			InstructionFuture<JSON> inst = compiler.parse(args[0],fin);
 			if(inst == null) {
 				System.err.println("no program");
@@ -45,11 +47,24 @@ public class SimpleJtlTest {
 			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
 				inputFile.getParentFile(),builder, les);
 //			context.debug(true);
+         long execute = System.nanoTime();
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
-			PrintWriter pw =new PrintWriter(System.out);
-			j.get().write(pw, 3,false);
+         long resolve = System.nanoTime();
+			JSON jj = j.get();
+         long print = System.nanoTime();
+         PrintWriter pw =new PrintWriter(System.out);
+			jj.write(pw, 3,false);
 			pw.flush();
-			System.err.println("execution " + (System.nanoTime() - start) + "ns");
+			long done = System.nanoTime();
+         System.out.println();
+			System.out.println("total execution " + (done - start) + " ns");
+			System.out.println("initializing " + (compile - start) + " ns");
+			System.out.println("compiling " + (execute-compile) + " ns");
+			System.out.println("executing " + (resolve-execute) + " ns");
+			System.out.println("resovling " + (print-resolve) + " ns");
+         System.out.println("printing " + (done -print) + " ns");
+		} catch(ExecutionException e) {
+		   System.err.println(e.getSourceInfo().toString(null));
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {

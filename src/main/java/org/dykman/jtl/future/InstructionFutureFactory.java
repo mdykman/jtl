@@ -2142,7 +2142,8 @@ public class InstructionFutureFactory {
                                  obj.put(pp.f, pp.s);
                               }
                               for(Pair<String, JSON> pp : (JSONObject) input) {
-                                 obj.put(pp.f, pp.s);
+                                 if(pp.s.getType() != JSONType.NULL)
+                                    obj.put(pp.f, pp.s);
                               }
                               return immediateCheckedFuture(obj);
                            }

@@ -33,16 +33,17 @@ public class SourceInfo {
 
    // @Override
    public String toString(AsyncExecutionContext<JSON> context) {
-      AsyncExecutionContext<JSON> master = context.getMasterContext();
-      int n = master.counter("trace", 1);
       // System.err.print(System.identityHashCode(context));
       StringBuilder sb = new StringBuilder();
       Formatter formatter = new Formatter(sb, Locale.CANADA);
       formatter.format("%12h::", System.identityHashCode(context));
-      for(int i = 0; i < n; ++i) {
-         sb.append("  ");
+      if(context != null) {
+         AsyncExecutionContext<JSON> master = context.getMasterContext();
+         int n = master.counter("trace", 1);
+         for(int i = 0; i < n; ++i) {
+            sb.append("  ");
+         }
       }
-
       formatter.format("%8s %d:%d-%d:%d %s", name, line, position, endline, endposition, code);
       formatter.close();
       return sb.toString();
