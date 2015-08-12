@@ -1,0 +1,51 @@
+{
+	!init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/pantheon",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:""
+      })
+
+	},
+	_:  playerId/primaryQuery()/amend("Recipe",batchId/ii() or null),
+	primaryQuery: db.query("select a.thingId as thingId, a.type as type, a.level as level, a.name as thingName, a.description as description, a.buildingType as buildingType, a.img as img, a.chances as chances, a.bookTitle as bookTitle, a.discoverId as discoverId, a.discoverDate as discoverDate, a.firstUsedId as firstUsedId, a.firstUsedDate as firstUsedDate, c.batchId as batch, c.name as userDefinedName
+									from things a
+									inner join  playerRecipes b on (a.thingId = b.createId)
+									inner join playerRecipeKey c on (b.batchId = c.batchId)
+									where c.playerId=? group by c.batchId"/copy(count($_))/join(" UNION "),$_),
+
+
+	ii: cq(.)/*/(thingId ? 
+		thingQ(thingId,amount,minQuality) : 
+		batchQ(batch,amount,minQuality)/amend("Recipe",batchId/ii() or null)),  
+
+	cq:  db.query("select * from playerRecipes where batchId = ?",[.]),
+
+	thingQ: db.query("select * from things where thingId = ?",[$1])/amend({
+		Recipe:thingId/ii() or null,
+		amount: $2,
+		minQuality: $3
+		})/amend("Stats", thingId/sq() or null),
+
+//	sumsof: **/Stats/colate()
+
+
+	batchQ: tq($1)/amend({
+		amount:$2,
+		minQuality: $3
+	}),
+	sq: db.query("select b.amount, c.attrId, c.name, c.description
+					from thingBenefits a
+					inner join Benefits b on (a.benId = b.benId)
+					inner join attribute c on (c.attrId = b.attrId)
+					where a.thingId=?", [.]),
+
+	 tq: $1/db.query("select a.thingId as thingId, a.type as type, a.level as level, a.name as thingName, a.description as description, a.buildingType as buildingType, a.img as img, a.chances as chances, a.bookTitle as bookTitle, a.discoverId as discoverId, a.discoverDate as discoverDate, a.firstUsedId as firstUsedId, a.firstUsedDate as firstUsedDate, c.batchId as batch, c.name as userDefinedName
+									from things a
+									inner join  playerRecipes b on (a.thingId = b.createId)
+									inner join playerRecipeKey c on (b.batchId = c.batchId)
+									where c.batchId=?",[.])
+
+}
+
