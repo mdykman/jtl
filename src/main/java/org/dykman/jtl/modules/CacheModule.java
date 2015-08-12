@@ -45,7 +45,7 @@ public class CacheModule implements Module {
       for(Pair<String, JSON> pp : config) {
          SourceInfo si = meta.clone();
          si.name="cache:"+pp.f;
-         context.define(pp.f,InstructionFutureFactory.items(meta,new AbstractInstructionFuture(si) {
+         context.define(pp.f,new AbstractInstructionFuture(si,true) {
             final JSONObject c = (JSONObject) pp.s;
             Cache<JSON, JSON> cache = null;
             
@@ -120,10 +120,10 @@ public class CacheModule implements Module {
                   throws org.dykman.jtl.ExecutionException {
                InstructionFuture<JSON> ff = context.getdef("1");
 //               final InstructionFuture<JSON> func = ff.unwrap(context);
-               while(ff instanceof MemoInstructionFuture) {
+ //              while(ff instanceof MemoInstructionFuture) {
                   ff = ff.unwrap(context);
-               }
-               
+//               }
+
                InstructionFuture<JSON> ffraw = ff;
                if(ff instanceof DeferredCall) {
                   String s = meta.code;
@@ -172,7 +172,7 @@ public class CacheModule implements Module {
                // TODO Auto-generated method stub
                return null;
             }
-         }));
+         });
 
       }
    }

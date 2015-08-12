@@ -1,6 +1,7 @@
 package org.dykman.jtl.future;
 
 import java.io.File;
+import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
@@ -129,6 +130,42 @@ public class DeferredCall implements InstructionFuture<JSON> {
          @Override
          public int counter(String label,int increment) {
             return pcontext.counter(label,increment);
+         }
+
+         @Override
+         public String method() {
+            return pcontext.method();
+         }
+
+         @Override
+         public String method(String m) {
+            return pcontext.method(m);
+         }
+
+         @Override
+         public void inject(AsyncExecutionContext<JSON> cc) {
+            pcontext.inject(cc);
+            
+         }
+
+         @Override
+         public void inject(String name, AsyncExecutionContext<JSON> cc) {
+            pcontext.inject(name,cc);
+         }
+
+         @Override
+         public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
+            return pcontext.getNamedContexts();
+         }
+
+         @Override
+         public AsyncExecutionContext<JSON> declaringContext() {
+            return pcontext.declaringContext();
+         }
+
+         @Override
+         public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
+            return pcontext.declaringContext(c);
          }
       }; 
 	   return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
