@@ -1,10 +1,10 @@
 {
 	!init: {
       db: module("jdbc",{
-              uri:"jdbc:mysql://localhost:3306/tracy",
+              uri:"jdbc:mysql://localhost:3306/pantheon",
               driver:"com.mysql.jdbc.Driver",
               user:"root",
-              password:"password"
+              password:""
       }),
 		cache: module("cache",{
 			c1: {
@@ -14,7 +14,7 @@
 			}
 		})
 	},
-	_:  wanted/primaryQuery()/amend("Recipe",thingId/ii() or null),
+	_:  recipes/primaryQuery()/amend("Recipe",thingId/ii() or null),
 	primaryQuery: db.query("select * from things where thingId = ?"/copy(count($_))/join(" UNION "),$_),
 	ii: cy(.)/amend("Recipe",thingId/ii() or null),
 	cy: $1/cache.c1(cx(.)),
