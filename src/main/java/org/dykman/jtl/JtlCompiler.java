@@ -153,7 +153,8 @@ public class JtlCompiler {
       define(context,"substr", substr(meta));
 		
 		// list-oriented
-		define(context,"unique", unique(meta));
+      define(context,"sum", sum(meta));
+      define(context,"unique", unique(meta));
 		define(context,"count", count(meta));
 		define(context,"sort", sort(meta,false));
 		define(context,"rsort", sort(meta,true));

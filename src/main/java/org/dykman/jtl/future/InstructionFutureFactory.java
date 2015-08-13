@@ -476,6 +476,49 @@ public class InstructionFutureFactory {
       return memo(meta, new DeferredCall(si, inst, context, t));
    }
 
+   public static InstructionFuture<JSON> sum(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+         
+         @Override
+         public ListenableFuture<JSON> _call(
+               final AsyncExecutionContext<JSON> context,
+               final ListenableFuture<JSON> data)
+               throws ExecutionException {
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  if(input instanceof JSONArray) {
+                     Long acc = 0L;
+                     Double facc = 0.0;
+                     boolean islong = true;
+                     for(JSON j : (JSONArray) input) {
+                        if(j.isNumber()) {
+                           Number n = (Number) ((JSONValue) j).get();
+                           if(islong) {
+                              if(n instanceof Double) {
+                                 facc = acc.doubleValue();
+                                 facc += n.doubleValue();
+                                 islong = false;
+                              } else {
+                                 acc += n.longValue();
+                              }
+                           } else {
+                              facc += n.doubleValue();
+                           }            
+                        }
+                        return islong ?
+                              immediateCheckedFuture(context.builder().value(acc)) :
+                              immediateCheckedFuture(context.builder().value(facc));
+                     }
+                  }
+                  return Futures.immediateCheckedFuture(context.builder().value());
+               }
+            });
+         }
+      };
+   }
+
    // rank all
    public static InstructionFuture<JSON> function(SourceInfo meta, final String name,
          final List<InstructionFuture<JSON>> iargs) {
@@ -486,6 +529,8 @@ public class InstructionFutureFactory {
             AsyncExecutionContext<JSON> context = ctx.createChild(true, data, meta);
             context.define("0", value(context.builder().value(name), meta));
             int cc = 1;
+            System.out.println("seting params bound to context "  +  System.identityHashCode(ctx.declaringContext()) 
+                  + " set in " + System.identityHashCode(context));
             for(InstructionFuture<JSON> i : iargs) {
                // the arguments themselves should be evaluated
                // with the parent context
@@ -2102,7 +2147,7 @@ public class InstructionFutureFactory {
    public static InstructionFuture<JSON> amend(SourceInfo meta) {
       meta.name = "amend";
 
-      return new AbstractInstructionFuture(meta) {
+      return new AbstractInstructionFuture(meta,true) {
 
          @Override
          public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
