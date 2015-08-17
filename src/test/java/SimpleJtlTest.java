@@ -51,6 +51,7 @@ public class SimpleJtlTest {
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
          long resolve = System.nanoTime();
 			JSON jj = j.get();
+			System.err.flush();
          long print = System.nanoTime();
          PrintWriter pw =new PrintWriter(System.out);
 			jj.write(pw, 3,false);
@@ -66,7 +67,11 @@ public class SimpleJtlTest {
 		} catch(ExecutionException e) {
 		   System.err.println(e.getSourceInfo().toString(null));
 		} catch (Exception e) {
-			e.printStackTrace();
+		   if(e.getCause() instanceof ExecutionException ) {
+	         System.err.println(e.getLocalizedMessage() + ": " + ((ExecutionException)e.getCause()).getSourceInfo().toString(null));
+		   } else {
+		      e.printStackTrace();
+		   }
 		} finally {
          les.shutdownNow();
          try {

@@ -161,6 +161,8 @@ public class JtlCompiler {
 		define(context,"filter", filter(meta));
       define(context,"contains", contains(meta));
       define(context,"copy", copy(meta));
+      
+      define(context,"rand", rand(meta));
 
 		// object-oriented
 		define(context,"group", groupBy(meta));

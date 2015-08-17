@@ -1,0 +1,19 @@
+{
+	
+	$x: domain,
+	_:  $x/[a(),b(),c(.),d($_)],
+	bar: city/foo('thing',$2,$3)
+	foo: {
+		$xloc: $1,
+		$yloc: yLoc,
+		_: ff('NW')
+	}
+	ff: switch($1,{
+		N: [1,1],
+		S: [1,1],
+		NW: [1,1],
+		NE: [1,1],
+		SW: [1,1],
+		SE: [1,1]
+	});
+}

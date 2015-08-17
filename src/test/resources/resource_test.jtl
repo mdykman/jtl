@@ -1,10 +1,10 @@
 {
 	!init: {
       db: module("jdbc",{
-              uri:"jdbc:mysql://localhost:3306/pantheon",
+              uri:"jdbc:mysql://localhost:3306/tracy",
               driver:"com.mysql.jdbc.Driver",
               user:"root",
-              password:""
+              password:"password"
       }),
 		cache: module("cache",{
 			c1: {

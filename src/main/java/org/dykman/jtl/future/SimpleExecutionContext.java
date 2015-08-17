@@ -169,13 +169,13 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
       AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc, debug);
       // if(fc && data!=null)
       // r.define("_",InstructionFutureFactory.value(data,source));
-      System.out.println("create context from parent " + System.identityHashCode(this) + " - " + System.identityHashCode(r));
+//      System.out.println("create context from parent " + System.identityHashCode(this) + " - " + System.identityHashCode(r));
       return r;
    }
 
    @Override
    public InstructionFuture<JSON> getdef(String name) {
- System.out.println("context seeking " + name + " in " + System.identityHashCode(this));
+// System.out.println("context seeking " + name + " in " + System.identityHashCode(this));
       InstructionFuture<JSON> r = null;
       String[] parts = name.split("[.]", 2);
       if(parts.length > 1) {
@@ -186,8 +186,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
       } else {
          r = functions.get(name);
-         if(r== null) System.out.println("context " + name + " NOT found");
-         else System.out.println("context " + name + " found");
+ //        if(r== null) System.out.println("context " + name + " NOT found");
+ //        else System.out.println("context " + name + " found");
          if(parent != null && r == null && !(functionContext && Character.isDigit(name.charAt(0)))) {
             r = parent.getdef(name);
 
@@ -231,7 +231,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
    @Override
    public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
-      System.out.println("set declaring " + System.identityHashCode(c));
+//      System.out.println("set declaring " + System.identityHashCode(c));
       return declarer = c;
    }
 

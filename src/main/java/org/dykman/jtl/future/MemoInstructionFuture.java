@@ -22,6 +22,11 @@ public class MemoInstructionFuture extends AbstractInstructionFuture {
    }
 
    @Override
+   public InstructionFuture<JSON> getBareInstruction() {
+      return inst.getBareInstruction();
+   }
+
+   @Override
    public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
          throws ExecutionException {
       AsyncExecutionContext<JSON> pp = context.getMasterContext();

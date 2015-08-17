@@ -12,15 +12,15 @@
 			th: { max: 10000, on: "read", ttl: 30000 }
 		})
 	},
-	_:  wanted/primaryQuery()/amend("Recipe",thingId/ii() or null),
+	_:  recipes/primaryQuery()/amend("Recipe",thingId/ii() or null),
 	ii: cy(.)/amend("Recipe",thingId/ii() or null),
-	cy: $1/cache.cr(cq(.)),
-	ty: $1/cache.th(thingQ(.))/amend({
+	cy: cache.cr(cq($1)),
+	ty: cache.th(thingQ($1))/amend({
 		Recipe:thingId/ii() or null,
 		amount: $2,
 		minQuality: $3
 		}),
-	caty: $1/cache.cat(categoryQ(.))/amend({
+	caty: cache.cat(categoryQ($1))/amend({
 		amount:$2,
 		minQuality: $3
 	}),

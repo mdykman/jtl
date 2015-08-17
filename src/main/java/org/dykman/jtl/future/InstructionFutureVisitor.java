@@ -12,7 +12,7 @@ import static org.dykman.jtl.future.InstructionFutureFactory.get;
 import static org.dykman.jtl.future.InstructionFutureFactory.modInstruction;
 import static org.dykman.jtl.future.InstructionFutureFactory.mulInstruction;
 import static org.dykman.jtl.future.InstructionFutureFactory.negate;
-import static org.dykman.jtl.future.InstructionFutureFactory.number;
+import static org.dykman.jtl.future.InstructionFutureFactory.*;
 import static org.dykman.jtl.future.InstructionFutureFactory.object;
 import static org.dykman.jtl.future.InstructionFutureFactory.reMatch;
 import static org.dykman.jtl.future.InstructionFutureFactory.recursDown;
@@ -24,6 +24,7 @@ import static org.dykman.jtl.future.InstructionFutureFactory.stepSelf;
 import static org.dykman.jtl.future.InstructionFutureFactory.subInstruction;
 import static org.dykman.jtl.future.InstructionFutureFactory.union;
 import static org.dykman.jtl.future.InstructionFutureFactory.value;
+import static org.dykman.jtl.future.InstructionFutureFactory.variable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,6 +45,7 @@ import org.dykman.jtl.jtlParser.Eq_exprContext;
 import org.dykman.jtl.jtlParser.FfContext;
 import org.dykman.jtl.jtlParser.Filter_pathContext;
 import org.dykman.jtl.jtlParser.FuncContext;
+import org.dykman.jtl.jtlParser.FuncderefContext;
 import org.dykman.jtl.jtlParser.IdContext;
 import org.dykman.jtl.jtlParser.IdentContext;
 import org.dykman.jtl.jtlParser.IndexlContext;
@@ -61,6 +63,7 @@ import org.dykman.jtl.jtlParser.PathContext;
 import org.dykman.jtl.jtlParser.PathelementContext;
 import org.dykman.jtl.jtlParser.PathindexContext;
 import org.dykman.jtl.jtlParser.PathstepContext;
+import org.dykman.jtl.jtlParser.PnumContext;
 import org.dykman.jtl.jtlParser.Re_exprContext;
 import org.dykman.jtl.jtlParser.RecursContext;
 import org.dykman.jtl.jtlParser.Rel_exprContext;
@@ -140,7 +143,6 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
-//			System.err.println(pp.ninst.f + " " + pp.ninst.s.toString());
 			ins.add(new Pair<String, InstructionFuture<JSON>>(pp.ninst.f, pp.ninst.s));
 		}
 
@@ -161,16 +163,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	public InstructionFutureValue<JSON> visitPair(PairContext ctx) {
 		InstructionFutureValue<JSON> k = null;
 		KeyContext id = ctx.key();
-//		String ss = ctx.toTex(;
 		if (id != null) {
 			k = visitKey(id);
 		}
-		/*
-		else {
-			StringContext ct = ctx.string();
-			if(ct!=null) k = visitString(ct);
-		}
-		*/
 		String ks = k.string;
 
 		InstructionFutureValue<JSON> v = visitValue(ctx.value());
@@ -221,6 +216,32 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	}
 
 	@Override
+   public InstructionFutureValue<JSON> visitFf(FfContext ctx) {
+      // TODO Auto-generated method stub
+      return super.visitFf(ctx);
+   }
+   @Override
+   public InstructionFutureValue<JSON> visitFuncderef(FuncderefContext ctx) {
+      String name = ctx.getChild(1).getText();
+      List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
+      for (ValueContext jc : ctx.value()) {
+         InstructionFutureValue<JSON> vv = visitValue(jc);
+         ins.add(vv.inst);
+      }
+      
+      return new InstructionFutureValue<JSON>(activate(getSource(ctx),name,ins));
+   }
+   @Override
+   public InstructionFutureValue<JSON> visitPnum(PnumContext ctx) {
+      if(ctx.INTEGER() ==null) {
+         Long l = new Long(ctx.FLOAT().getText());
+         return new InstructionFutureValue<JSON>(l);
+      } else {
+         Double d = new Double(ctx.INTEGER().getText());
+         return new InstructionFutureValue<JSON>(d);
+      }
+  }
+   @Override
 	public InstructionFutureValue<JSON> visitFunc(FuncContext ctx) {
 	   FfContext fc = ctx.ff();
 	   String name = fc.getChild(0).getText();
@@ -234,6 +255,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
          ins.add(vv.inst);
       }
       return new InstructionFutureValue<JSON>(function(getSource(ctx),name, ins));
+    
 	}
 
 	@Override
@@ -249,16 +271,10 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	   if(n ==4 ) {
 	     name = visitIdent(iit.get(0)).string + '.' + name;
 	   }
-		return new InstructionFutureValue<JSON>(function(getSource(ctx),name, new ArrayList<>()));
+	   List<InstructionFuture<JSON>> ins = new ArrayList<>();
+      return new InstructionFutureValue<JSON>(variable(function(getSource(ctx),name, ins)));
 	}
-/*
-	  protected static Pair<String,Integer> getSource(ParserRuleContext ctx) {
-	     Token start = ctx.getStart();
-//	     Token stop = ctx.getStop();
-	     TokenSource ts = start.getTokenSource();
-	     return new Pair<>(ctx.toString(),ts.getLine());
-	  }
-	*/
+
 	@Override
 	public InstructionFutureValue<JSON> visitId(IdContext ctx) {
 		IdentContext ic = ctx.ident();
@@ -290,8 +306,19 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitNumber(NumberContext ctx) {
-		return new InstructionFutureValue<JSON>(number(ctx.INTEGER(), ctx.FLOAT(),builder,getSource(ctx)));
+	   Number num = visitPnum(ctx.pnum()).number;
+      int n = ctx.getChildCount();
+      if(n>1) {
+         if(num instanceof Long) {
+            num = - (Long) num;
+         } else {
+            num = - (Double) num;
+         }
+      }
+		return new InstructionFutureValue<JSON>(number(num,builder,getSource(ctx)));
 	}
+	
+	
 
 	@Override
 	public InstructionFutureValue<JSON> visitJpath(JpathContext ctx) {
