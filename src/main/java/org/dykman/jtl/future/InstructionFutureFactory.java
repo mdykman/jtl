@@ -1864,23 +1864,7 @@ public class InstructionFutureFactory {
                }
             });
          }
-         /*
-          * // @Override public ListenableFuture<JSON>
-          * callItem(AsyncExecutionContext<JSON> context, ListenableFuture<JSON>
-          * data) throws ExecutionException { return transform(data, new
-          * AsyncFunction<JSON, JSON>() {
-          * 
-          * @Override public ListenableFuture<JSON> apply(JSON input) throws
-          * Exception { JSONType type = input.getType(); switch(type) { case
-          * ARRAY: { Frame unbound = context.builder().frame(); JSONArray arr =
-          * (JSONArray) input; for(JSON j : arr) { unbound.add(j); } return
-          * immediateCheckedFuture(input); } case OBJECT: { Frame unbound =
-          * context.builder().frame(); JSONObject obj = (JSONObject) input;
-          * for(Pair<String, JSON> ee : obj) { unbound.add(ee.s); } return
-          * immediateCheckedFuture(unbound); } default: Frame unbound =
-          * context.builder().frame(); return immediateCheckedFuture(unbound); }
-          * } }); }
-          */
+       
       };
    }
 
@@ -1989,25 +1973,7 @@ public class InstructionFutureFactory {
       };
    }
 
-   /*
-    * public static InstructionFuture<JSON> strc(SourceInfo meta,final
-    * List<InstructionFuture<JSON>> ii) { return new
-    * AbstractInstructionFuture(meta) {
-    * 
-    * @Override public ListenableFuture<JSON> call(AsyncExecutionContext<JSON>
-    * context, ListenableFuture<JSON> data) throws ExecutionException {
-    * List<ListenableFuture<JSON>> rr = new ArrayList<>(ii.size());
-    * for(InstructionFuture<JSON> inst : ii) { rr.add(inst.call(context, data));
-    * } return transform(Futures.allAsList(rr), new AsyncFunction<List<JSON>,
-    * JSON>() {
-    * 
-    * @Override public ListenableFuture<JSON> apply(List<JSON> input) throws
-    * Exception { StringBuilder sb = new StringBuilder(); for(JSON j : input) {
-    * if(j.getType() != JSONType.NULL) { sb.append(((JSONValue)
-    * j).stringValue()); } } return
-    * immediateCheckedFuture(context.builder().value(sb.toString())); } }); } };
-    * }
-    */
+
    // rank all
    public static InstructionFuture<JSON> abspath(SourceInfo meta, InstructionFuture<JSON> inst) {
       meta.name = "apath";

@@ -375,7 +375,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		InstructionFutureValue<JSON> a = visitEq_expr(ctx.eq_expr());
 		And_exprContext c = ctx.and_expr();
 		if (c != null) {
-			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitAnd_expr(c).inst,
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),visitAnd_expr(c).inst,a.inst, 
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
@@ -399,7 +399,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 		if (c != null) {
 			final boolean inv = ctx.getChild(1).getText().equals("!=");
-			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitEq_expr(c).inst,
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),visitEq_expr(c).inst,a.inst, 
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
@@ -453,7 +453,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					};
 					break;
 			}
-			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx),a.inst, visitRel_expr(c).inst, df));
+			return new InstructionFutureValue<JSON>(dyadic(getSource(ctx), visitRel_expr(c).inst, a.inst,df));
 		} else {
 			return a;
 		}
