@@ -173,6 +173,8 @@ variable
       : '$' ident 
       |  ident '.' '$' ident 
       | '$' INTEGER
+      | '$' '@'
+      | '$' '#'
       ;
 
 

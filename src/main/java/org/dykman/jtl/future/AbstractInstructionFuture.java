@@ -37,6 +37,7 @@ public abstract class AbstractInstructionFuture implements
    public InstructionFuture<JSON> getBareInstruction() {
       return this;
    }
+   
    protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
       for(JSON j : ij) {
          if(j != null && j.getType() != JSONType.NULL)

@@ -1,19 +1,13 @@
 {
 	
-	$x: domain,
-	_:  $x/[a(),b(),c(.),d($_)],
-	bar: city/foo('thing',$2,$3)
-	foo: {
-		$xloc: $1,
-		$yloc: yLoc,
-		_: ff('NW')
-	}
+	_:  [ff('NW'),ff('NE'),ff('S'),ff('WTF')],
 	ff: switch($1,{
-		N: [1,1],
-		S: [1,1],
-		NW: [1,1],
+		N: [0,0],
+		S: [0,1],
+		NW: [1,0],
 		NE: [1,1],
-		SW: [1,1],
-		SE: [1,1]
-	});
+		SW: [2,0],
+		SE: [2,1],
+		_: "not found"
+	})
 }

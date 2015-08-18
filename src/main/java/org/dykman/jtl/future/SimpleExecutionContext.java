@@ -22,6 +22,10 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
    protected final AsyncExecutionContext<JSON> parent;
    protected final boolean functionContext;
+   public boolean isFunctionContext() {
+      return functionContext;
+   }
+
    protected String method = null;
    protected final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
    protected ListeningExecutorService executorService = null;

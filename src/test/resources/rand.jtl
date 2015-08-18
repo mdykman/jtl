@@ -1,0 +1,8 @@
+{
+	_: {
+		single: rand(20), // 0-19
+		array: rand(10,20), // 10 * 0-19
+		rangedsingle: rand(21) - 10, // 1 number -10 -> 10
+		rangedarray: rand(10,21)/*/(. - 10) // 10 numbers, -10 -> 10
+		}
+}

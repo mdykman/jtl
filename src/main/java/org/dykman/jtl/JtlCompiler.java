@@ -140,6 +140,8 @@ public class JtlCompiler {
 		// general
 		define(context,"error", defaultError(meta));
 		define(context,"params", params(meta));
+      define(context,"rand", rand(meta));
+      define(context,"switch", switchInst(meta));
 
 		// external data
 		define(context,"file", file(meta));
@@ -162,7 +164,6 @@ public class JtlCompiler {
       define(context,"contains", contains(meta));
       define(context,"copy", copy(meta));
       
-      define(context,"rand", rand(meta));
 
 		// object-oriented
 		define(context,"group", groupBy(meta));

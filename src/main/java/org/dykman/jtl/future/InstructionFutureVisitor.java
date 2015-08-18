@@ -1,30 +1,6 @@
 package org.dykman.jtl.future;
 
-import static org.dykman.jtl.future.InstructionFutureFactory.abspath;
-import static org.dykman.jtl.future.InstructionFutureFactory.addInstruction;
-import static org.dykman.jtl.future.InstructionFutureFactory.array;
-import static org.dykman.jtl.future.InstructionFutureFactory.conditional;
-import static org.dykman.jtl.future.InstructionFutureFactory.dereference;
-import static org.dykman.jtl.future.InstructionFutureFactory.divInstruction;
-import static org.dykman.jtl.future.InstructionFutureFactory.dyadic;
-import static org.dykman.jtl.future.InstructionFutureFactory.function;
-import static org.dykman.jtl.future.InstructionFutureFactory.get;
-import static org.dykman.jtl.future.InstructionFutureFactory.modInstruction;
-import static org.dykman.jtl.future.InstructionFutureFactory.mulInstruction;
-import static org.dykman.jtl.future.InstructionFutureFactory.negate;
 import static org.dykman.jtl.future.InstructionFutureFactory.*;
-import static org.dykman.jtl.future.InstructionFutureFactory.object;
-import static org.dykman.jtl.future.InstructionFutureFactory.reMatch;
-import static org.dykman.jtl.future.InstructionFutureFactory.recursDown;
-import static org.dykman.jtl.future.InstructionFutureFactory.recursUp;
-import static org.dykman.jtl.future.InstructionFutureFactory.relpath;
-import static org.dykman.jtl.future.InstructionFutureFactory.stepChildren;
-import static org.dykman.jtl.future.InstructionFutureFactory.stepParent;
-import static org.dykman.jtl.future.InstructionFutureFactory.stepSelf;
-import static org.dykman.jtl.future.InstructionFutureFactory.subInstruction;
-import static org.dykman.jtl.future.InstructionFutureFactory.union;
-import static org.dykman.jtl.future.InstructionFutureFactory.value;
-import static org.dykman.jtl.future.InstructionFutureFactory.variable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -220,6 +196,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
       // TODO Auto-generated method stub
       return super.visitFf(ctx);
    }
+	
    @Override
    public InstructionFutureValue<JSON> visitFuncderef(FuncderefContext ctx) {
       String name = ctx.getChild(1).getText();
@@ -228,19 +205,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
          InstructionFutureValue<JSON> vv = visitValue(jc);
          ins.add(vv.inst);
       }
-      
       return new InstructionFutureValue<JSON>(activate(getSource(ctx),name,ins));
    }
-   @Override
-   public InstructionFutureValue<JSON> visitPnum(PnumContext ctx) {
-      if(ctx.INTEGER() ==null) {
-         Long l = new Long(ctx.FLOAT().getText());
-         return new InstructionFutureValue<JSON>(l);
-      } else {
-         Double d = new Double(ctx.INTEGER().getText());
-         return new InstructionFutureValue<JSON>(d);
-      }
-  }
+   
    @Override
 	public InstructionFutureValue<JSON> visitFunc(FuncContext ctx) {
 	   FfContext fc = ctx.ff();
@@ -255,10 +222,20 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
          ins.add(vv.inst);
       }
       return new InstructionFutureValue<JSON>(function(getSource(ctx),name, ins));
-    
 	}
 
-	@Override
+   @Override
+   public InstructionFutureValue<JSON> visitPnum(PnumContext ctx) {
+      if(ctx.INTEGER() ==null) {
+         Double d = new Double(ctx.FLOAT().getText());
+         return new InstructionFutureValue<JSON>(d);
+      } else {
+         Long l = new Long(ctx.INTEGER().getText());
+         return new InstructionFutureValue<JSON>(l);
+      }
+  }
+
+   @Override
 	public InstructionFutureValue<JSON> visitVariable(VariableContext ctx) {
 	   List<IdentContext> iit = ctx.ident();
 	   int n = iit.size();
@@ -588,7 +565,10 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		FuncContext fc = ctx.func();
 		if (fc != null)
 			return visitFunc(fc);
-
+		
+		FuncderefContext fdc = ctx.funcderef();
+		if(fdc != null) return visitFuncderef(fdc);
+		
 		NumberContext nc = ctx.number();
 		if (nc != null)
 			return visitNumber(nc);

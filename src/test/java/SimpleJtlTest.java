@@ -57,6 +57,7 @@ public class SimpleJtlTest {
 			jj.write(pw, 3,false);
 			pw.flush();
 			long done = System.nanoTime();
+			/*
          System.out.println();
 			System.out.println("total execution " + (done - start) + " ns");
 			System.out.println("initializing " + (compile - start) + " ns");
@@ -64,6 +65,7 @@ public class SimpleJtlTest {
 			System.out.println("executing " + (resolve-execute) + " ns");
 			System.out.println("resovling " + (print-resolve) + " ns");
          System.out.println("printing " + (done -print) + " ns");
+         */
 		} catch(ExecutionException e) {
 		   System.err.println(e.getSourceInfo().toString(null));
 		} catch (Exception e) {

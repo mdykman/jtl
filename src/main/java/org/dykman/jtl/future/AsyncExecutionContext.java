@@ -33,7 +33,7 @@ public interface AsyncExecutionContext<T> {
    public AsyncExecutionContext<T> declaringContext();
    public AsyncExecutionContext<T> declaringContext(AsyncExecutionContext<T> c);
 
-
+   public boolean isFunctionContext() ;
 	
 	public boolean debug();
    public boolean debug(boolean d);

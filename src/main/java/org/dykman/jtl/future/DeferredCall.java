@@ -15,7 +15,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 public class DeferredCall implements InstructionFuture<JSON> {
    final SourceInfo info;
 	public final InstructionFuture<JSON> inst;
-	public final AsyncExecutionContext<JSON> pcontext;
+	public AsyncExecutionContext<JSON> pcontext;
 	public final ListenableFuture<JSON> data;
 
 	public DeferredCall(SourceInfo source,InstructionFuture<JSON> inst,
@@ -28,23 +28,7 @@ public class DeferredCall implements InstructionFuture<JSON> {
 	}
 
 
-	public InstructionFuture<JSON> deref(AsyncExecutionContext<JSON> ctx,List<InstructionFuture<JSON>> ll) {
-	   AsyncExecutionContext<JSON> cc = ctx.createChild(false, data, info);
-      int ctr = 1;
-      for(InstructionFuture<JSON> i : ll) {
-         // the arguments themselves should be evaluated
-         // with the parent context
-         // instructions can be unwrapped if the callee wants a
-         // a function, rather than a value from the arument list
-         InstructionFuture<JSON> ins = InstructionFutureFactory.deferred(info, i, ctx.declaringContext(), data);
-         // but define the argument in the child context
 
-         // this strategy allows numbered argument (ie.) $1 to be used
-         cc.define(Integer.toString(ctr++), ins);
-      }
-      return new DeferredCall(info, inst.getBareInstruction(), cc, null);
-
-	}
 	@Override
 	public InstructionFuture<JSON> getBareInstruction() {
 	   return inst.getBareInstruction();
@@ -57,6 +41,10 @@ public class DeferredCall implements InstructionFuture<JSON> {
 	public AsyncExecutionContext<JSON> getContext() {
 	   return pcontext;
 	}
+	
+	  public DeferredCall rebindContext(final AsyncExecutionContext<JSON> context) {
+	     return new DeferredCall(info, inst, context, data);
+	  }
 	@Override
 	public InstructionFuture<JSON> unwrap(final AsyncExecutionContext<JSON> context) {
 	   AsyncExecutionContext<JSON> ctx = new AsyncExecutionContext<JSON>() {
@@ -191,8 +179,14 @@ public class DeferredCall implements InstructionFuture<JSON> {
          public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
             return pcontext.declaringContext(c);
          }
+
+         @Override
+         public boolean isFunctionContext() {
+            return pcontext.isFunctionContext();
+         }
       }; 
-	   return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
+      return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
+//      return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
 	}
 
 	@Override
