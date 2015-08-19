@@ -1,0 +1,29 @@
+// create new city
+{
+	!init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/pantheon",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:""
+      })
+
+	},
+	_:createCity/find(xLoc,yLoc), 
+
+	create: [
+		addCity($1,$2),
+		getCity()/initializeBuildings()
+		],
+	find: fq($1,$2) ? find($1+1,$2+2) : create($1,$2, playerId), 
+
+	fq: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1, $2]),
+
+	addCity: db.execute("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid,$1,$2,username,level]),
+	getCity:  db.query("SELECT pcId from playerCities where playerId=? order by pcId desc limit 1",[playerid])[0]/pcId,
+	//getCity:  db.query("SELECT LAST_INSERT_ID()",[])[0]/*[0],
+	initializeBuildings: [ 
+		addBuilding(1,5,5,"S") 
+		],
+	addBuilding: db.execute("INSERT into cityBuildings set pcid=?, btId=?, xLoc=?, yLoc=?, direction=?",[.,$1,$2,$3,$4])
+}
