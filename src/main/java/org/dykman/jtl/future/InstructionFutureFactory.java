@@ -25,8 +25,6 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.http.entity.mime.content.AbstractContentBody;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
@@ -43,7 +41,6 @@ import org.dykman.jtl.modules.ModuleLoader;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.sun.org.apache.xerces.internal.jaxp.validation.WrappedSAXException;
 
 public class InstructionFutureFactory {
 
@@ -615,14 +612,7 @@ public class InstructionFutureFactory {
             AsyncExecutionContext<JSON> cc = ctx.createChild(true, data, source);
             int ctr = 1;
             for(InstructionFuture<JSON> i : ll) {
-               // the arguments themselves should be evaluated
-               // with the parent context
-               // instructions can be unwrapped if the callee wants a
-               // a function, rather than a value from the arument list
-               InstructionFuture<JSON> ins = wrapArgument(source, ctx.declaringContext(), inst, data);
-               // but define the argument in the child context
-
-               // this strategy allows numbered argument (ie.) $1 to be used
+               InstructionFuture<JSON> ins = wrapArgument(source, ctx, inst, data);
                cc.define(Integer.toString(ctr++), ins);
             }
             
@@ -663,7 +653,7 @@ public class InstructionFutureFactory {
    static InstructionFuture<JSON> wrapArgument(SourceInfo info,AsyncExecutionContext<JSON> ctx,
          InstructionFuture<JSON> inst,
          final ListenableFuture<JSON> data) {
-      return memo(info,deferred(info, inst, ctx, data));
+      return memo(info,deferred(info, inst, ctx.declaringContext(), data));
       
    }
    public static InstructionFuture<JSON> function(SourceInfo meta, final String name,
