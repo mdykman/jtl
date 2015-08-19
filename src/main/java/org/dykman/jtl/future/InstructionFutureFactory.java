@@ -43,6 +43,7 @@ import org.dykman.jtl.modules.ModuleLoader;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.sun.org.apache.xerces.internal.jaxp.validation.WrappedSAXException;
 
 public class InstructionFutureFactory {
 
@@ -618,14 +619,14 @@ public class InstructionFutureFactory {
                // with the parent context
                // instructions can be unwrapped if the callee wants a
                // a function, rather than a value from the arument list
-               InstructionFuture<JSON> ins = InstructionFutureFactory.deferred(source, i, ctx.declaringContext(), data);
+               InstructionFuture<JSON> ins = wrapArgument(source, ctx.declaringContext(), inst, data);
                // but define the argument in the child context
 
                // this strategy allows numbered argument (ie.) $1 to be used
                cc.define(Integer.toString(ctr++), ins);
             }
             
-            DeferredCall dc =  new DeferredCall(source, inst, cc, null);
+            DeferredCall dc =  new DeferredCall(source, inst.unwrap(ctx), cc, null);
             return dc;
 
          }
@@ -658,6 +659,13 @@ public class InstructionFutureFactory {
          }
       };
    }
+   
+   static InstructionFuture<JSON> wrapArgument(SourceInfo info,AsyncExecutionContext<JSON> ctx,
+         InstructionFuture<JSON> inst,
+         final ListenableFuture<JSON> data) {
+      return memo(info,deferred(info, inst, ctx, data));
+      
+   }
    public static InstructionFuture<JSON> function(SourceInfo meta, final String name,
          final List<InstructionFuture<JSON>> iargs) {
       meta.name = "function";
@@ -668,10 +676,10 @@ public class InstructionFutureFactory {
             List<InstructionFuture<JSON>> insts = new ArrayList<>();
             context.define("0", value(context.builder().value(name), meta));
             int cc = 1;
-            Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
+ //           Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
             for(InstructionFuture<JSON> inst:iargs) {
                String key = Integer.toString(cc++);
-               context.define(key, inst);
+               context.define(key, wrapArgument(source, ctx,inst, data));
                insts.add(inst);
             }
             AsyncExecutionContext<JSON> declaring = ctx.declaringContext();
@@ -683,7 +691,8 @@ public class InstructionFutureFactory {
                   InstructionFuture<JSON> si = ctx.getdef(skey);
                   if(si==null) break;
                   String key = Integer.toString(cc++);
-                  context.define(key, si);
+//                  context.define(key, new DeferredCall(source, si, ctx, data));
+                  context.define(key,  si);
                   insts.add(si);
                }
                

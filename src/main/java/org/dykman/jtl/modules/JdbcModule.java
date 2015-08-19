@@ -183,30 +183,31 @@ public class JdbcModule implements Module {
 		}
 	}
 
+	Executor queryExecutor = new Executor() {
+      @Override
+      public JSON process(PreparedStatement stat, JSONBuilder builder)
+            throws SQLException {
+         ResultSet rs = stat.executeQuery();
+         Frame frame = builder.frame();
+         ResultSetMetaData rsm = rs.getMetaData();
+         int n = rsm.getColumnCount();
+         while (rs.next()) {
+            JSONObject obj = builder.object(frame);
+            for (int i = 1; i <= n; ++i) {
+               obj.put(rsm.getColumnName(i),
+                     builder.value(rs.getObject(i)));
+            }
+            frame.add(obj);
+         }
+         return frame;
+      }
+   };
 	@Override
 	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
 		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
 		SourceInfo si = meta.clone();
 		si.name = "query";
-		context.define("query", wrapper.query(si,new Executor() {
-			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder)
-					throws SQLException {
-				ResultSet rs = stat.executeQuery();
-				Frame frame = builder.frame();
-				ResultSetMetaData rsm = rs.getMetaData();
-				int n = rsm.getColumnCount();
-				while (rs.next()) {
-					JSONObject obj = builder.object(frame);
-					for (int i = 1; i <= n; ++i) {
-						obj.put(rsm.getColumnName(i),
-								builder.value(rs.getObject(i)));
-					}
-					frame.add(obj);
-				}
-				return frame;
-			}
-		}));
+		context.define("query", wrapper.query(si,queryExecutor));
 
       si = meta.clone();
       si.name = "cquery";
@@ -244,6 +245,23 @@ public class JdbcModule implements Module {
 			}
 
 		}));
+
+	    context.define("insert", wrapper.query(si,new Executor() {
+	         @Override
+	         public JSON process(PreparedStatement stat, JSONBuilder builder)
+	               throws SQLException {
+	            boolean b=stat.execute();
+	            if(b) {
+	               PreparedStatement lid = wrapper.connection.prepareStatement("select last_insert_id()");
+	               JSONArray j = (JSONArray)queryExecutor.process(lid, builder);
+	               return builder.value(j.get(0));
+	            }
+	            return builder.value();
+	         }
+
+	      }));
+
+		
 	}
 
 	protected static String stringValue(JSON j) {
