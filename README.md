@@ -4,13 +4,13 @@
  All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document
  could be refering to any of these unless specified otherwise.
 
-  ### objects 
+ ### objects 
   Objects are conainers mapping string keys to JSON values.  Values may be of any JSON type
 
-  ### array 
+ ### array 
   Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any type
 
-  ### scalars 
+ ### scalars 
   Scalars can be of severals types
   * string
   * number (Long or Double)
@@ -36,24 +36,24 @@
  ## regular expressions 
 	The general syntax for a regular expression match is:
 	
-		text =~ regexp
+		`text =~ regexp`
 
 	Note the =~ operator which is only legal with a literal string to the right of it.
 
 	The regular expression itself must be a literal string:
 
-	.../(. =~ "[a-z]*")
+	`. =~ "[a-z]*"`
 	
 	Dynamic regular expressions are on the road map, not at high priority
 
 	On match, this expression will prduce an array containg at least 1 item: the matched text.  If parentheses have been used to
 	define sub matches, those submatches will appears as subsequent elements of the array.
 
-	"this is my text string" =~ "th[^y]*(y..).*(ri.*)$" -> ["this is my text string","y t","ring"]
+	`"this is my text string" =~ "th[^y]*(y..).*(ri.*)$" -> ["this is my text string","y t","ring"]`
 
 	On no-match, the expression yields an empty array, which tests false.
 
-	"not even close" =~ "th[^y]*(y..).*(ri.*)$" -> []
+	`"not even close" =~ "th[^y]*(y..).*(ri.*)$" -> []`
 
  ## functions 
 
@@ -65,13 +65,13 @@
 		error - define error handler for current scope - badly implemented
       rand(selector) - random numbers - 
 		rand(count,selector)
-			* 1 param returns 0->(p-1): rand(20)->17 
-			* 2 params returns array of size p1, selected by p2: rand(4,20) -> [3,17,0,8]
-			* 0 selector returns random double 0 <= n < 1: rand(0) -> 0.583501
+			* 1 param returns 0->(p-1): `rand(20)`->17
+			* 2 params returns array of size p1, selected by p2: `rand(4,20)` -> [3,17,0,8]
+			* 0 selector returns random double 0 <= n < 1: `rand(0)` -> 0.583501
       switch(selector,object) - string based expression selector
 			* selector - string expression keyed to a member of object
 			* object - a map of expressions keyed by string with '_' as default
-			* switch("foo",{bar:"you selected bar",foo:"you selected foo",_:"you selected nothing useful"}) -> "you selected foo"
+			 `switch("foo",{bar:"you selected bar",foo:"you selected foo",_:"you selected nothing useful"}) -> "you selected foo"`
 			
 
 		### external data 
@@ -94,13 +94,13 @@
 		count() - count the items in an array
 		sort() - sort items in an array
 		sort(expr)
-			* dataset/sort() - sort the items 'naturally' (nulls->boolean->numeric->string->object->array)
-			* dataset/sort(expr) - evaluate expr against each item in the input array, sort 'naturally' with that value
+			* `dataset/sort()` - sort the items 'naturally' (nulls->boolean->numeric->string->object->array)
+			* `dataset/sort(expr)` - evaluate expr against each item in the input array, sort 'naturally' with that value
 		rsort - same as sort, but reversed
 		filter(expr) - returns an array of elements from the input array which expr evaluated as true
       contains(element) - return true if array contains element
 		append($1, ...)  - return an array with each argument appended to the input array
-			 [1,3,5]/append(7,9) -> [1,3,5,7,9]
+			 `[1,3,5]/append(7,9) -> [1,3,5,7,9]`
       copy
       
 
@@ -115,6 +115,7 @@
 			* 1 param form: expects an object result which is overlaid on the input object, creating or replacing values
 			* 2 params form: key is used to create or replace input object memeber
       keys * returns an array of the keys in the object
+			`{ foo:1,bar:2 }/keys()`->["foo","bar"]
 
       ### types 
 		// boolean type test only - 0 arguments
@@ -122,10 +123,12 @@
       value()
 		object()
 
+```
 		null/nil() -> true
 		1/value() -> true
 		"hello"/value() -> true
 		{ thing: 1 }/object() -> true
+```
 
 		// with 0 args, they return boolean type test
 		// with 1 arg, attempts to coerce to the specified type
