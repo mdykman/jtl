@@ -57,7 +57,6 @@
 
  == functions ==
 
-		
 		=== general ===
 		module(name,config)  - import modules, usually called in !init
 			* name - a string selecting the name, must be defined in config.json
