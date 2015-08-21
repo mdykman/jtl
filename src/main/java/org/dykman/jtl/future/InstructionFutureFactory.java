@@ -37,6 +37,7 @@ import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.dykman.jtl.modules.ModuleLoader;
+import org.omg.PortableServer.ServantRetentionPolicyValue;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -50,6 +51,7 @@ public class InstructionFutureFactory {
    // rank all
 
    public static InstructionFuture<JSON> memo(SourceInfo meta, final InstructionFuture<JSON> inst) {
+      if(inst instanceof MemoInstructionFuture) return inst;
       meta.name = "memo";
       return new MemoInstructionFuture(meta, inst);
    }
@@ -572,14 +574,72 @@ public class InstructionFutureFactory {
    }
 
    
-   public static InstructionFuture<JSON> variable(final InstructionFuture<JSON>  func) {
-      return new AbstractInstructionFuture(func.getSourceInfo()) {
+   public static InstructionFuture<JSON> defined(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+         
+         @Override
+         public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> inst = context.getdef("1");
+            return transform(inst.call(context, data), new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  String k = stringValue(input);
+                  return immediateCheckedFuture(context.builder().value(context.getdef(k) != null));
+               }
+            });
+         }
+      };
+   }
+   
+   public static InstructionFuture<JSON> each(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+         @Override
+         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> inst = context.getdef("1").unwrap(context);
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+               
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  if(input instanceof JSONArray) {
+                     List<ListenableFuture<JSON>> ll = new ArrayList<>();
+                     for(JSON j : (JSONArray)input) {
+                        ll.add(inst.call(context, immediateCheckedFuture(j)));
+                     }
+                     return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+                        @Override
+                        public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+                           Frame f = context.builder().frame();
+                           for(JSON j : input) {
+                              f.add(j);
+                           }
+                           return immediateCheckedFuture(f);
+                        }
+                     });
+                  } else {
+                     return inst.call(context, immediateCheckedFuture(input));
+                  }
+               }
+            });
+         }
+      };
+   }
+
+   
+   public static InstructionFuture<JSON> variable(SourceInfo meta, final String name) {
+      final FunctionInstruction fi = function(meta, name, null);
+      fi.setVariable(true);
+//      final InstructionFuture<JSON> func = function(meta, name, null);
+      return new AbstractInstructionFuture(fi.getSourceInfo()) {
          
          @Override
          public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
             try {
-               return func.call(context, data);
+               return fi.call(context, data);
             } catch(ExecutionException e) {
                // eat the access exception and quietly return null
                return immediateCheckedFuture(context.builder().value());
@@ -587,6 +647,7 @@ public class InstructionFutureFactory {
          }
       };
    }
+   
    // rank all
    public static InstructionFuture<JSON> activate(SourceInfo meta, final String name,
          final List<InstructionFuture<JSON>> iargs) {
@@ -608,15 +669,18 @@ public class InstructionFutureFactory {
  //           }
             return inst.call(context, data);
          }
-         public InstructionFuture<JSON> deref(AsyncExecutionContext<JSON> ctx, ListenableFuture<JSON> data,InstructionFuture<JSON> inst,List<InstructionFuture<JSON>> ll) {
+         public InstructionFuture<JSON> deref(AsyncExecutionContext<JSON> ctx, 
+               ListenableFuture<JSON> data,
+               InstructionFuture<JSON> inst,
+               List<InstructionFuture<JSON>> ll) {
             AsyncExecutionContext<JSON> cc = ctx.createChild(true, data, source);
             int ctr = 1;
             for(InstructionFuture<JSON> i : ll) {
-               InstructionFuture<JSON> ins = wrapArgument(source, ctx, inst, data);
+               InstructionFuture<JSON> ins = wrapArgument(source, ctx, i, data);
                cc.define(Integer.toString(ctr++), ins);
             }
             
-            DeferredCall dc =  new DeferredCall(source, inst.unwrap(ctx), cc, null);
+            DeferredCall dc =  new DeferredCall(source, inst.getBareInstruction(), cc, null);
             return dc;
 
          }
@@ -656,9 +720,113 @@ public class InstructionFutureFactory {
       return memo(info,deferred(info, inst, ctx.declaringContext(), data));
       
    }
-   public static InstructionFuture<JSON> function(SourceInfo meta, final String name,
+   public static class FunctionInstruction extends AbstractInstructionFuture {
+      final String name;
+      final List<InstructionFuture<JSON>> iargs;
+      boolean variable = false;
+      
+      public FunctionInstruction(SourceInfo info,String name, List<InstructionFuture<JSON>> iargs) {       
+         super(info);
+         this.name = name;
+         this.iargs = iargs;
+      }
+      
+      public void setVariable(boolean b) {
+         variable = b;
+      }
+      
+      protected AsyncExecutionContext<JSON> setupArguments(AsyncExecutionContext<JSON> ctx, final String name,
+            final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
+         AsyncExecutionContext<JSON> context = ctx.createChild(true, data, source);
+         List<InstructionFuture<JSON>> insts = new ArrayList<>();
+         context.define("0", value(context.builder().value(name), source));
+         int cc = 1;
+//           Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
+         if(iargs!=null) for(InstructionFuture<JSON> inst:iargs) {
+            String key = Integer.toString(cc++);
+            context.define(key, wrapArgument(source, ctx,inst, data));
+            insts.add(inst);
+         }
+         AsyncExecutionContext<JSON> declaring = ctx.declaringContext();
+         boolean subst =  (ctx != declaring) && ctx.isFunctionContext();
+         if(subst) {
+            int ss = 1;
+            while(true) {
+               String skey = Integer.toString(ss++);
+               InstructionFuture<JSON> si = ctx.getdef(skey);
+               if(si==null) break;
+               String key = Integer.toString(cc++);
+//               context.define(key, new DeferredCall(source, si, ctx, data));
+               context.define(key,  si);
+               insts.add(si);
+            }
+            
+         }
+         context.define("@", paramArray(source, insts));
+         context.define("#", value(context.builder().value(insts.size()), source));
+         /*
+         while(true) {
+            String key = Integer.toString(cc++);
+            InstructionFuture<JSON> inst = iit.hasNext() ? iit.next() : null;
+            if(inst == null &&)
+            if(subst) {
+               InstructionFuture<JSON> si = ctx.getdef(key);
+               if(si!=null) context.define(key, si);
+               else if(inst != null) context.define(key, inst);
+               else break;
+            } else {
+               if(inst == null) break;
+               context.define(key, inst);
+            }
+            
+         }
+         */
+         /*
+         for(InstructionFuture<JSON> i : iargs) {
+            // the arguments themselves should be evaluated
+            // with the parent context
+            // instructions can be unwrapped if the callee wants a
+            // a function, rather than a value from the arument list
+            String key = Integer.toString(cc++);
+            
+            InstructionFuture<JSON> inst = ctx.getdef(key);
+            if(inst == null) inst = deferred(meta, i, ctx.declaringContext(), data);
+            // but define the argument in the child context
+
+            // this strategy allows numbered argument (ie.) $1 to be used
+            context.define(key, inst);
+         }
+         */
+         return context;
+      }
+
+      @Override
+      public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+            final ListenableFuture<JSON> data) throws ExecutionException {
+         String[] ss = name.split("[.]", 2);
+         InstructionFuture<JSON> func;
+         if(ss.length == 1)
+            func = context.getdef(name);
+         else {
+            AsyncExecutionContext<JSON> ctx = context.getNamedContext(ss[0]);
+            if(ctx == null) {
+               throw new ExecutionException("unable to load named context " + ss[0],source);
+            }
+            func = ctx.getdef(ss[1]);
+         }
+         if(func == null) {
+            throw new ExecutionException("no function found named " + name, source);
+         }
+         AsyncExecutionContext<JSON> childContext = setupArguments(context, name, iargs, data);
+         return func.call(childContext, data);
+      }
+   }
+   
+   public static FunctionInstruction function(SourceInfo meta, final String name,
          final List<InstructionFuture<JSON>> iargs) {
       meta.name = "function";
+      return new FunctionInstruction(meta, name, iargs);
+      /*
       return new AbstractInstructionFuture(meta) {
          protected AsyncExecutionContext<JSON> setupArguments(AsyncExecutionContext<JSON> ctx, final String name,
                final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
@@ -667,7 +835,7 @@ public class InstructionFutureFactory {
             context.define("0", value(context.builder().value(name), meta));
             int cc = 1;
  //           Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
-            for(InstructionFuture<JSON> inst:iargs) {
+            if(iargs!=null) for(InstructionFuture<JSON> inst:iargs) {
                String key = Integer.toString(cc++);
                context.define(key, wrapArgument(source, ctx,inst, data));
                insts.add(inst);
@@ -689,39 +857,6 @@ public class InstructionFutureFactory {
             }
             context.define("@", paramArray(meta, insts));
             context.define("#", value(context.builder().value(insts.size()), meta));
-            /*
-            while(true) {
-               String key = Integer.toString(cc++);
-               InstructionFuture<JSON> inst = iit.hasNext() ? iit.next() : null;
-               if(inst == null &&)
-               if(subst) {
-                  InstructionFuture<JSON> si = ctx.getdef(key);
-                  if(si!=null) context.define(key, si);
-                  else if(inst != null) context.define(key, inst);
-                  else break;
-               } else {
-                  if(inst == null) break;
-                  context.define(key, inst);
-               }
-               
-            }
-            */
-            /*
-            for(InstructionFuture<JSON> i : iargs) {
-               // the arguments themselves should be evaluated
-               // with the parent context
-               // instructions can be unwrapped if the callee wants a
-               // a function, rather than a value from the arument list
-               String key = Integer.toString(cc++);
-               
-               InstructionFuture<JSON> inst = ctx.getdef(key);
-               if(inst == null) inst = deferred(meta, i, ctx.declaringContext(), data);
-               // but define the argument in the child context
-
-               // this strategy allows numbered argument (ie.) $1 to be used
-               context.define(key, inst);
-            }
-            */
             return context;
          }
 
@@ -746,6 +881,7 @@ public class InstructionFutureFactory {
             return func.call(childContext, data);
          }
       };
+      */
    }
 
    // rank all

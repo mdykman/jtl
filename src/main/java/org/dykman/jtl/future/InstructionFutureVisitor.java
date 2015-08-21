@@ -249,7 +249,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	     name = visitIdent(iit.get(0)).string + '.' + name;
 	   }
 	   List<InstructionFuture<JSON>> ins = new ArrayList<>();
-      return new InstructionFutureValue<JSON>(variable(function(getSource(ctx),name, ins)));
+      return new InstructionFutureValue<JSON>(variable(getSource(ctx),name));
 	}
 
 	@Override

@@ -1,7 +1,7 @@
 package org.dykman.jtl;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -142,6 +142,8 @@ public class JtlCompiler {
 		define(context,"params", params(meta));
       define(context,"rand", rand(meta));
       define(context,"switch", switchInst(meta));
+      define(context,"each", each(meta));
+      define(context,"defined", defined(meta));
 
 		// external data
 		define(context,"file", file(meta));
@@ -176,7 +178,7 @@ public class JtlCompiler {
 // ??		define("apply", apply());
 	
 		// boolean type test only
-      define(context,"null", isNull(meta));
+      define(context,"nil", isNull(meta));
       define(context,"value", isValue(meta));
 		define(context,"object", isObject(meta));
 

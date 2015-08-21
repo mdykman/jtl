@@ -1,6 +1,9 @@
 {
-	_: "something"/foo(func("three","four")),
-	foo: "context data"/$1,
+	_: "something"/foo(func("one","two")),
+	foo: {
+		var: "context data"/$1,
+		func: "context data"/$1("three")
+		},
 	func: {
 		name: "func",
 		data: .,

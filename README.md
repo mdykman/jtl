@@ -18,7 +18,7 @@
   * null
 
  == literal notation ==
- 	The notation of daa literals in JTL is exactly that of JSON, of which JTL is a superset. Any valid JSON notation should be a valid notation
+ 	The notation of literal data in JTL is exactly that of JSON, of which JTL is a superset. Any valid JSON notation should be a valid notation
 	for expressing literal data in JTL.  Any inconsistency which is found should be reported to the author as a bug.
  	
  == truth values ==
@@ -34,11 +34,11 @@
 	All other values evaluate as true
 
  == regular expressions ==
-	The general syntax is:
+	The general syntax for a regular expression match is:
 	
 		text =~ regexp
 
-	Note the =~ operator.
+	Note the =~ operator which is only legal with a literal string to the right of it.
 
 	The regular expression itself must be a literal string:
 
@@ -51,7 +51,7 @@
 
 	"this is my text string" =~ "th[^y]*(y..).*(ri.*)$" -> ["this is my text string","y t","ring"]
 
-	On no-match, the expression yields an empty array, which test false.
+	On no-match, the expression yields an empty array, which tests false.
 
 	"not even close" =~ "th[^y]*(y..).*(ri.*)$" -> []
 
@@ -83,7 +83,7 @@
 		
 		=== string-oriented ===
       split(sep) - returns an array of strings splitting the input on sep
-      join(cnj) - expects an array of strings as iput data, returning the joined string with cnj in between
+      join(cnj) - expects an array of strings as input data, returning the joined string with cnj in between
       substr(start) - return the substring of 
       substr(start,length)
 		
