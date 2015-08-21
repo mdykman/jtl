@@ -573,6 +573,49 @@ public class InstructionFutureFactory {
       };
    }
 
+   public static InstructionFuture<JSON> append(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+         
+         @Override
+         public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            int cc = 1;
+            InstructionFuture<JSON> inst = null;
+            List<ListenableFuture<JSON>> ll = new ArrayList<>();
+            ll.add(data);
+            while(null != (inst = context.getdef(Integer.toString(cc)))) {
+               ll.add(inst.call(context, data));
+            }
+            return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+                  Iterator<JSON> jit = input.iterator();
+                  JSON dd  = jit.next();
+                  if(dd instanceof JSONArray) {
+                     JSONArray arr = context.builder().array(dd.getParent());
+                     for(JSON jj: (JSONArray)dd) {
+                        arr.add(jj);
+                     }
+                     while(jit.hasNext()) {
+                        JSON jj = jit.next();
+                        if(jj instanceof Frame) {
+                           for(JSON jjj : (Frame)jj) {
+                              arr.add(jjj);
+                           }
+                        } else {
+                           arr.add(jj);
+                        }
+                     }
+                     return immediateCheckedFuture(context.builder().value(arr));
+                  }
+                  return immediateCheckedFuture(dd);
+               }
+            });
+         }
+      };
+   }
+   
    
    public static InstructionFuture<JSON> defined(SourceInfo meta) {
       return new AbstractInstructionFuture(meta) {

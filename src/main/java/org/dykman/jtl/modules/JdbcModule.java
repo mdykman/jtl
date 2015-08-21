@@ -241,7 +241,8 @@ public class JdbcModule implements Module {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {
-				return builder.value(stat.execute());
+			   stat.execute();
+				return builder.value(true);
 			}
 
 		}));

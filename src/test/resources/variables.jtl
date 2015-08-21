@@ -1,6 +1,6 @@
 {
-	$times: 55,
-	_: [foo(12),ff(12)],
+	$times: 25,
+	_: [foo(10),ff(10)],
 	foo : {
 		$times: $1,
 		_: ff($1)

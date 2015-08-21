@@ -165,6 +165,7 @@ public class JtlCompiler {
 		define(context,"filter", filter(meta));
       define(context,"contains", contains(meta));
       define(context,"copy", copy(meta));
+      define(context,"append", append(meta));
       
 
 		// object-oriented
