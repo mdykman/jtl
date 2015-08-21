@@ -1,27 +1,27 @@
 # jtl
 
- == data types ==
+ ## data types 
  All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document
  could be refering to any of these unless specified otherwise.
 
-  === objects ===
+  ### objects 
   Objects are conainers mapping string keys to JSON values.  Values may be of any JSON type
 
-  === array ===
+  ### array 
   Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any type
 
-  === scalars ===
+  ### scalars 
   Scalars can be of severals types
   * string
   * number (Long or Double)
   * boolean
   * null
 
- == literal notation ==
+ ## literal notation 
  	The notation of literal data in JTL is exactly that of JSON, of which JTL is a superset. Any valid JSON notation should be a valid notation
 	for expressing literal data in JTL.  Any inconsistency which is found should be reported to the author as a bug.
  	
- == truth values ==
+ ## truth values 
  	All JSON values have a well-defined truth value when evaluated in boolean contexts.
 
 	Evaluate as false:
@@ -33,7 +33,7 @@
 
 	All other values evaluate as true
 
- == regular expressions ==
+ ## regular expressions 
 	The general syntax for a regular expression match is:
 	
 		text =~ regexp
@@ -55,9 +55,9 @@
 
 	"not even close" =~ "th[^y]*(y..).*(ri.*)$" -> []
 
- == functions ==
+ ## functions 
 
-		=== general ===
+		### general 
 		module(name,config)  - import modules, usually called in !init
 			* name - a string selecting the name, must be defined in config.json
 			* config - an object containing module-specific config data
@@ -74,19 +74,19 @@
 			* switch("foo",{bar:"you selected bar",foo:"you selected foo",_:"you selected nothing useful"}) -> "you selected foo"
 			
 
-		=== external data ===
+		### external data 
 		file
       url
       write
 
 		
-		=== string-oriented ===
+		### string-oriented 
       split(sep) - returns an array of strings splitting the input on sep
       join(cnj) - expects an array of strings as input data, returning the joined string with cnj in between
       substr(start) - return the substring of 
       substr(start,length)
 		
-		=== list-oriented ===
+		### list-oriented 
 		list-oriented functions operate on lists or frames equivalently
 
       sum() - sum all numeric values in an array
@@ -104,7 +104,7 @@
       copy
       
 
-		=== object-oriented ===
+		### object-oriented 
 		group(expr) - apply expr to each object in an array, return an object grouping them according to that result
 		map
 		collate - collects the data from an array of objects into a single object
@@ -116,7 +116,7 @@
 			* 2 params form: key is used to create or replace input object memeber
       keys * returns an array of the keys in the object
 
-      === types ===
+      ### types 
 		// boolean type test only - 0 arguments
       nil()
       value()
