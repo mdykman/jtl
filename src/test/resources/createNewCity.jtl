@@ -1,4 +1,4 @@
-// create new city
+// create new city // Sept 2 8:45 pm  A wing ground floor 256 call in. no eating for 3 hours.
 {
 	!init: {
       db: module("jdbc",{
@@ -9,21 +9,37 @@
       })
 
 	},
-	_:createCity/find(xLoc,yLoc), 
+	_:createCity/find(direction,xLoc,yLoc), 
 
 	create: [
-		addCity($1,$2),
-		getCity()/initializeBuildings()
+		addCity($1,$2)/initializeBuildings()
+		//getCity()/initializeBuildings()
 		],
-	find: fq($1,$2) ? find($1+1,$2+2) : create($1,$2, playerId), 
+	find:  fq($2,$3) ? switch($1,{
+		'sw': find($1,$2-1,$3-2)
+	//	,'se': find($1,$2+1,$3-2)
+	//	,'s': find($1,$2,$3+1)
+	//	,'nw': find($1,$2-2,$3+2)
+	//	,'ne': find($1,$2+1,$3+2)
+	//	,'n': find($1,$2+1,$3)
+	}) : create($2,$3, playerId), 
 
 	fq: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1, $2]),
 
-	addCity: db.execute("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid,$1,$2,username,level]),
-	getCity:  db.query("SELECT pcId from playerCities where playerId=? order by pcId desc limit 1",[playerid])[0]/pcId,
-	//getCity:  db.query("SELECT LAST_INSERT_ID()",[])[0]/*[0],
-	initializeBuildings: [ 
-		addBuilding(1,5,5,"S") 
-		],
+	addCity: insert("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid, $1, $2, username, level]), //db.execute("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid, $1, $2, username, level]),
+
+	getCity:   db.query("SELECT pcId from playerCities where playerId=? order by pcId desc limit 1",[playerid])[0]/pcId,
+
+	initializeBuildings: ., 
+	//[ 
+	//	addBuilding(1,5,5,"S"),
+	//	addBuilding(13,1,1,"SE"),
+	//	addBuilding(14,5,8,"SW"),
+	//	addBuilding(12,8,1,"NE"),
+	//	addBuilding(2,8,8,"NW"),
+	//	addBuilding(32,6,7,"S"),
+	//	addBuilding(33,6,8,"S")
+	//	],
+	insert: db.execute($1, $2)?db.query("SELECT LAST_INSERT_ID()",[])[0]/*[0]:false,
 	addBuilding: db.execute("INSERT into cityBuildings set pcid=?, btId=?, xLoc=?, yLoc=?, direction=?",[.,$1,$2,$3,$4])
 }
