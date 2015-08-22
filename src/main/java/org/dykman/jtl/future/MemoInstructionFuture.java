@@ -7,13 +7,14 @@ import org.dykman.jtl.json.JSON;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class MemoInstructionFuture extends AbstractInstructionFuture {
-   private ListenableFuture<JSON> result = null;
-   private boolean fired = false;
-   InstructionFuture<JSON> inst;
+   final InstructionFuture<JSON> inst;
+   final String key;
    
    MemoInstructionFuture(SourceInfo info,InstructionFuture<JSON> inst) {
       super(info);
       this.inst = inst;
+      // TODO a stronger key would be advisable
+      this.key = "@memo-"+Long.toHexString(System.identityHashCode(this));
    }
    @Override
    public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
@@ -21,16 +22,25 @@ public class MemoInstructionFuture extends AbstractInstructionFuture {
    }
 
    @Override
+   public InstructionFuture<JSON> getBareInstruction() {
+      return inst.getBareInstruction();
+   }
+
+   @Override
    public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
          throws ExecutionException {
-      if(!fired) {
+      AsyncExecutionContext<JSON> pp = context.getMasterContext();
+      InstructionFuture<JSON> ic = pp.getdef(key);
+      if(ic==null) {
          synchronized(this) {
-            if(!fired) {
-               result = inst.call(context, data);
-               fired = true;
+            ic = pp.getdef(key);
+            if(ic==null) {
+               ListenableFuture<JSON>  r = inst.call(context, data);
+               pp.define(key, InstructionFutureFactory.value(r, source));
+               return r;
             }
          }
       }
-      return result;
+      return ic.call(context, data); 
    }
 }

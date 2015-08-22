@@ -51,11 +51,13 @@ public class SimpleJtlTest {
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
          long resolve = System.nanoTime();
 			JSON jj = j.get();
+			System.err.flush();
          long print = System.nanoTime();
          PrintWriter pw =new PrintWriter(System.out);
 			jj.write(pw, 3,false);
 			pw.flush();
 			long done = System.nanoTime();
+			/*
          System.out.println();
 			System.out.println("total execution " + (done - start) + " ns");
 			System.out.println("initializing " + (compile - start) + " ns");
@@ -63,10 +65,15 @@ public class SimpleJtlTest {
 			System.out.println("executing " + (resolve-execute) + " ns");
 			System.out.println("resovling " + (print-resolve) + " ns");
          System.out.println("printing " + (done -print) + " ns");
+         */
 		} catch(ExecutionException e) {
 		   System.err.println(e.getSourceInfo().toString(null));
 		} catch (Exception e) {
-			e.printStackTrace();
+		   if(e.getCause() instanceof ExecutionException ) {
+	         System.err.println(e.getLocalizedMessage() + ": " + ((ExecutionException)e.getCause()).getSourceInfo().toString(null));
+		   } else {
+		      e.printStackTrace();
+		   }
 		} finally {
          les.shutdownNow();
          try {

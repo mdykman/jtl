@@ -36,8 +36,13 @@ array
     :   '[' value (',' value)* ']' 
     |   '[' ']' // empty array
     ;
-   
+ 
+  
 number
+ : '-' ? pnum
+ ;
+ 
+pnum
       : INTEGER 
       | FLOAT 
       ;

@@ -1,6 +1,8 @@
 package org.dykman.jtl.future;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
@@ -13,7 +15,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 public class DeferredCall implements InstructionFuture<JSON> {
    final SourceInfo info;
 	public final InstructionFuture<JSON> inst;
-	public final AsyncExecutionContext<JSON> pcontext;
+	public AsyncExecutionContext<JSON> pcontext;
 	public final ListenableFuture<JSON> data;
 
 	public DeferredCall(SourceInfo source,InstructionFuture<JSON> inst,
@@ -24,7 +26,14 @@ public class DeferredCall implements InstructionFuture<JSON> {
 		this.data = t;
 		this.info = source;
 	}
-	
+
+
+
+	@Override
+	public InstructionFuture<JSON> getBareInstruction() {
+	   return inst.getBareInstruction();
+	}
+
 	public SourceInfo getSourceInfo() {
 	   return info;
 	}
@@ -32,6 +41,10 @@ public class DeferredCall implements InstructionFuture<JSON> {
 	public AsyncExecutionContext<JSON> getContext() {
 	   return pcontext;
 	}
+	
+	  public DeferredCall rebindContext(final AsyncExecutionContext<JSON> context) {
+	     return new DeferredCall(info, inst, context, data);
+	  }
 	@Override
 	public InstructionFuture<JSON> unwrap(final AsyncExecutionContext<JSON> context) {
 	   AsyncExecutionContext<JSON> ctx = new AsyncExecutionContext<JSON>() {
@@ -130,8 +143,50 @@ public class DeferredCall implements InstructionFuture<JSON> {
          public int counter(String label,int increment) {
             return pcontext.counter(label,increment);
          }
+
+         @Override
+         public String method() {
+            return pcontext.method();
+         }
+
+         @Override
+         public String method(String m) {
+            return pcontext.method(m);
+         }
+
+         @Override
+         public void inject(AsyncExecutionContext<JSON> cc) {
+            pcontext.inject(cc);
+            
+         }
+
+         @Override
+         public void inject(String name, AsyncExecutionContext<JSON> cc) {
+            pcontext.inject(name,cc);
+         }
+
+         @Override
+         public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
+            return pcontext.getNamedContexts();
+         }
+
+         @Override
+         public AsyncExecutionContext<JSON> declaringContext() {
+            return pcontext.declaringContext();
+         }
+
+         @Override
+         public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
+            return pcontext.declaringContext(c);
+         }
+
+         @Override
+         public boolean isFunctionContext() {
+            return pcontext.isFunctionContext();
+         }
       }; 
-	   return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
+      return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
+//      return new DeferredCall(info,inst.unwrap(ctx), ctx, null);
 	}
 
 	@Override

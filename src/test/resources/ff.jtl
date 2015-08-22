@@ -1,0 +1,14 @@
+{
+	_: "something"/foo(func("one","two")),
+	foo: "context data"/{
+		variable: $1,
+		fncnoarg: $1(),
+		fncwtarg: $1("three")
+		},
+	func: {
+		name: "func",
+		data: .,
+		nparams: $#,
+		params: $@
+	}
+}

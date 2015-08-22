@@ -2,16 +2,20 @@ package org.dykman.jtl.json;
 
 
 
+import static org.dykman.jtl.future.InstructionFutureFactory.number;
+
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jsonBaseVisitor;
+import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.jsonParser.ArrayContext;
 import org.dykman.jtl.jsonParser.JsonContext;
 import org.dykman.jtl.jsonParser.KeyContext;
 import org.dykman.jtl.jsonParser.NumberContext;
 import org.dykman.jtl.jsonParser.ObjectContext;
 import org.dykman.jtl.jsonParser.PairContext;
+import org.dykman.jtl.jsonParser.PnumContext;
 import org.dykman.jtl.jsonParser.StringContext;
 import org.dykman.jtl.jsonParser.ValueContext;
 
@@ -79,12 +83,19 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	
 	@Override
 	public DataValue<JSON> visitNumber(NumberContext ctx) {
-		TerminalNode tn = ctx.INTEGER();
-		if(tn!=null) {
-			return new DataValue<JSON>(builder.value(Long.parseLong(tn.getText())));
-		}
-		tn = ctx.FLOAT();
-		return new DataValue<JSON>(builder.value(Double.parseDouble(tn.getText())));
+	   DataValue<JSON> pp = visitPnum(ctx.pnum());
+	   
+	   if(ctx.getChildCount() > 1) {
+	      Number num = (Number) ((JSONValue)pp.value).get();
+	      if(num instanceof Long) {
+	         num = - num.longValue();
+	      } else {
+	         num = - num.doubleValue();
+	      }
+         return new DataValue<>(builder.value(num));
+	   } else {
+	      return pp;
+	   }
 	}
 	@Override
 	public DataValue<JSON> visitKey(KeyContext ctx) {
@@ -106,5 +117,15 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		return new DataValue<JSON>(k);
 		
 	}
+   @Override
+   public DataValue<JSON> visitPnum(PnumContext ctx) {
+      if(ctx.INTEGER() ==null) {
+         Double d = new Double(ctx.FLOAT().getText());
+         return new DataValue<JSON>(builder.value(d));
+      } else {
+         Long l = new Long(ctx.INTEGER().getText());
+         return new DataValue<JSON>(builder.value(l));
+      }
+   }
 
 }

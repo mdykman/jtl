@@ -128,6 +128,7 @@ pathstep
    : id
    | recurs
    | func
+   | funcderef
    | variable
    | number
 //   | jstring
@@ -160,25 +161,29 @@ ff
      | ident '(' value (',' value )* ')' 
      ;
 
+
+funcderef
+     : '$' ident '(' ')'
+     | '$' ident '(' value (',' value )* ')'
+     | '$' INTEGER '(' ')' 
+     | '$' INTEGER '(' value (',' value )* ')'
+     ;
 	
 variable
       : '$' ident 
       |  ident '.' '$' ident 
       | '$' INTEGER
+      | '$' '@'
+      | '$' '#'
       ;
 
-
-//number
-//      : INTEGER 
-//      | FLOAT 
-//      ;
 
 ident 
 	: ID
 	;
 
 
-key  
+key
 	: ident
 	| '!' ident
 	| '$' ident

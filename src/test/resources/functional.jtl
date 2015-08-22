@@ -1,0 +1,10 @@
+{
+	_: "something"/foo(func("three","four")),
+	foo: "context data"/[$1,$1(),$1("foo"),$1("foo","bar"),$1("foo","bar","scissors")],
+	func: {
+		name: "func",
+		data: .,
+		nparams: $#,
+		params: $@
+	}
+}

@@ -1,0 +1,16 @@
+{
+	!init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/tracy",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:"password"
+      }),
+		cache: module("cache",{
+			cr: { max: 5000, on: "read", ttl: 30000 },
+			cat: { max: 10000, on: "read", ttl: 30000 },
+			th: { max: 10000, on: "read", ttl: 30000 }
+		})
+	},
+	_:  recipes
+}

@@ -5,22 +5,16 @@
               driver:"com.mysql.jdbc.Driver",
               user:"root",
               password:"password"
-      }),
-		cache: module("cache",{
-			cr: { max: 5000, on: "read", ttl: 30000 },
-			cat: { max: 10000, on: "read", ttl: 30000 },
-			th: { max: 10000, on: "read", ttl: 30000 }
-		})
+      })
 	},
-	_:  recipes/primaryQuery()/amend("Recipe",thingId/ii() or null),
-	ii: cy(.)/amend("Recipe",thingId/ii() or null),
-	cy: cache.cr(cq($1)),
-	ty: cache.th(thingQ($1))/amend({
+	_:  wanted/primaryQuery()/amend("Recipe",thingId/ii()),
+	ii: cq(.)/amend("Recipe",thingId/ii() or null),
+	ty: thingQ($1)/amend({
 		Recipe:thingId/ii() or null,
 		amount: $2,
 		minQuality: $3
 		}),
-	caty: cache.cat(categoryQ($1))/amend({
+	caty: categoryQ($1)/amend({
 		amount:$2,
 		minQuality: $3
 	}),

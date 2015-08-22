@@ -58,7 +58,7 @@ public class JdbcModule implements Module {
 
 		Connection connection = null;
 
-		public Connection getConnection() {
+		public Connection getConnection(SourceInfo src) throws ExecutionException {
 			if (connection == null) {
 				synchronized (JdbcModule.class) {
 					if (connection == null) {
@@ -86,11 +86,11 @@ public class JdbcModule implements Module {
 							} catch (ClassNotFoundException
 									| InstantiationException
 									| IllegalAccessException e) {
-								throw new RuntimeException(
-										"JDBC: unable to load class " + driver);
+								throw new ExecutionException(
+										"JDBC: unable to load class " + driver,src);
 							} catch (SQLException e) {
-								throw new RuntimeException(
-										"JDBC: unable to connect to " + uri);
+                        throw new ExecutionException(
+										"JDBC: unable to connect to " + uri,src);
 							}
 						}
 					}
@@ -130,7 +130,7 @@ public class JdbcModule implements Module {
 									Callable<JSON> cc = new Callable<JSON>() {
 										@Override
 										public JSON call() throws Exception {
-											Connection connection = getConnection();
+											Connection connection = getConnection(source);
 											PreparedStatement prep = connection
 													.prepareStatement(stringValue(qq));
 											System.err.println("query:" + stringValue(qq) + pp.toString());
@@ -183,30 +183,31 @@ public class JdbcModule implements Module {
 		}
 	}
 
+	Executor queryExecutor = new Executor() {
+      @Override
+      public JSON process(PreparedStatement stat, JSONBuilder builder)
+            throws SQLException {
+         ResultSet rs = stat.executeQuery();
+         Frame frame = builder.frame();
+         ResultSetMetaData rsm = rs.getMetaData();
+         int n = rsm.getColumnCount();
+         while (rs.next()) {
+            JSONObject obj = builder.object(frame);
+            for (int i = 1; i <= n; ++i) {
+               obj.put(rsm.getColumnName(i),
+                     builder.value(rs.getObject(i)));
+            }
+            frame.add(obj);
+         }
+         return frame;
+      }
+   };
 	@Override
 	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
 		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
 		SourceInfo si = meta.clone();
 		si.name = "query";
-		context.define("query", wrapper.query(si,new Executor() {
-			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder)
-					throws SQLException {
-				ResultSet rs = stat.executeQuery();
-				Frame frame = builder.frame();
-				ResultSetMetaData rsm = rs.getMetaData();
-				int n = rsm.getColumnCount();
-				while (rs.next()) {
-					JSONObject obj = builder.object(frame);
-					for (int i = 1; i <= n; ++i) {
-						obj.put(rsm.getColumnName(i),
-								builder.value(rs.getObject(i)));
-					}
-					frame.add(obj);
-				}
-				return frame;
-			}
-		}));
+		context.define("query", wrapper.query(si,queryExecutor));
 
       si = meta.clone();
       si.name = "cquery";
@@ -240,10 +241,28 @@ public class JdbcModule implements Module {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder)
 					throws SQLException {
-				return builder.value(stat.execute());
+			   stat.execute();
+				return builder.value(true);
 			}
 
 		}));
+
+	    context.define("insert", wrapper.query(si,new Executor() {
+	         @Override
+	         public JSON process(PreparedStatement stat, JSONBuilder builder)
+	               throws SQLException {
+	            boolean b=stat.execute();
+	            if(b) {
+	               PreparedStatement lid = wrapper.connection.prepareStatement("select last_insert_id()");
+	               JSONArray j = (JSONArray)queryExecutor.process(lid, builder);
+	               return builder.value(j.get(0));
+	            }
+	            return builder.value();
+	         }
+
+	      }));
+
+		
 	}
 
 	protected static String stringValue(JSON j) {

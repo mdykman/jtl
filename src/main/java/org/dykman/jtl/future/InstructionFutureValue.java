@@ -8,9 +8,13 @@ public class InstructionFutureValue<T> {
 	public Pair<String,InstructionFuture<T>> ninst;
 	
 	public String string;
+	public Number number;
 	public InstructionFutureValue(String s) {
 		string = s;
 	}
+   public InstructionFutureValue(Number s) {
+      number = s;
+   }
 	public InstructionFutureValue(InstructionFuture<T> t) {
 		inst = t;
 	}

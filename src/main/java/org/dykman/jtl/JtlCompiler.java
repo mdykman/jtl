@@ -1,7 +1,7 @@
 package org.dykman.jtl;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -89,7 +89,7 @@ public class JtlCompiler {
 			JtlContext tree = parser.jtl();
 			InstructionFutureVisitor visitor = new InstructionFutureVisitor(file,jsonBuilder,imported);
 			InstructionFutureValue<JSON> v = visitor.visit(tree);
-			return v.inst;
+			return InstructionFutureFactory.fixContextData(v.inst.getSourceInfo(), v.inst);
 		}
 
 	
@@ -108,6 +108,10 @@ public class JtlCompiler {
    }
 
 
+	
+	public static void define(AsyncExecutionContext<JSON> ctx, String s, InstructionFuture<JSON> inst) {
+	   ctx.define(s, inst);
+	}
    public static AsyncExecutionContext<JSON> createInitialContext(
 			JSON data,
 			JSON config,
@@ -125,59 +129,66 @@ public class JtlCompiler {
 		meta.source=meta.code;
 		meta.line=meta.position=0;
 		// configurable: import, extend
-      context.define("_", InstructionFutureFactory.value(df,meta));
+      define(context,"_", InstructionFutureFactory.value(df,meta));
 		if(config.getType() == JSONType.OBJECT) {
 			JSONObject conf = (JSONObject) config;
 			JSONObject modules= (JSONObject)conf.get("modules");
-			context.define("module", loadModule(meta,modules));
-			context.define("import", importInstruction(meta,config));
+			define(context,"module", loadModule(meta,modules));
+			define(context,"import", importInstruction(meta,config));
 		}
 		
 		// general
-		context.define("error", defaultError(meta));
-		context.define("params", params(meta));
+		define(context,"error", defaultError(meta));
+		define(context,"params", params(meta));
+      define(context,"rand", rand(meta));
+      define(context,"switch", switchInst(meta));
+      define(context,"each", each(meta));
+      define(context,"defined", defined(meta));
 
 		// external data
-		context.define("file", file(meta));
-      context.define("url", url(meta));
-      context.define("write", write(meta));
+		define(context,"file", file(meta));
+      define(context,"url", url(meta));
+      define(context,"write", write(meta));
 
 		
 		// string-oriented
-      context.define("split", split(meta));
-      context.define("join", join(meta));
-      context.define("substr", substr(meta));
+      define(context,"split", split(meta));
+      define(context,"join", join(meta));
+      define(context,"substr", substr(meta));
 		
 		// list-oriented
-		context.define("unique", unique(meta));
-		context.define("count", count(meta));
-		context.define("sort", sort(meta,false));
-		context.define("rsort", sort(meta,true));
-		context.define("filter", filter(meta));
-      context.define("contains", contains(meta));
-      context.define("copy", copy(meta));
+      define(context,"sum", sum(meta));
+      define(context,"unique", unique(meta));
+		define(context,"count", count(meta));
+		define(context,"sort", sort(meta,false));
+		define(context,"rsort", sort(meta,true));
+		define(context,"filter", filter(meta));
+      define(context,"contains", contains(meta));
+      define(context,"copy", copy(meta));
+      define(context,"append", append(meta));
+      
 
 		// object-oriented
-		context.define("group", groupBy(meta));
-		context.define("map", map(meta));
-		context.define("collate", collate(meta));
-		context.define("omap", omap(meta));
-		context.define("amend", amend(meta));
-      context.define("keys", keys(meta));
+		define(context,"group", groupBy(meta));
+		define(context,"map", map(meta));
+		define(context,"collate", collate(meta));
+		define(context,"omap", omap(meta));
+		define(context,"amend", amend(meta));
+      define(context,"keys", keys(meta));
 
-// ??		context.define("apply", apply());
+// ??		define("apply", apply());
 	
 		// boolean type test only
-      context.define("null", isNull(meta));
-      context.define("value", isValue(meta));
-		context.define("object", isObject(meta));
+      define(context,"nil", isNull(meta));
+      define(context,"value", isValue(meta));
+		define(context,"object", isObject(meta));
 
 		// with 0 args, they return boolean type test
 		// with 1 arg, attempts to coerce to the specified type
-		context.define("array", isArray(meta));
-		context.define("number", isNumber(meta));
-		context.define("string", isString(meta));
-		context.define("boolean", isBoolean(meta));
+		define(context,"array", isArray(meta));
+		define(context,"number", isNumber(meta));
+		define(context,"string", isString(meta));
+		define(context,"boolean", isBoolean(meta));
 
 		
 		return context;
