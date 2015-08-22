@@ -1,0 +1,19 @@
+// validate coupon
+{
+	!init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/pantheon",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:""
+      })
+
+	},
+	_:validateCoupon/validate()/amend("Response", code/update()),
+
+	validate: db.query("select code, email, redeemed, inviteDate from coupons where code=? and email=? and redeemed=0", [./coupon, ./email]),
+
+	update: [.] ? ./updatedb() : false,
+
+	updatedb: db.execute("Update coupons set redeemed=1, inviteDate=now() where code=?", [.])/amend("Response", true)
+}

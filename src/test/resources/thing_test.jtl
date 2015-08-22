@@ -8,12 +8,12 @@
       })
 
 	},
-	_:  playerId/primaryQuery()/amend("Recipe",batchId/ii() or null),
+	_:  playerId/primaryQuery()/amend("Recipe",batchId/ii() or null)/amend("CumulativeStats", sumsof() or null),
 	primaryQuery: db.query("select a.thingId as thingId, a.type as type, a.level as level, a.name as thingName, a.description as description, a.buildingType as buildingType, a.img as img, a.chances as chances, a.bookTitle as bookTitle, a.discoverId as discoverId, a.discoverDate as discoverDate, a.firstUsedId as firstUsedId, a.firstUsedDate as firstUsedDate, c.batchId as batch, c.name as userDefinedName
 									from things a
 									inner join  playerRecipes b on (a.thingId = b.createId)
 									inner join playerRecipeKey c on (b.batchId = c.batchId)
-									where c.playerId=? group by c.batchId"/copy(count($_))/join(" UNION "),$_),
+									where c.playerId=? group by c.batchId limit 1"/copy(count($_))/join(" UNION "),$_),
 
 
 	ii: cq(.)/*/(thingId ? 
@@ -28,18 +28,18 @@
 		minQuality: $3
 		})/amend("Stats", thingId/sq() or null),
 
-//	sumsof: **/Stats/colate()
+	sumsof:  **/Stats/collate(), 
 
 
 	batchQ: tq($1)/amend({
 		amount:$2,
 		minQuality: $3
 	}),
-	sq: db.query("select b.amount, c.attrId, c.name, c.description
+	sq: db.query("select b.amount, c.name
 					from thingBenefits a
 					inner join Benefits b on (a.benId = b.benId)
 					inner join attribute c on (c.attrId = b.attrId)
-					where a.thingId=?", [.]),
+					where a.thingId=? order by c.name", [.]),
 
 	 tq: $1/db.query("select a.thingId as thingId, a.type as type, a.level as level, a.name as thingName, a.description as description, a.buildingType as buildingType, a.img as img, a.chances as chances, a.bookTitle as bookTitle, a.discoverId as discoverId, a.discoverDate as discoverDate, a.firstUsedId as firstUsedId, a.firstUsedDate as firstUsedDate, c.batchId as batch, c.name as userDefinedName
 									from things a
