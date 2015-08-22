@@ -1783,7 +1783,8 @@ public class InstructionFutureFactory {
                   if(fexp != null) {
                      fexp = fexp.unwrap(context);
                      List<ListenableFuture<JSON>> ll = new ArrayList<>();
-                     if(input instanceof Frame || input instanceof JSONArray) {
+                     final boolean isFrame = input instanceof Frame;
+                     if(input instanceof JSONArray) {
                         for(JSON j : (JSONArray) input) {
                            ListenableFuture<JSON> jj = immediateCheckedFuture(j);
                            ll.add(transform(fexp.call(context, jj), function(j, context.builder())));
@@ -1798,7 +1799,8 @@ public class InstructionFutureFactory {
 
                         @Override
                         public ListenableFuture<JSON> apply(final List<JSON> input2) throws Exception {
-                           JSONArray array = context.builder().array(input.getParent());
+                           JSONArray array = isFrame ? context.builder().frame() :
+                                 context.builder().array(input.getParent());
                            if(input2.size() == 1) {
                               JSON j = input2.iterator().next();
                               if(j != null && j.isTrue()) {
