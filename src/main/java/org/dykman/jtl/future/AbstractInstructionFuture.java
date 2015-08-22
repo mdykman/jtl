@@ -40,6 +40,7 @@ public abstract class AbstractInstructionFuture implements
    
    protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
       for(JSON j : ij) {
+//         if(j != null && j.isTrue())
          if(j != null && j.getType() != JSONType.NULL)
             if(recurse && j.getType() == JSONType.FRAME) {
                addToFrame(f, (Frame) j, false);

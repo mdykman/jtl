@@ -25,6 +25,7 @@ public interface JSON extends Comparable<JSON> {
 	public void write(Writer out,int indent,boolean fq)
 		throws IOException;
 	public String toString(boolean fq);
+   public String toString(int n, boolean fq);
 	
 	void write(Writer out,int indent, int depth,boolean fq)
 			throws IOException;

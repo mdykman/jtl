@@ -1,5 +1,5 @@
 {
 	people: people/*/filter(name =~ "^B.*" )/*/{name:name,email:email},
-	people2: people/*/filter(name =~ "^B.*" )/*/{name:name,email:email}/collate(),
-	mapped: people/*/(name =~ "(^B[a-z]+) ([A-Za-z]+)")/{first:.[1],last:.[2]}
+	collated: people/*/filter(name =~ "^B.*" )/*/{name:name,email:email}/collate(),
+	parsed: people/*/(name =~ "(^B[a-z]+) ([A-Za-z]+)")/filter(.)/{first:.[1],last:.[2]}
 }
