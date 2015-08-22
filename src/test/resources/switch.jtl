@@ -1,13 +1,19 @@
 {
 	
-	_:  [ff('NW'),ff('NE'),ff('S'),ff('WTF')],
+	_:  "data"/[ff('NW'),ff('NE'),ff('S'),ff('WTF')],
 	ff: switch($1,{
-		N: [0,0],
-		S: [0,1],
-		NW: [1,0],
-		NE: [1,1],
-		SW: [2,0],
-		SE: [2,1],
-		_: "not found"
-	})
+		N: func("one"),
+		S: func("two"),
+		NW: func("three"),
+		NE: func("four"),
+		SW: func("five"),
+		SE: func("six"),
+		_: func("default")
+	}),
+	func: {
+		name: "func",
+		data: .,
+		nparams: $#,
+		params: $@
+	}
 }

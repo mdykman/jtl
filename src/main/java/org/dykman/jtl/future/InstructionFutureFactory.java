@@ -675,7 +675,6 @@ public class InstructionFutureFactory {
    public static InstructionFuture<JSON> variable(SourceInfo meta, final String name) {
       final FunctionInstruction fi = function(meta, name, null);
       fi.setVariable(true);
-//      final InstructionFuture<JSON> func = function(meta, name, null);
       return new AbstractInstructionFuture(fi.getSourceInfo()) {
          
          @Override
@@ -791,7 +790,7 @@ public class InstructionFutureFactory {
             insts.add(inst);
          }
          AsyncExecutionContext<JSON> declaring = ctx.declaringContext();
-         boolean subst =  (ctx != declaring) && ctx.isFunctionContext();
+         boolean subst = (! variable) && (ctx != declaring) && ctx.isFunctionContext();
          if(subst) {
             int ss = 1;
             while(true) {
@@ -869,62 +868,6 @@ public class InstructionFutureFactory {
          final List<InstructionFuture<JSON>> iargs) {
       meta.name = "function";
       return new FunctionInstruction(meta, name, iargs);
-      /*
-      return new AbstractInstructionFuture(meta) {
-         protected AsyncExecutionContext<JSON> setupArguments(AsyncExecutionContext<JSON> ctx, final String name,
-               final List<InstructionFuture<JSON>> iargs, final ListenableFuture<JSON> data) {
-            AsyncExecutionContext<JSON> context = ctx.createChild(true, data, meta);
-            List<InstructionFuture<JSON>> insts = new ArrayList<>();
-            context.define("0", value(context.builder().value(name), meta));
-            int cc = 1;
- //           Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
-            if(iargs!=null) for(InstructionFuture<JSON> inst:iargs) {
-               String key = Integer.toString(cc++);
-               context.define(key, wrapArgument(source, ctx,inst, data));
-               insts.add(inst);
-            }
-            AsyncExecutionContext<JSON> declaring = ctx.declaringContext();
-            boolean subst =  (ctx != declaring) && ctx.isFunctionContext();
-            if(subst) {
-               int ss = 1;
-               while(true) {
-                  String skey = Integer.toString(ss++);
-                  InstructionFuture<JSON> si = ctx.getdef(skey);
-                  if(si==null) break;
-                  String key = Integer.toString(cc++);
-//                  context.define(key, new DeferredCall(source, si, ctx, data));
-                  context.define(key,  si);
-                  insts.add(si);
-               }
-               
-            }
-            context.define("@", paramArray(meta, insts));
-            context.define("#", value(context.builder().value(insts.size()), meta));
-            return context;
-         }
-
-         @Override
-         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
-               final ListenableFuture<JSON> data) throws ExecutionException {
-            String[] ss = name.split("[.]", 2);
-            InstructionFuture<JSON> func;
-            if(ss.length == 1)
-               func = context.getdef(name);
-            else {
-               AsyncExecutionContext<JSON> ctx = context.getNamedContext(ss[0]);
-               if(ctx == null) {
-                  throw new ExecutionException("unable to load named context " + ss[0],meta);
-               }
-               func = ctx.getdef(ss[1]);
-            }
-            if(func == null) {
-               throw new ExecutionException("no function found named " + name, meta);
-            }
-            AsyncExecutionContext<JSON> childContext = setupArguments(context, name, iargs, data);
-            return func.call(childContext, data);
-         }
-      };
-      */
    }
 
    // rank all
@@ -1431,7 +1374,7 @@ public class InstructionFutureFactory {
             InstructionFuture<JSON> body = s.getBareInstruction();
             if(body instanceof ObjectInstructionBase) {
                final ObjectInstructionBase base = ( ObjectInstructionBase) body;
-               return transform(f.call(context, data), new AsyncFunction<JSON, JSON>() {
+               return transform(f.call(context.getParent(), data), new AsyncFunction<JSON, JSON>() {
                   @Override
                   public ListenableFuture<JSON> apply(JSON input) throws Exception {
                      String str = stringValue(input);
@@ -1441,11 +1384,11 @@ public class InstructionFutureFactory {
                            defi = pp.s;
                         }
                         if(str.equals(pp.f)) {
-                           return pp.s.call(context, data);
+                           return pp.s.call(context.getParent(), data);
                         }
                      }
                      if(defi != null) {
-                        return defi.call(context, data);
+                        return defi.call(context.getParent(), data);
                      }
                      return immediateCheckedFuture(context.builder().value());
                   }
