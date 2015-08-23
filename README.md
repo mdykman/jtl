@@ -33,17 +33,21 @@ Evaluate as false:
 All other values evaluate as true
 
 ## regular expressions 
-The general syntax for a regular expression match is:
+The general syntax for a regex match expression is:
 	
 `text =~ regexp`
 
 Note the =~ operator which is only legal with a literal string to the right of it.
 
-The regular expression itself must be a literal string:
+
+The regular expression itself must be represented as a literal string:
 
 `. =~ "[a-z]*"`
 	
 Dynamic regular expressions are on the road map, not at high priority
+
+Regular expression syntax is as in https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+
 
 On match, this expression will prduce an array containg at least 1 item: the matched text.  If parentheses have been used to define sub matches, those submatches will appears as subsequent elements of the array.
 

@@ -1,0 +1,16 @@
+{
+	tests:{
+		toarr: array(.),
+		isarr: array(),
+		arrnum: number(.),
+		isarrnum: number(),
+		tonum: */number(.),
+		isnum : */number(),
+		tostr: */string(.),
+		isstr: */string()
+	},
+	$numbers: ["3","1","4"]/tests(),
+	$mixed: ["14", 2, [3]]/tests(),
+
+	_: {number:$numbers,mixed:$mixed}
+}

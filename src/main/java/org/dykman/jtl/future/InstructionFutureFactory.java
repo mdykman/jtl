@@ -637,7 +637,7 @@ public class InstructionFutureFactory {
    }
 
    public static InstructionFuture<JSON> each(SourceInfo meta) {
-      return new AbstractInstructionFuture(meta) {
+      return new AbstractInstructionFuture(meta,true) {
          @Override
          public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
                final ListenableFuture<JSON> data) throws ExecutionException {
@@ -646,6 +646,8 @@ public class InstructionFutureFactory {
 
                @Override
                public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  return inst.call(context, immediateCheckedFuture(input));
+                  /*
                   if(input instanceof JSONArray) {
                      List<ListenableFuture<JSON>> ll = new ArrayList<>();
                      for(JSON j : (JSONArray) input) {
@@ -665,7 +667,9 @@ public class InstructionFutureFactory {
                   } else {
                      return inst.call(context, immediateCheckedFuture(input));
                   }
+                  */
                }
+               
             });
          }
       };
@@ -2853,10 +2857,6 @@ public class InstructionFutureFactory {
 
    static abstract class ConverterFunction implements AsyncFunction<JSON, JSON> {
       JSONBuilder builder;
-
-      public ConverterFunction() {
-      }
-
       public void setBuilder(JSONBuilder b) {
          builder = b;
       }
@@ -2870,7 +2870,20 @@ public class InstructionFutureFactory {
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
             if(input.getType() == JSONType.NULL)
                return immediateCheckedFuture(builder.value(""));
-            return immediateCheckedFuture(builder.value(input.toString()).setParent(input.getParent()));
+            if(input instanceof Frame) {
+               Frame ff = builder.frame();
+               for(JSON jj:  (Frame) input) {
+                  if(jj instanceof JSONValue)
+                     ff.add(builder.value(((JSONValue) jj).stringValue()));
+                  else
+                     ff.add(builder.value(jj.toString()));
+               }
+               return immediateCheckedFuture(builder.value(ff.setParent(input.getParent())));
+            } else if(input instanceof JSONValue) {
+               return immediateCheckedFuture(builder.value(((JSONValue) input).stringValue()).setParent(input.getParent()));
+            } else {
+               return immediateCheckedFuture(builder.value(input.toString()).setParent(input.getParent()));
+            }
          }
       }, JSONType.STRING);
    }
@@ -2880,31 +2893,47 @@ public class InstructionFutureFactory {
 
       return isType(meta, new ConverterFunction() {
 
-         @Override
-         public ListenableFuture<JSON> apply(JSON input) throws Exception {
+         JSON toNumber(JSON j) {
+            
             Number number = null;
-            switch(input.getType()) {
-            case FRAME:
+            switch(j.getType()) {
+            case FRAME: {
+               Frame ff = builder.frame();
+               Frame inf = (Frame) j;
+               for(JSON jj:inf) {
+                  ff.add(builder.value(toNumber(jj)));
+               }
+               return ff;
+            }
             case ARRAY:
-               number = ((JSONArray) input).size();
-               break;
+               /*
+            {
+               JSONArray ff = builder.array(null);
+               JSONArray inf = (JSONArray) j;
+               for(JSON jj:inf) {
+                  ff.add(builder.value(toNumber(jj)));
+               }
+               return ff;
+            } */
+//               number = ((JSONArray) j).size();
+//               break;
             case OBJECT:
-               number = ((JSONObject) input).size();
-               break;
+//               number = ((JSONObject) j).size();
+//               break;
             case NULL:
-               number = 0;
+//               number = 0;
                break;
             case LONG:
-               number = ((JSONValue) input).longValue();
+               number = ((JSONValue) j).longValue();
                break;
             case BOOLEAN:
-               number = ((JSONValue) input).booleanValue() ? 0L : 1L;
+               number = ((JSONValue) j).booleanValue() ? 1L : 0L;
                break;
             case DOUBLE:
-               number = ((JSONValue) input).doubleValue();
+               number = ((JSONValue) j).doubleValue();
                break;
             case STRING:
-               String s = ((JSONValue) input).stringValue();
+               String s = ((JSONValue) j).stringValue();
                try {
                   number = Long.parseLong(s);
                } catch (NumberFormatException e) {
@@ -2917,18 +2946,29 @@ public class InstructionFutureFactory {
                }
 
             }
-            return immediateCheckedFuture(builder.value(number).setParent(input.getParent()));
+            return number != null ? builder.value(number) : builder.value();
+         }
+         @Override
+         public ListenableFuture<JSON> apply(JSON input) throws Exception {
+            return immediateCheckedFuture(toNumber(input).setParent(input.getParent()));
          }
       }, JSONType.LONG, JSONType.DOUBLE);
    }
 
    public static InstructionFuture<JSON> isBoolean(SourceInfo meta) {
       meta.name = "boolean";
-
       return isType(meta, new ConverterFunction() {
-
          @Override
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
+            if(input instanceof Frame) {
+               Frame ff = builder.frame();
+               Frame inf = (Frame) input;
+               for(JSON jj:inf) {
+                  ff.add(jj);
+
+               }    
+               return immediateCheckedFuture(ff.setParent(input.getParent()));
+            }
             return immediateCheckedFuture(builder.value(input.isTrue()).setParent(input.getParent()));
          }
       }, JSONType.BOOLEAN);
@@ -2990,23 +3030,40 @@ public class InstructionFutureFactory {
             if(arg != null && conv != null) {
                conv.setBuilder(context.builder());
                if(arg != null) {
-                  return transform(arg.call(context, data), conv);
+                  arg=arg.unwrap(context);
+                  InstructionFuture<JSON> a = each(meta);
+                  AsyncExecutionContext<JSON> fc = context.createChild(true, data, meta);
+                  fc.define("1", deferred(meta, a, context, null));
+                  return transform(a.call(fc, data), conv);
+//                 return transform(arg.call(context, data), conv);
                }
             }
             return transform(data, new AsyncFunction<JSON, JSON>() {
                @Override
                public ListenableFuture<JSON> apply(JSON input) throws Exception {
-                  boolean res = false;
-                  JSONType jt = input.getType();
-                  for(JSONType t : types) {
-                     if(jt.equals(t)) {
-                        res = true;
-                        break;
+                  JSONBuilder builder=context.builder();
+                  if(input instanceof Frame) {
+                     if(hasType(JSONType.FRAME)) {
+                        return immediateCheckedFuture(builder.value(true));
+                     } else {
+                        JSONArray arr = builder.array(null);
+                        for(JSON j:(JSONArray)input) {
+                           arr.add(builder.value(hasType(j.getType())));
+                        }
+                        return immediateCheckedFuture(arr);
                      }
                   }
-                  return immediateCheckedFuture(context.builder().value(res));
+                  return immediateCheckedFuture(builder.value(true));
                }
             });
+         }
+         boolean hasType(JSONType type) {
+            for(JSONType t : types) {
+               if(type.equals(t)) {
+                  return true;
+               }
+            }
+            return false;
          }
 
       };

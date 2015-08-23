@@ -53,6 +53,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 	@Override
 	public JSON value(Object o) {
 		if(o == null) return value();
+		if(o instanceof JSON) return sign(((JSON) o).cloneJSON());
 		if(o instanceof Boolean) return value((Boolean)o);
 		if(o instanceof BigInteger) {
 			BigInteger maxLong = new BigInteger(Long.toString(Long.MAX_VALUE));
