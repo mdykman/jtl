@@ -72,6 +72,8 @@ dependencies {
     
     compile 'com.zaxxer:HikariCP:2.3.8'
     compile 'mysql:mysql-connector-java:5.1.35'
+    compile 'postgresql:postgresql:9.1-901-1.jdbc4'
+
     compile 'org.xerial:sqlite-jdbc:3.8.10.1'
     runtime 'org.xerial:sqlite-jdbc:3.8.10.1'
 
