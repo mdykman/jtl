@@ -1,10 +1,11 @@
 {
-	_: "something"/foo(func("three","four")),
-	foo: "context data"/[$1,$1(),$1("foo"),$1("foo","bar"),$1("foo","bar","scissors")],
+	_: "something"/foo(func("one")),
+	foo: "context data"/[$1,$1(),$1("two"),ff("something","else")],
 	func: {
 		name: "func",
 		data: .,
 		nparams: $#,
 		params: $@
-	}
+	},
+	ff: call("func",$1,$2)
 }

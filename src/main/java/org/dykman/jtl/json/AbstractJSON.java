@@ -179,7 +179,17 @@ public abstract class AbstractJSON implements JSON {
 	public final String toString() {
 		return toString(false);
 	}
-	
+
+	  @Override
+	   public final String toString(int n, boolean fq) {
+	      StringWriter writer = new StringWriter();
+	      try {
+	         write(writer,n,fq);
+	      } catch(IOException e) {
+	         throw new RuntimeException("error while rendering");
+	      }
+	      return writer.toString();
+	   }
 	@Override
 	public final String toString(boolean fq) {
 		StringWriter writer = new StringWriter();

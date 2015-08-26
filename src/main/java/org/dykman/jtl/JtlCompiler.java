@@ -144,6 +144,7 @@ public class JtlCompiler {
       define(context,"switch", switchInst(meta));
       define(context,"each", each(meta));
       define(context,"defined", defined(meta));
+      define(context,"call", call(meta));
 
 		// external data
 		define(context,"file", file(meta));
