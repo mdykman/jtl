@@ -1,5 +1,5 @@
 {
-	tests:{
+	tests: {
 		toarr: array(.),
 		isarr: array(),
 		arrnum: number(.),
@@ -9,8 +9,24 @@
 		tostr: */string(.),
 		isstr: */string()
 	},
-	$numbers: ["3","1","4"]/tests(),
-	$mixed: ["14", 2, [3]]/tests(),
+	xt: {
+		num: numtest(),
+		str: strtest(),
+		arr: arrtest(),
+		val: valtest()
+	},
+	numtest: [number(),number(.),*/number(),*/number(.)],
+	strtest: [string(),string(.),*/string(),*/string(.)],
+	arrtest: [array(),array(.),*/array(),*/array(.)],
+	valtest: [value(),*/value()],
+	
+	$numstr: ["3","1","4"]/tests(),
+	$nmber: [3,1,4]/tests(),
+	$mixed: ["3", 1, [4]]/tests(),
 
-	_: {number:$numbers,mixed:$mixed}
+	$xnumstr: ["3","1","4"]/xt(),
+	$xnmber: [3,1,4]/xt(),
+	$xmixed: ["3", 1, [4]]/xt(),
+
+	_: {numstr:$xnumstr,number:$xnmber,mixed:$xmixed}
 }

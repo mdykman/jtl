@@ -125,15 +125,18 @@ public class JdbcModule implements Module {
 									      new ExecutionException("query is not a string: " + qq.toString(),meta));
 									final JSON pp = jit.hasNext() ? jit.next()
 											: null;
-                           if(pp !=null && ! (pp instanceof JSONArray)) return Futures.immediateFailedCheckedFuture(
-                                 new ExecutionException("parameters are not an array: " + pp.toString(),meta));
+//                           if(pp !=null && ! (pp instanceof JSONArray)) return Futures.immediateFailedCheckedFuture(
+//                                 new ExecutionException("parameters are not an array: " + pp.toString(),meta));
 									Callable<JSON> cc = new Callable<JSON>() {
 										@Override
 										public JSON call() throws Exception {
 											Connection connection = getConnection(source);
 											PreparedStatement prep = connection
 													.prepareStatement(stringValue(qq));
-											System.err.println("query:" + stringValue(qq) + pp.toString());
+											System.err.print("query:" + stringValue(qq));
+											if(pp!=null) System.err.println(" " + pp.toString());
+											System.err.println();
+											
 											if (pp != null) {
 												switch (pp.getType()) {
                                     case FRAME:
@@ -169,6 +172,7 @@ public class JdbcModule implements Module {
 												}
 
 											}
+											
 											return exec.process(prep,
 													context.builder());
 
@@ -200,6 +204,24 @@ public class JdbcModule implements Module {
             frame.add(obj);
          }
          return frame;
+      }
+   };
+   Executor insertExecutor = new Executor() {
+      @Override
+      public JSON process(PreparedStatement stat, JSONBuilder builder)
+            throws SQLException {
+         stat.executeUpdate();
+//         stat.execute();
+         PreparedStatement lid = stat.getConnection().prepareStatement("select last_insert_id()");
+         ResultSet rs = lid.executeQuery();
+         JSON r = builder.value();
+         if(rs.next()) {
+            r = builder.value(rs.getInt(1));
+         }
+         stat.close();
+         lid.close();
+         
+         return r;
       }
    };
 	@Override
@@ -247,22 +269,7 @@ public class JdbcModule implements Module {
 
 		}));
 
-	    context.define("insert", wrapper.query(si,new Executor() {
-	         @Override
-	         public JSON process(PreparedStatement stat, JSONBuilder builder)
-	               throws SQLException {
-	            boolean b=stat.execute();
-	            if(b) {
-	               PreparedStatement lid = wrapper.connection.prepareStatement("select last_insert_id()");
-	               JSONArray j = (JSONArray)queryExecutor.process(lid, builder);
-	               return builder.value(j.get(0));
-	            }
-	            return builder.value();
-	         }
-
-	      }));
-
-		
+	    context.define("insert", wrapper.query(si,insertExecutor));
 	}
 
 	protected static String stringValue(JSON j) {

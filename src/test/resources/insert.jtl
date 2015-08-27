@@ -1,0 +1,12 @@
+{
+   !init: {
+      db: module("jdbc",{
+              uri:"jdbc:mysql://localhost:3306/pantheon",
+              driver:"com.mysql.jdbc.Driver",
+              user:"root",
+              password:"password"
+      })
+   },
+   
+   _: db.insert("INSERT INTO tt (name) values('michael')")
+}

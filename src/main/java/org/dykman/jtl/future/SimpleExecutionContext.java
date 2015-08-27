@@ -22,8 +22,13 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
    protected final AsyncExecutionContext<JSON> parent;
    protected final boolean functionContext;
+   protected final boolean include;
    public boolean isFunctionContext() {
       return functionContext;
+   }
+
+   public boolean isInclude() {
+      return include;
    }
 
    protected String method = null;
@@ -44,7 +49,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
    }
 
    public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
-         JSON conf, File f, boolean fc, boolean debug) {
+         JSON conf, File f, boolean fc, boolean include, boolean debug) {
       this.parent = parent;
       this.functionContext = fc;
       this.builder = builder;
@@ -52,10 +57,11 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
       this.data = data;
       this.currentDirectory = f;
       this.debug = debug;
+      this.include = include;
    }
 
    public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
-      this(null, builder, data, conf, f, false, false);
+      this(null, builder, data, conf, f, false, false,false);
    }
 
    public void inject(AsyncExecutionContext<JSON> cc) {
@@ -65,7 +71,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
    public void inject(String name, AsyncExecutionContext<JSON> cc) {
       SimpleExecutionContext c = (SimpleExecutionContext) cc;
-      SimpleExecutionContext n = (SimpleExecutionContext) getNamedContext(name, true, null);
+      SimpleExecutionContext n = (SimpleExecutionContext) getNamedContext(name, true,false, null);
       n.functions.putAll(c.functions);
    }
 
@@ -139,22 +145,22 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
    @Override
    public AsyncExecutionContext<JSON> getNamedContext(String label) {
-      return getNamedContext(label, false, null);
+      return getNamedContext(label, false,false, null);
    }
 
-   public AsyncExecutionContext<JSON> getNamedContext(String label, boolean create, SourceInfo info) {
+   public AsyncExecutionContext<JSON> getNamedContext(String label, boolean create,boolean include, SourceInfo info) {
       AsyncExecutionContext<JSON> c = namedContexts.get(label);
       if(c == null) {
          synchronized(this) {
             c = namedContexts.get(label);
             if(c == null) {
                if(parent != null) {
-                  c = parent.getNamedContext(label, false, info);
+                  c = parent.getNamedContext(label, false, include, info);
                   if(c != null)
                      return c;
                }
                if(create) {
-                  c = this.createChild(false, null, info);
+                  c = this.createChild(false, include,null, info);
                   namedContexts.put(label, c);
                }
             }
@@ -169,8 +175,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
    }
 
    @Override
-   public AsyncExecutionContext<JSON> createChild(boolean fc, ListenableFuture<JSON> data, SourceInfo source) {
-      AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc, debug);
+   public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data, SourceInfo source) {
+      AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,include, debug);
       // if(fc && data!=null)
       // r.define("_",InstructionFutureFactory.value(data,source));
 //      System.out.println("create context from parent " + System.identityHashCode(this) + " - " + System.identityHashCode(r));
