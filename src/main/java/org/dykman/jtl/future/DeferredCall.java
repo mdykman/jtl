@@ -101,24 +101,24 @@ public class DeferredCall implements InstructionFuture<JSON> {
          @Override
          public AsyncExecutionContext<JSON> getNamedContext(
                String label) {
-            return getNamedContext(label,false,null);
+            return getNamedContext(label);
          }
 
          @Override
          public AsyncExecutionContext<JSON> getNamedContext(
-               String label, boolean create,SourceInfo info) {
-            AsyncExecutionContext<JSON> c = pcontext.getNamedContext(label,create,info);
+               String label, boolean create,boolean imp,SourceInfo info) {
+            AsyncExecutionContext<JSON> c = pcontext.getNamedContext(label,create,imp,info);
             
             /// NB: it is had to imagine this call succeeding if the previous one has not
-            if(c == null) c = context.getNamedContext(label,create,info);
+            if(c == null) c = context.getNamedContext(label,create,imp,info);
             return c;
          }
-
+/*
          @Override
-         public AsyncExecutionContext<JSON> createChild(boolean fc,ListenableFuture<JSON> data,SourceInfo info) {
-            return pcontext.createChild(fc,data,info);
+         public AsyncExecutionContext<JSON> createChild(boolean fc,boolean imp,ListenableFuture<JSON> data,SourceInfo info) {
+            return pcontext.createChild(fc,imp,data,info);
          }
-
+*/
          @Override
          public File currentDirectory() {
             return pcontext.currentDirectory();
@@ -183,6 +183,17 @@ public class DeferredCall implements InstructionFuture<JSON> {
          @Override
          public boolean isFunctionContext() {
             return pcontext.isFunctionContext();
+         }
+
+         @Override
+         public boolean isInclude() {
+            return pcontext.isInclude();
+         }
+
+         @Override
+         public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include,
+               ListenableFuture<JSON> dataContext, SourceInfo source) {
+            return pcontext.createChild(fc, include, dataContext, source);
          }
       }; 
       return new DeferredCall(info,inst.unwrap(ctx), ctx, null);

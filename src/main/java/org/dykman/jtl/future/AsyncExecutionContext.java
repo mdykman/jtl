@@ -34,6 +34,7 @@ public interface AsyncExecutionContext<T> {
    public AsyncExecutionContext<T> declaringContext(AsyncExecutionContext<T> c);
 
    public boolean isFunctionContext() ;
+   public boolean isInclude() ;
 	
 	public boolean debug();
    public boolean debug(boolean d);
@@ -42,8 +43,10 @@ public interface AsyncExecutionContext<T> {
 
 	public void inject(AsyncExecutionContext<T> cc);
    public void inject(String name,AsyncExecutionContext<T> cc);
+   
 	public AsyncExecutionContext<T> getNamedContext(String label);
-	public AsyncExecutionContext<T> getNamedContext(String label,boolean create,SourceInfo info);
+	public AsyncExecutionContext<T> getNamedContext(String label,boolean create,boolean include,SourceInfo info);
    public Map<String, AsyncExecutionContext<JSON>>getNamedContexts();
-	public AsyncExecutionContext<T> createChild(boolean fc,ListenableFuture<T> dataContext,SourceInfo source);
+
+   public AsyncExecutionContext<T> createChild(boolean fc,boolean include,ListenableFuture<T> dataContext,SourceInfo source);
 }
