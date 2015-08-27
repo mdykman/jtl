@@ -252,12 +252,13 @@ public class JdbcModule implements Module {
 	         public JSON process(PreparedStatement stat, JSONBuilder builder)
 	               throws SQLException {
 	            boolean b=stat.execute();
-	            if(b) {
 	               PreparedStatement lid = wrapper.connection.prepareStatement("select last_insert_id()");
 	               JSONArray j = (JSONArray)queryExecutor.process(lid, builder);
+						JSON retval = j.get(0);
+System.err.println("returning from insert with " + stringValue(retval));
 	               return builder.value(j.get(0));
-	            }
-	            return builder.value();
+//System.err.println("returning from insert with null");
+//	            return builder.value();
 	         }
 
 	      }));
