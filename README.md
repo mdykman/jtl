@@ -121,7 +121,8 @@ keys - returns an array of the keys in the object
 
 ### types 
   __boolean type test only - 0 arguments__
-    __see src/test/resources/types.jtl
+  
+    __see src/test/resources/types.jtl__
 nil()
 value()
 object()
