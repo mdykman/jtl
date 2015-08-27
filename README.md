@@ -120,7 +120,8 @@ keys - returns an array of the keys in the object
 			`{ foo:1,bar:2 }/keys()`->["foo","bar"]
 
 ### types 
-		__boolean type test only - 0 arguments__
+  __boolean type test only - 0 arguments__
+    __see src/test/resources/types.jtl
 nil()
 value()
 object()
