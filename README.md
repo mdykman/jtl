@@ -12,7 +12,7 @@ Arrays are conainers which hold a continuous sequence of JSON values.  Values ma
 ### scalars 
 Scalars can be of severals types
 * string
-* number (Long or Double)
+* number (int or real)
 * boolean
 * null
 
@@ -26,6 +26,7 @@ All JSON values have a well-defined truth value when evaluated in boolean contex
 Evaluate as false:
 * null
 * false (boolean)
+* 0 (int or real)
 * empty string
 * empty array
 * empty object
