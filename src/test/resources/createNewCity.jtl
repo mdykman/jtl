@@ -9,37 +9,96 @@
       })
 
 	},
-	_:createCity/find(direction,xLoc,yLoc), 
+	_:createCity/find(xLoc,yLoc),//[0][0], 
+//	_:createCity/fr(xLoc,yLoc,5),//[0][0], 
+	insert: db.execute($1, $2)?db.query("SELECT LAST_INSERT_ID()",[])[0]/*[0]:false,
+//	insert: db.insert($1,$2),
+	create: addCity($1,$2)/initializeBuildings(),
 
-	create: [
-		addCity($1,$2)/initializeBuildings()
-		//getCity()/initializeBuildings()
-		],
-	find:  fq($2,$3) ? switch($1,{
-		'sw': find($1,$2-1,$3-2)
-	//	,'se': find($1,$2+1,$3-2)
-	//	,'s': find($1,$2,$3+1)
-	//	,'nw': find($1,$2-2,$3+2)
-	//	,'ne': find($1,$2+1,$3+2)
-	//	,'n': find($1,$2+1,$3)
-	}) : create($2,$3, playerId), 
+
+	fr: find($1,$2, 1, 5)/( . ? . : fr((2*$1),(2*$2),($3+1),($4+1))),
+
+	//ff: $3 ? (findx($1,$2) ? ff($1+rand(3),$2+rand(4),$4-1) : create) : false,
+
+	find:  fq($1,$2) ? switch(direction,{
+		 sw: find($1 - rand(3), $2 - rand(3))
+		,se: find($1 - rand(3), $2 + rand(3))
+		,s: find($1 - rand(3), $2)
+		,nw: find($1 + rand(3), $2 - rand(3))
+		,ne: find($1 + rand(3), $2 + rand(3))
+		,n: find($1 + rand(3), $2)
+	}) : create($1,$2, playerId), 
+
+	//find:  $4 ? (fq($1,$2) ? switch(direction,{
+	//	 sw: find($1 - rand($3), $2 - rand($3), $4 - 1)
+	//	,se: find($1 - rand($3), $2 + rand($3), $4 - 1)
+	//	,s: find($1 - rand($3), $2, $4 - 1)
+	//	,nw: find($1 + rand($3), $2 - rand($3), $4 - 1)
+	//	,ne: find($1 + rand($3), $2 + rand($3), $4 - 1)
+	//	,n: find($1 + rand($3), $2, $4 - 1)
+	//}) : create($1,$2, playerId) ) : false, 
 
 	fq: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1, $2]),
 
-	addCity: insert("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid, $1, $2, username, level]), //db.execute("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid, $1, $2, username, level]),
+	addCity: insert("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [playerid, $1, $2,username, level]), 
 
-	getCity:   db.query("SELECT pcId from playerCities where playerId=? order by pcId desc limit 1",[playerid])[0]/pcId,
+	initializeBuildings: [ 
+		addBuilding(1,5,5,"S")/InitializeWorkers()/addBuildingProduction(40)
+	//	,addBuilding(13,1,1,"SE")/InitializeWorkers()/addBuildingProduction(169)
+	//	,addBuilding(14,5,8,"SW")/InitializeWorkers()/addBuildingProduction(194)
+	//	,addBuilding(12,8,1,"NE")/InitializeWorkers()/addBuildingProduction(41)
+	//	,addBuilding(2,8,8,"NW")/InitializeWorkers()/addBuildingProduction(1)
+	//	,addBuilding(32,6,7,"S")/InitializeWarehouse()
+	//	,addBuilding(33,6,8,"S")
+	],
+	
+	addBuilding: insert("INSERT into cityBuildings set pcid=?, btId=?, xLoc=?, yLoc=?, direction=?",[.,$1,$2,$3,$4])/getBuildingInfo()/updateBuilding(),
 
-	initializeBuildings: ., 
-	//[ 
-	//	addBuilding(1,5,5,"S"),
-	//	addBuilding(13,1,1,"SE"),
-	//	addBuilding(14,5,8,"SW"),
-	//	addBuilding(12,8,1,"NE"),
-	//	addBuilding(2,8,8,"NW"),
-	//	addBuilding(32,6,7,"S"),
-	//	addBuilding(33,6,8,"S")
-	//	],
-	insert: db.execute($1, $2)?db.query("SELECT LAST_INSERT_ID()",[])[0]/*[0]:false,
-	addBuilding: db.execute("INSERT into cityBuildings set pcid=?, btId=?, xLoc=?, yLoc=?, direction=?",[.,$1,$2,$3,$4])
+	getBuildingInfo: db.query("SELECT a.buildingId, a.pcId, a.xLoc, a.yLoc, 
+			b.btype as buildingType, a.direction, a.quality,  b.buildingFolder,
+			a.resourceLevel, a.terrain, e.name as resource, d.quality as productionQuality, e.type as resourceType, 
+			b.name, a.level, a.btId, a.numWorkers, a.topQuality, a.rate, a.capacityPerLevel, sum(w.amount) as currentHold, 
+			a.allTimeTotal, a.recipeId, a.slope, a.materialBaseAmount, b.materialBit, e.thingId as resourceId, 
+			a.construction,b.pointValue,f.playerId
+			from cityBuildings a 
+			inner join buildingTypes b on (a.btId = b.btId) 
+			left join currentProduction d on (a.buildingId = d.buildingId)
+			left join things e on (e.thingId = d.resourceId)
+			left join warehouse w on (w.buildingId = a.buildingId)
+			inner join playerCities f on (a.pcId = f.pcId)
+			where a.buildingId = ?
+			group by a.buildingId",[.])[0],
+
+	InitializeWorkers: db.execute("update cityBuildings set numWorkers = numWorkers+? where buildingId=?",[1,buildingId])
+		? . : false,
+
+	makeMaterialList: [ makeMat(42), makeMat(374), makeMat(195) ],
+
+	makeMat: insert("INSERT into buildingMaterials set resourceId=?, buildingId=?, amount=?", [$1, buildingId, 570]),
+
+	AddPoints: insert("INSERT into points set pointValue=?, comment=?, playerId=?, buildingId=?",[($3 * pointValue), ("Add " + $3 + "x" + pointValue + " for level " +$3+" "+name), $1, buildingId]),
+
+	updateBuilding: [
+				makeMaterialList()
+				,removeConstructionFlag()
+				,AddPoints(playerId, pcId, 1)
+				,updateCityPoints(pcId),
+				.
+	][4],
+
+	
+	InitializeWarehouse: [
+		addToWarehouse(343),
+		addToWarehouse(42),
+		addToWarehouse(195)
+	],
+
+	removeConstructionFlag: db.execute("UPDATE cityBuildings set construction=0 where buildingId=?", [buildingId]),
+	
+	updateCityPoints: db.execute("UPDATE cityBuildings set points = points+? where pcId=? AND buildingId=?", [pointValue, $1, buildingId]),
+
+	addBuildingProduction: insert("INSERT into currentProduction set buildingId=?, resourceId=?, quality=?, rate=?",[buildingId, $1, 1, rate]),
+
+	addToWarehouse: insert("INSERT into warehouse set pcid=?, buildingId=?, resourceId=?, amount=?, quality=?, type=?, dateAdded=now(), dateUpdated=now()",[pcId,buildingId,$1,1000,1,'core'])
+		
 }
