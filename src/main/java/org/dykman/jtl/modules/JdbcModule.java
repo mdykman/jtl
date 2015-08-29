@@ -17,13 +17,10 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 
 import org.dykman.jtl.ExecutionException;
-import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-//import org.codehaus.jettison.json.JSONArray;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
-import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.Frame;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
@@ -34,21 +31,66 @@ import org.dykman.jtl.json.JSONValue;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class JdbcModule implements Module {
 
    final JSONObject baseConfig;
+   boolean debug = false;
 
    public JdbcModule(JSONObject config) {
-      baseConfig = config;
+      this.baseConfig = config;
+      JSON j = config.get("debug"); 
+      if(j!=null) debug = j.isTrue();
+
+      queryExecutor = new Executor() {
+         @Override
+         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+            ResultSet rs = stat.executeQuery();
+            Frame frame = builder.frame();
+            ResultSetMetaData rsm = rs.getMetaData();
+            int n = rsm.getColumnCount();
+            while(rs.next()) {
+               JSONObject obj = builder.object(frame);
+               for(int i = 1; i <= n; ++i) {
+                  obj.put(rsm.getColumnLabel(i), builder.value(rs.getObject(i)));
+               }
+               frame.add(obj);
+            }
+            return frame;
+         }
+      };
+      insertExecutor = new Executor() {
+         final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
+
+         @Override
+         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+            stat.executeUpdate();
+            stat.close();
+            if(insertIdExpr != null) {
+               // stat.execute();
+               PreparedStatement lid = stat.getConnection().prepareStatement(insertIdExpr);
+               ResultSet rs = lid.executeQuery();
+               JSON r = builder.value();
+               if(rs.next()) {
+                  r = builder.value(rs.getInt(1));
+               }
+               lid.close();
+
+               return r;
+            } else {
+               if(debug)
+                  System.err.println("no insert_id statement provided");
+               return builder.value(true);
+            }
+         }
+      };
    }
 
    interface Executor {
       JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException;
    }
 
-   static class JdbcConnectionWrapper {
+   class JdbcConnectionWrapper {
       JSONObject conf;
 
       JdbcConnectionWrapper(JSONObject conf) {
@@ -112,20 +154,18 @@ public class JdbcModule implements Module {
                         return Futures.immediateFailedCheckedFuture(new ExecutionException("query is not a string: "
                               + qq.toString(), meta));
                      final JSON pp = jit.hasNext() ? jit.next() : null;
-                     // if(pp !=null && ! (pp instanceof JSONArray)) return
-                     // Futures.immediateFailedCheckedFuture(
-                     // new ExecutionException("parameters are not an array: " +
-                     // pp.toString(),meta));
+
                      Callable<JSON> cc = new Callable<JSON>() {
                         @Override
                         public JSON call() throws Exception {
                            Connection connection = getConnection(source);
                            PreparedStatement prep = connection.prepareStatement(stringValue(qq));
-                           System.err.print("query:" + stringValue(qq));
-                           if(pp != null)
-                              System.err.println(" " + pp.toString());
-                           System.err.println();
-
+                           if(debug) {
+                              System.err.print("query:" + stringValue(qq));
+                              if(pp != null)
+                                 System.err.println(" " + pp.toString());
+                              System.err.println();
+                           }
                            if(pp != null) {
                               switch(pp.getType()) {
                               case FRAME:
@@ -134,8 +174,8 @@ public class JdbcModule implements Module {
                                  int i = 1;
                                  for(JSON j : arr) {
                                     if(!j.isValue())
-                                       throw new ExecutionException("query parameter " + i + " is not a scalar value: "
-                                             + j.toString(), source);
+                                       throw new ExecutionException("parameter element" + (i - 1)
+                                             + " is not a scalar value: " + j.toString(), source);
 
                                     prep.setObject(i++, ((JSONValue) j).get());
                                  }
@@ -165,40 +205,8 @@ public class JdbcModule implements Module {
       }
    }
 
-   Executor queryExecutor = new Executor() {
-      @Override
-      public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-         ResultSet rs = stat.executeQuery();
-         Frame frame = builder.frame();
-         ResultSetMetaData rsm = rs.getMetaData();
-         int n = rsm.getColumnCount();
-         while(rs.next()) {
-            JSONObject obj = builder.object(frame);
-            for(int i = 1; i <= n; ++i) {
-               obj.put(rsm.getColumnLabel(i), builder.value(rs.getObject(i)));
-            }
-            frame.add(obj);
-         }
-         return frame;
-      }
-   };
-   Executor insertExecutor = new Executor() {
-      @Override
-      public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-         stat.executeUpdate();
-         // stat.execute();
-         PreparedStatement lid = stat.getConnection().prepareStatement("select last_insert_id()");
-         ResultSet rs = lid.executeQuery();
-         JSON r = builder.value();
-         if(rs.next()) {
-            r = builder.value(rs.getInt(1));
-         }
-         stat.close();
-         lid.close();
-
-         return r;
-      }
-   };
+   final Executor queryExecutor;
+   final Executor insertExecutor;
 
    @Override
    public void define(SourceInfo meta, AsyncExecutionContext<JSON> context) {
