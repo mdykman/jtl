@@ -62,6 +62,7 @@ public class JtlCompiler {
 		}
 	public InstructionFuture<JSON> parse(File in) 
 		throws IOException {
+System.err.println("parsing file: " + in.getAbsolutePath());		
 		return parse(in.getName(),in, trace, profile);
 	}
 

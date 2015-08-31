@@ -64,11 +64,11 @@ public class JtlMain {
 					"specify a port (implies 'server' mode)"));
 			options.addOption(new Option("d", "data", true,
 					"specify input data (json file)"));
-			options.addOption(new Option("h", "help", true,
+			options.addOption(new Option("h", "help", false,
 					"print help message"));
 			options.addOption(new Option("D", "directory", true,
 					"specify base directory"));
-			options.addOption(new Option("s", "server", true,
+			options.addOption(new Option("s", "server", false,
 					"run in server mode (deafult port: 7718"));
 			options.addOption(new Option("D", "directory", true,
 					"specify base directory"));
@@ -91,15 +91,19 @@ public class JtlMain {
 			String oo;
 			if (cli.hasOption('c') || cli.hasOption("config")) {
 				oo = cli.getOptionValue('c');
+System.out.println("oo=" + oo);				
 				if (oo == null)
 					oo = cli.getOptionValue("config");
-				fconfig = new File(cwd, oo);
+
+				fconfig = new File(oo);
+//				fconfig = new File(cwd, oo);
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
 				oo = cli.getOptionValue('c');
 				if (oo == null)
-					oo = cli.getOptionValue("config");
-				jtl = new File(cwd, oo);
+					oo = cli.getOptionValue("jtl");
+//				jtl = new File(cwd, oo);
+				jtl = new File(oo);
 
 			}
 			if (cli.hasOption('s') || cli.hasOption("server")) {
@@ -112,7 +116,8 @@ public class JtlMain {
 				oo = cli.getOptionValue('d');
 				if (oo == null)
 					oo = cli.getOptionValue("data");
-				fdata = new File(cwd, oo);
+//				fdata = new File(cwd, oo);
+				fdata = new File(oo);
 			}
 			if (cli.hasOption('D') || cli.hasOption("directory")) {
 				oo = cli.getOptionValue('D');
