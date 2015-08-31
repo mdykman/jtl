@@ -188,6 +188,8 @@ public class JtlCompiler {
 		// with 1 arg, attempts to coerce to the specified type
 		define(context,"array", isArray(meta));
 		define(context,"number", isNumber(meta));
+      define(context,"int", isInt(meta));
+      define(context,"real", isReal(meta));
 		define(context,"string", isString(meta));
 		define(context,"boolean", isBoolean(meta));
 

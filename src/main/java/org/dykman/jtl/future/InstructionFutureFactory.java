@@ -2963,7 +2963,37 @@ public class InstructionFutureFactory {
       }, JSONType.STRING);
    }
 
+   interface NumberCheck {
+      Number check(Number n);
+   }
    public static InstructionFuture<JSON> isNumber(SourceInfo meta) {
+      return isNumberImpl(meta, new NumberCheck() {
+         
+         @Override
+         public Number check(Number n) {
+            return n;
+         }
+      }, JSONType.LONG,JSONType.DOUBLE);
+   }  
+   public static InstructionFuture<JSON> isReal(SourceInfo meta) {
+      return isNumberImpl(meta, new NumberCheck() {
+         
+         @Override
+         public Number check(Number n) {
+            return n !=null ? n.doubleValue() : null;
+         }
+      }, JSONType.DOUBLE);
+   }  
+   public static InstructionFuture<JSON> isInt(SourceInfo meta) {
+      return isNumberImpl(meta, new NumberCheck() {
+         
+         @Override
+         public Number check(Number n) {
+            return n!=null ? n.longValue() : null;
+         }
+      }, JSONType.LONG);
+   }  
+   public static InstructionFuture<JSON> isNumberImpl(SourceInfo meta,NumberCheck check,JSONType... types) {
       meta.name = "number";
 
       return isType(meta, new ConverterFunction() {
@@ -3017,16 +3047,17 @@ public class InstructionFutureFactory {
                }
 
             }
-            return number != null ? builder.value(number) : builder.value();
+            return number != null ? builder.value(check.check(number)) : builder.value();
          }
 
          @Override
          public ListenableFuture<JSON> apply(JSON input) throws Exception {
             return immediateCheckedFuture(toNumber(input).setParent(input.getParent()));
          }
-      }, JSONType.LONG, JSONType.DOUBLE);
+      }, types);
    }
 
+   
    public static InstructionFuture<JSON> isBoolean(SourceInfo meta) {
       meta.name = "boolean";
       return isType(meta, new ConverterFunction() {
