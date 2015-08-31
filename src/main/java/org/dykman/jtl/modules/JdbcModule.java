@@ -65,7 +65,6 @@ public class JdbcModule implements Module {
          @Override
          public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
             stat.executeUpdate();
-            stat.close();
             if(insertIdExpr != null) {
                // stat.execute();
                PreparedStatement lid = stat.getConnection().prepareStatement(insertIdExpr);
@@ -75,6 +74,7 @@ public class JdbcModule implements Module {
                   r = builder.value(rs.getInt(1));
                }
                lid.close();
+               stat.close();
 
                return r;
             } else {
@@ -258,21 +258,7 @@ public class JdbcModule implements Module {
       }));
 
 
-	    context.define("insert", wrapper.query(si,new Executor() {
-	         @Override
-	         public JSON process(PreparedStatement stat, JSONBuilder builder)
-	               throws SQLException {
-	            boolean b=stat.execute();
-	               PreparedStatement lid = wrapper.connection.prepareStatement("select last_insert_id()");
-	               JSONArray j = (JSONArray)queryExecutor.process(lid, builder);
-						JSON retval = j.get(0);
-System.err.println("returning from insert with " + stringValue(retval));
-	               return builder.value(j.get(0));
-//System.err.println("returning from insert with null");
-//	            return builder.value();
-	         }
-
-	      }));
+	    context.define("insert", wrapper.query(si,insertExecutor));
 
 	}
 

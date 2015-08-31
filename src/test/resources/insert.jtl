@@ -3,6 +3,7 @@
       db: module("jdbc",{
               uri:"jdbc:mysql://localhost:3306/pantheon",
               driver:"com.mysql.jdbc.Driver",
+				  insert_id: "select last_insert_id()",
               user:"root",
               password:"password"
       })
