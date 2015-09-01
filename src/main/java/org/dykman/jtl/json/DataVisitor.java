@@ -11,6 +11,7 @@ import org.dykman.jtl.jsonBaseVisitor;
 import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.jsonParser.ArrayContext;
 import org.dykman.jtl.jsonParser.JsonContext;
+import org.dykman.jtl.jsonParser.JsonseqContext;
 import org.dykman.jtl.jsonParser.KeyContext;
 import org.dykman.jtl.jsonParser.NumberContext;
 import org.dykman.jtl.jsonParser.ObjectContext;
@@ -28,6 +29,15 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	@Override
 	public DataValue<JSON> visitJson(JsonContext ctx) {
 		return visitValue(ctx.value());
+	}
+	
+	@Override
+	public DataValue<JSON> visitJsonseq(JsonseqContext ctx) {
+		JSONArray arr = builder.array(null);
+		for(JsonContext jc: ctx.json()) {
+			arr.add(visitJson(jc).value);
+		}
+		return new DataValue<JSON>(arr);
 	}
 	@Override
 	public DataValue<JSON> visitObject(ObjectContext ctx) {

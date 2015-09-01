@@ -6,8 +6,10 @@ package org.dykman.jtl;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -20,6 +22,7 @@ import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
@@ -72,8 +75,11 @@ public class JtlMain {
 					"run in server mode (deafult port: 7718"));
 			options.addOption(new Option("D", "directory", true,
 					"specify base directory"));
-			options.addOption(new Option("i", "indent", true,
+			options.addOption(new Option("n", "indent", true,
 					"specifiy default indent level for output (default is 3)"));
+			options.addOption(new Option("a", "array", false, 
+					"parse a sequence of json entities from the input stream and "
+					+ "assemble them into an array"));
 
 			int c;
 			boolean help = false;
@@ -81,6 +87,7 @@ public class JtlMain {
 			File jtl = null;
 			File fdata = null;
 			int indent = 3;
+			boolean array = false;
 			File cwd = new File(".");
 			boolean serverMode = false;
 			int port = 7719; // default port
@@ -89,6 +96,9 @@ public class JtlMain {
 			CommandLine cli = parser.parse(options, args);
 
 			String oo;
+			if (cli.hasOption('a') || cli.hasOption("array")) {
+				array = true;
+			}
 			if (cli.hasOption('c') || cli.hasOption("config")) {
 				oo = cli.getOptionValue('c');
 //System.out.println("oo=" + oo);				
@@ -167,7 +177,30 @@ public class JtlMain {
 //            System.err.println("running file " + jtl.getAbsolutePath());
 				InstructionFuture<JSON> inst = main.compile(jtl);
 				PrintWriter pw = new PrintWriter(System.out);
-				if (fdata != null) {
+				if(array) {
+					JSONArray arr = main.builder.array(null);
+					while(true) {
+						InputStreamReader reader = new InputStreamReader(System.in);
+						try {
+						JSON j = main.parse(System.in);
+						System.out.println("============================================!!!!!!!!!!!!!!==============");
+						arr.add(j);
+						
+						} catch(IOException e) { 
+							System.err.println("I hope THIS is antlr signaling EOF");
+							e.printStackTrace();
+							break;
+						} catch(IllegalStateException e) {
+							System.err.println("I hope this is antlr signaling EOF");
+							e.printStackTrace();
+							
+							break;
+						}
+					}
+					JSON result = main.execute(inst, arr, cwd, fconfig);
+					result.write(pw, indent, false);
+					pw.flush();
+				} else	if (fdata != null) {
 					JSON data = main.parse(fdata);
 					JSON result = main.execute(inst, data, cwd, fconfig);
 					result.write(pw, indent, false);
@@ -222,6 +255,12 @@ public class JtlMain {
 	}
 
 	public JSON parse(File f) throws IOException {
+		return builder.parse(f);
+	}
+	public JSON parse(Reader f) throws IOException {
+		return builder.parse(f);
+	}
+	public JSON parse(InputStream f) throws IOException {
 		return builder.parse(f);
 	}
 

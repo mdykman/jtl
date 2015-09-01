@@ -6,8 +6,12 @@ options {
 
 
 json
-    :   value EOF?;
+    :   value ;
 
+jsonseq
+	: json+
+	;
+	
 value
     : object 
     | array
@@ -57,7 +61,7 @@ string
 fragment INT :   '0' | [1-9] [0-9]* ; // no leading zeros
 fragment EXP :   [Ee] [+\-]? INT ; // \- since - means "range" inside [...]
 
-fragment ESC :   '\\' ([\\/bfnrt] | UNICODE) ;
+fragment ESC :   '\\' ([\\/bfnrt"] | UNICODE) ;
 fragment UNICODE : 'u' HEX HEX HEX HEX ;
 fragment HEX : [0-9a-fA-F] ;
 

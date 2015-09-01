@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
 import org.dykman.jtl.jsonParser.JsonContext;
+import org.dykman.jtl.jsonParser.JsonseqContext;
 import org.dykman.jtl.factory.CollectionFactory;
 import org.dykman.jtl.factory.MapFactory;
 
@@ -183,6 +184,19 @@ public class JSONBuilderImpl implements JSONBuilder {
 			JsonContext tree = parser.json();
 			DataVisitor visitor = new DataVisitor(this);
 			DataValue<JSON> v = visitor.visitJson(tree);
+			if(v!=null && v.value != null) v.value.setBuilder(this);
+			if(v == null) return  null;
+			v.value.lock();
+			return v.value;
+		}
+	protected JSON parseSequence(jsonLexer lexer) 
+			throws IOException {
+			jsonParser parser = new jsonParser(new CommonTokenStream(lexer));
+			//parser.setTrace(true);
+//			JsonContext tree = parser.json();
+			JsonseqContext tree = parser.jsonseq();
+			DataVisitor visitor = new DataVisitor(this);
+			DataValue<JSON> v = visitor.visitJsonseq(tree);
 			if(v!=null && v.value != null) v.value.setBuilder(this);
 			if(v == null) return  null;
 			v.value.lock();

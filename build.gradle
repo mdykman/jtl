@@ -101,6 +101,7 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
+/*
 jar {
   manifest { 
     attributes "Main-Class": "org.dykman.jtl.core.JtlMain"
@@ -110,7 +111,7 @@ jar {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
   }
 }
-
+*/
 compileJava.dependsOn antlr4
 
 sourceSets.main.java.srcDirs += "target/generated-sources/antlr4"
@@ -125,6 +126,7 @@ clean {
 
 clean.dependsOn cleanCompileJava
 
+/*
 task execute( dependsOn: 'compileJava', type:JavaExec) {
    classpath = sourceSets.main.runtimeClasspath
 	classpath.add(files("bin"))
@@ -167,4 +169,4 @@ task execute( dependsOn: 'compileJava', type:JavaExec) {
 
 //   args "src/test/resources/config.json"
 }
-
+*/

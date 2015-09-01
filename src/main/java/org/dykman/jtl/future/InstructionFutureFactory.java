@@ -549,6 +549,7 @@ public class InstructionFutureFactory {
 
                @Override
                public ListenableFuture<JSON> apply(JSON input) throws Exception {
+//System.err.println("sum is passed a " + input.getClass().getName());            	   
                   if(input instanceof JSONArray) {
                      Long acc = 0L;
                      Double facc = 0.0;
@@ -568,9 +569,9 @@ public class InstructionFutureFactory {
                               facc += n.doubleValue();
                            }
                         }
-                        return islong ? immediateCheckedFuture(context.builder().value(acc))
-                              : immediateCheckedFuture(context.builder().value(facc));
                      }
+                     return islong ? immediateCheckedFuture(context.builder().value(acc))
+                             : immediateCheckedFuture(context.builder().value(facc));
                   }
                   return Futures.immediateCheckedFuture(context.builder().value());
                }
@@ -2623,8 +2624,9 @@ public class InstructionFutureFactory {
                                  public ListenableFuture<JSON> apply(JSON input) throws Exception {
 
                                     final JSONObject obj = context.builder().object(inp.getParent());
+//                                    context.builder().o
                                     for(Pair<String, JSON> pp : (JSONObject) inp) {
-                                       if(!pp.f.equals(kj))
+                                       if(!pp.f.equals(ks))
                                           obj.put(pp.f, pp.s);
                                     }
                                     if(input.getType() != JSONType.NULL)
@@ -2640,10 +2642,11 @@ public class InstructionFutureFactory {
                         public ListenableFuture<JSON> apply(JSON input) throws Exception {
                            if(input.getType() == JSONType.OBJECT) {
                               final JSONObject obj = context.builder().object(inp.getParent());
+                              JSONObject inp =  (JSONObject) input; 
                               for(Pair<String, JSON> pp : (JSONObject) inp) {
-                                 obj.put(pp.f, pp.s);
+                                 if(!inp.containsKey(pp.f)) obj.put(pp.f, pp.s);
                               }
-                              for(Pair<String, JSON> pp : (JSONObject) input) {
+                              for(Pair<String, JSON> pp : inp) {
                                  if(pp.s.getType() != JSONType.NULL)
                                     obj.put(pp.f, pp.s);
                               }
