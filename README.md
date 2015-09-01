@@ -9,20 +9,27 @@ The langauge is a superset of json which allows a jpath expression to be specifi
 
 initialize with gradle..   details, details
 
+`./gradlew distZip`
 
+generates ./build/distributions/jtl.zip
 
-## jpath
-Jpath is a notation for navigating and manipulating json data, analogous to XPath and it's relationship with XML. Unlike XPath expressions, jpath is not string-embedded 
-allowing path components to be freely intermixed with literal data expressions.
+unzip in the directory of your choice.  You may then either
+* add JTLHOME/bin to your PATH
+* access the jtl script directly via JTLLHOME/bin/jtl
+
+## usage
+### EXAMPLES
+`$ jtl -c config.json -x variables.jtl -d inputdata`
+`$ jtl --help`
 
 ## data types 
 All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document could be refering to any of these unless specified otherwise.
 
 ### objects 
-Objects are conainers mapping string keys to JSON values.  Values may be of any JSON type
+Objects are containers mapping string keys to JSON values.  Values may be of any JSON type
 
 ### array 
-Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any type
+Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any JSON type
 
 ### scalars 
 Scalars can be of severals types
@@ -47,6 +54,31 @@ Evaluate as false:
 * empty object
 
 All other values evaluate as true
+
+## jpath
+Jpath is a notation for navigating and manipulating json data, analogous to XPath and it's relationship with XML. 
+
+Like XPath, jpath expressions are evaluated against implicit context data. 
+
+Unlike XPath expressions, jpath is not string-embedded allowing path components to be freely intermixed with literal data expressions. The latter
+statement implies that jpath and JTL are the same language; for the sake of convenience, the term __jpath__ will be used when refering to line
+statements of path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
+
+Jpath expressions are evaluated against implicit context data.  
+
+__data.json__
+```
+{
+	domain:"org.dykman",
+	author: "michael",
+	year: 2015
+}
+```
+===========
+__a.jtl__
+```
+domain
+```
 
 ## regular expressions 
 The general syntax for a regex match expression is:
