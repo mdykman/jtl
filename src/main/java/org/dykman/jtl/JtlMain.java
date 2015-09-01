@@ -91,7 +91,7 @@ public class JtlMain {
 			String oo;
 			if (cli.hasOption('c') || cli.hasOption("config")) {
 				oo = cli.getOptionValue('c');
-System.out.println("oo=" + oo);				
+//System.out.println("oo=" + oo);				
 				if (oo == null)
 					oo = cli.getOptionValue("config");
 
@@ -100,7 +100,7 @@ System.out.println("oo=" + oo);
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
 				oo = cli.getOptionValue('c');
-				if (oo == null)
+			//	if (oo == null)
 					oo = cli.getOptionValue("jtl");
 //				jtl = new File(cwd, oo);
 				jtl = new File(oo);
@@ -155,6 +155,7 @@ System.out.println("oo=" + oo);
 						throw new RuntimeException(
 								"could not determine input script");
 					}
+//					System.err.println("running script " + aa[0]);
 					jtl = new File(aa[0]);
 					/*
 					 * int n = g.getOptind(); String script = n >= args.length ?
@@ -163,6 +164,7 @@ System.out.println("oo=" + oo);
 					 * jtl = new File(script);
 					 */
 				}
+//            System.err.println("running file " + jtl.getAbsolutePath());
 				InstructionFuture<JSON> inst = main.compile(jtl);
 				PrintWriter pw = new PrintWriter(System.out);
 				if (fdata != null) {

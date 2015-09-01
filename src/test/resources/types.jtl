@@ -1,14 +1,4 @@
 {
-	tests: {
-		toarr: array(.),
-		isarr: array(),
-		arrnum: number(.),
-		isarrnum: number(),
-		tonum: */number(.),
-		isnum : */number(),
-		tostr: */string(.),
-		isstr: */string()
-	},
 	xt: {
 		num: numtest(),
 		str: strtest(),
@@ -20,13 +10,9 @@
 	arrtest: [array(),array(.),*/array(),*/array(.)],
 	valtest: [value(),*/value()],
 	
-	$numstr: ["3","1","4"]/tests(),
-	$nmber: [3,1,4]/tests(),
-	$mixed: ["3", 1, [4]]/tests(),
+	$numstr: ["3","1","4"]/xt(),
+	$nmber: [3,1,4]/xt(),
+	$mixed: ["3", 1, [4]]/xt(),
 
-	$xnumstr: ["3","1","4"]/xt(),
-	$xnmber: [3,1,4]/xt(),
-	$xmixed: ["3", 1, [4]]/xt(),
-
-	_: {numstr:$xnumstr,number:$xnmber,mixed:$xmixed}
+	_: {numstr:$numstr,number:$nmber,mixed:$mixed}
 }

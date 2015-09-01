@@ -5,6 +5,12 @@ JTL is a JSON Transformation Language designed for accepting json-formatted data
 
 The langauge is a superset of json which allows a jpath expression to be specified anywhere a json value would be expected.
 
+## installation
+
+initialize with gradle..   details, details
+
+
+
 ## jpath
 Jpath is a notation for navigating and manipulating json data, analogous to XPath and it's relationship with XML. Unlike XPath expressions, jpath is not string-embedded 
 allowing path components to be freely intermixed with literal data expressions.

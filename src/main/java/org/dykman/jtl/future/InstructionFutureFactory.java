@@ -3101,18 +3101,29 @@ public class InstructionFutureFactory {
                   proceed = true;
                }
             }
-            JSONArray arr = builder.array(input.getParent());
+            final JSONArray destarr = builder.frame();
             if(proceed) {
                if(type == JSONType.FRAME) {
-                  for(JSON j : (JSONArray) arr) {
-                     arr.add(j);
+                  List<ListenableFuture<JSON>> ll = new ArrayList<>();
+                  for(JSON j : (JSONArray) input) {
+                     ll.add(apply(j));
                   }
+                  return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+                     @Override
+                     public ListenableFuture<JSON> apply(List<JSON> inp) throws Exception {
+                        for(JSON j : inp) {
+                           destarr.add(j);
+                        }
+                        return immediateCheckedFuture(destarr);
+                     }
+                  });
                }
             } else {
-               arr.add(input);
+               destarr.add(input);
 
             }
-            return immediateCheckedFuture(arr);
+            return immediateCheckedFuture(destarr);
          }
 
       }, types);
