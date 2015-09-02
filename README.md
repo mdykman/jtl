@@ -20,6 +20,7 @@ unzip in the directory of your choice.  You may then either
 ## usage
 ### EXAMPLES
 `$ jtl -c config.json -x variables.jtl -d inputdata`
+
 `$ jtl --help`
 
 ## data types 
