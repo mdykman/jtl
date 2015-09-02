@@ -19,6 +19,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.future.InstructionFutureFactory;
@@ -51,7 +52,7 @@ public class JtlMain {
 				" $ jtl " 
 				+ " [options ...] arg1 arg2 ...");
 		System.out.println();
-		System.out.println("  JTL is a language, library and tool for parsing, creating and transforming JSON data");
+		System.out.println("  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
 		System.out
 				.println("  see: https://github.com/mdykman/jtl");
 		System.out.println();
@@ -77,35 +78,23 @@ public class JtlMain {
 		// TODO Auto-generated method stub
 		JtlMain main = new JtlMain();
 		try {
+			Options options = new Options();
+			options.addOption(new Option("c", "config", true,					"specify a configuration file"));
+			options.addOption(new Option("x", "jtl", true,					"specify a jtl file"));
+			options.addOption(new Option("p", "port", true,					"specify a port number (default:7718) * implies --server * not implemented"));
+			options.addOption(new Option("d", "data", true,					"specify input data (json file)"));
+			options.addOption(new Option("h", "help", false,					"print this help message and exit"));
+			options.addOption(new Option("s", "server", false,					"run in server mode (default port:7718 * not implemented"));
+			options.addOption(new Option("D", "directory", true,					"specify base directory (default:."));
+			options.addOption(new Option("n", "indent", true,					"specify default indent level for output (default:3)"));
+			options.addOption(new Option("q", "quote", false,					"enforce quoting of all object keys (default:false)"));
+			options.addOption(new Option("a", "array", false,					"parse a sequence of json entities from the input stream and "
+							+ "assemble them into an array * not implemented"));
+
 			String s = System.getProperty("jtl.home");
+			if(s==null) s = System.getProperty("JTL_HOME");
 			File home = s == null ? new File("."): new File(s);
 
-			Options options = new Options();
-			options.addOption(new Option("c", "config", true,
-					"specify a configuration file"));
-			options.addOption(new Option("x", "jtl", true,
-					"specify a jtl file"));
-			options.addOption(new Option("p", "port", true,
-					"specify a port number (default:7718) * implies --server"));
-			options.addOption(new Option("d", "data", true,
-					"specify input data (json file)"));
-			options.addOption(new Option("h", "help", false,
-					"print help message"));
-			options.addOption(new Option("D", "directory", true,
-					"specify base directory"));
-			options.addOption(new Option("s", "server", false,
-					"run in server mode (default port:7718"));
-			options.addOption(new Option("D", "directory", true,
-					"specify base directory (default:."));
-			options.addOption(new Option("n", "indent", true,
-					"specify default indent level for output (default:3)"));
-			options.addOption(new Option("q", "quote", false,
-					"enforce quoting of all object keys (default:false)"));
-			options.addOption(new Option("a", "array", false,
-					"parse a sequence of json entities from the input stream and "
-							+ "assemble them into an array"));
-
-			int c;
 			boolean help = false;
 			File fconfig = null;
 			File jtl = null;
@@ -120,8 +109,17 @@ public class JtlMain {
 			int port = 7719; // default port
 
 			CommandLineParser parser = new GnuParser();
-			CommandLine cli = parser.parse(options, args);
-
+			CommandLine cli;
+			try {
+				cli = parser.parse(options, args);
+			} catch(ParseException e) {
+				System.err.println("error parsing arguments: " + e.getLocalizedMessage());
+				System.err.println();
+				
+				printHelp(options);
+				System.exit(0);
+				throw new RuntimeException("exit didn't");
+			}
 			String oo;
 			if (cli.hasOption('D') || cli.hasOption("directory")) {
 				oo = cli.getOptionValue('D');
@@ -148,13 +146,19 @@ public class JtlMain {
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
 				oo = cli.getOptionValue('c');
-				oo = cli.getOptionValue("jtl");
+				oo = oo != null ? oo : cli.getOptionValue("jtl");
 				jtl = new File(oo);
 				if (!dirSet) {
 					cexddir = jtl.getParentFile();
 				}
 
 			}
+			if (cli.hasOption('p') || cli.hasOption("port")) {
+				oo = cli.getOptionValue('p');
+				oo = oo != null ? oo : cli.getOptionValue("port");
+				port = Integer.parseInt(oo);
+				serverMode = true;
+				}
 			if (cli.hasOption('s') || cli.hasOption("server")) {
 				serverMode = true;
 			}
@@ -183,8 +187,11 @@ public class JtlMain {
 				System.exit(0);
 			}
 
-			if (fconfig != null)
+			if (fconfig != null) {
 				main.setConfig(fconfig);
+			} else {
+				fconfig = main.searchConfig("config.json",cexddir,home);
+			}
 
 			if (serverMode) {
 				JtlServer server = main.launchServer(jtl, port);
@@ -211,25 +218,19 @@ public class JtlMain {
 				PrintWriter pw = new PrintWriter(System.out);
 				if (array) {
 					JSONArray arr = main.builder.array(null);
+					jsonParser jp = main.createParser(System.in);
 					while (true) {
-						InputStreamReader reader = new InputStreamReader(
-								System.in);
+//						InputStreamReader reader = new InputStreamReader(
+//								System.in);
 						try {
-							JSON j = main.parse(System.in);
-							System.out
-									.println("============================================!!!!!!!!!!!!!!==============");
+							JSON j = main.parse(jp);
+							if(j==null) break;
 							arr.add(j);
 
 						} catch (IOException e) {
 							System.err
 									.println("I hope THIS is antlr signaling EOF");
 							e.printStackTrace();
-							break;
-						} catch (IllegalStateException e) {
-							System.err
-									.println("I hope this is antlr signaling EOF");
-							e.printStackTrace();
-
 							break;
 						}
 					}
@@ -259,7 +260,7 @@ public class JtlMain {
 			try {
 				main.shutdown();
 			} catch (InterruptedException e) {
-				System.err.println("error un shutdown: "
+				System.err.println("error on shutdown: "
 						+ e.getLocalizedMessage());
 				// e.printStackTrace();
 			}
@@ -270,7 +271,16 @@ public class JtlMain {
 		config = builder.parse(f);
 	}
 
-	public JSONObject getConfig(File f) throws IOException {
+	public  File searchConfig(String name,File... f) throws IOException {
+		for(File ff: f) {
+			File cc = new File(ff, name);
+			if(cc.exists()) {
+				return cc;
+			}
+		}
+		return null;
+	}	
+	public  JSONObject getConfig(File f) throws IOException {
 		JSON c;
 		if (f != null && f.exists()) {
 			c = builder.parse(f);
@@ -308,6 +318,13 @@ public class JtlMain {
 
 	public JSON parse(InputStream f) throws IOException {
 		return builder.parse(f);
+	}
+	public JSON parse(jsonParser p) throws IOException {
+		return builder.parseSequence(p);
+	}
+
+	public jsonParser createParser(InputStream f) throws IOException {
+		return builder.createParser(f);
 	}
 
 	public JSON execute(InstructionFuture<JSON> inst, JSON data, File cwd,

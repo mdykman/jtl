@@ -6,7 +6,8 @@ options {
 
 
 json
-    :   value ;
+    :   value EOF?
+    ;
 
 jsonseq
 	: json+

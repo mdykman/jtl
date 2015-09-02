@@ -7,6 +7,7 @@ public class DataValue<T> {
 	public T value;
 	public String str;
 	public Pair<String, T> pair;
+	
 	public DataValue(String s) { str = s; }
 	public DataValue(T value) {
 		this.value = value;
