@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
@@ -219,12 +220,24 @@ public class JSONBuilderImpl implements JSONBuilder {
 	
 	public JSON parseSequence(jsonParser parser) 
 			throws IOException {
+		parser.getCurrentToken();
+		
+			if(Token.EOF == parser.getCurrentToken().getType()) {
+				return null;
+			}
 			JsonContext tree = parser.json();
+//System.out.println("one");			
 			if(tree==null) return null;
+//			System.out.println("two");			
+			
+//			if(tree.value())
 				if(tree.value().getChild(0) == null) {
+//					System.out.println("three");			
 					return null;
 				}
+//				System.out.println("four");			
 			DataVisitor visitor = new DataVisitor(this);
+//			System.out.println("five");			
 			DataValue<JSON> v = visitor.visitJson(tree);
 			if(v!=null && v.value != null) v.value.setBuilder(this);
 			if(v == null) return  null;

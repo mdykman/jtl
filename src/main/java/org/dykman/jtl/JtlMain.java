@@ -90,6 +90,7 @@ public class JtlMain {
 			options.addOption(new Option("q", "quote", false,					"enforce quoting of all object keys (default:false)"));
 			options.addOption(new Option("a", "array", false,					"parse a sequence of json entities from the input stream and "
 							+ "assemble them into an array * not implemented"));
+			options.addOption(new Option("b", "batch", true,					"gather n items from a sequence of JSON values and process them as an array"));
 
 			String s = System.getProperty("jtl.home");
 			if(s==null) s = System.getProperty("JTL_HOME");
@@ -99,6 +100,7 @@ public class JtlMain {
 			File fconfig = null;
 			File jtl = null;
 			File fdata = null;
+			Integer batch = null;
 			int indent = 3;
 			boolean dirSet = false;
 			boolean array = false;
@@ -131,6 +133,18 @@ public class JtlMain {
 			if (cli.hasOption('a') || cli.hasOption("array")) {
 				array = true;
 			}
+			if (cli.hasOption('b') || cli.hasOption("batch")) {
+				oo = cli.getOptionValue('b');
+				if (oo == null)
+					oo = cli.getOptionValue("batch");
+				batch = Integer.parseInt(oo);
+				if(batch == 0) {
+					throw new RuntimeException("don't know how to process a batch of 0");
+				}
+				array = true;
+			}
+			
+
 			if (cli.hasOption('c') || cli.hasOption("config")) {
 				oo = cli.getOptionValue('c');
 				if (oo == null)
@@ -200,7 +214,6 @@ public class JtlMain {
 			} else {
 				List<String> argList = cli.getArgList();
 				Iterator<String> argIt = argList.iterator();
-				int offset = 0;
 				if (jtl == null) {
 					// if not specified with a switch, the script must be the
 					// first
@@ -212,26 +225,30 @@ public class JtlMain {
 					}
 					// System.err.println("running script " + aa[0]);
 					jtl = new File(argIt.next());
-					offset = 1;
 				}
 				InstructionFuture<JSON> inst = main.compile(jtl);
 				PrintWriter pw = new PrintWriter(System.out);
 				if (array) {
 					JSONArray arr = main.builder.array(null);
 					jsonParser jp = main.createParser(System.in);
+					int cc = 0;
 					while (true) {
-//						InputStreamReader reader = new InputStreamReader(
-//								System.in);
 						try {
 							JSON j = main.parse(jp);
 							if(j==null) break;
 							arr.add(j);
-
+System.out.println("BATCH add");								
+							if((batch!=null) && (++cc >= batch)) {
+								JSON result = main.execute(inst, arr, cexddir, fconfig);
+System.out.println("BATCH flush");								
+								result.write(pw, indent, enquote);
+								pw.flush();
+								cc = 0;
+								arr = main.builder.array(null);
+System.out.println("BATCH reset");								
+							}
 						} catch (IOException e) {
-							System.err
-									.println("I hope THIS is antlr signaling EOF");
-							e.printStackTrace();
-							break;
+							throw new RuntimeException("while reading sequence: " + e.getLocalizedMessage());
 						}
 					}
 					JSON result = main.execute(inst, arr, cexddir, fconfig);
