@@ -62,7 +62,7 @@ public class JtlCompiler {
 		}
 	public InstructionFuture<JSON> parse(File in) 
 		throws IOException {
-System.err.println("parsing file: " + in.getAbsolutePath());		
+// System.err.println("parsing file: " + in.getAbsolutePath());		
 		return parse(in.getName(),in, trace, profile);
 	}
 
@@ -146,6 +146,7 @@ System.err.println("parsing file: " + in.getAbsolutePath());
       define(context,"each", each(meta));
       define(context,"defined", defined(meta));
       define(context,"call", call(meta));
+      define(context,"thread", thread(meta));
 
 		// external data
 		define(context,"file", file(meta));
@@ -185,8 +186,8 @@ System.err.println("parsing file: " + in.getAbsolutePath());
       define(context,"value", isValue(meta));
 		define(context,"object", isObject(meta));
 
-		// with 0 args, they return boolean type test
-		// with 1 arg, attempts to coerce to the specified type
+		// 0 args: return boolean type test
+		// 1 arg: attempts to coerce to the specified type
 		define(context,"array", isArray(meta));
 		define(context,"number", isNumber(meta));
       define(context,"int", isInt(meta));

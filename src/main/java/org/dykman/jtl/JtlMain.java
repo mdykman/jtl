@@ -49,6 +49,7 @@ public class JtlMain {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+	   JtlMain main = new JtlMain();
 		try {
 			String s = System.getProperty("jtl.home");
 			File home;
@@ -147,7 +148,7 @@ public class JtlMain {
 				System.exit(0);
 			}
 
-			JtlMain main = new JtlMain();
+			
 			if (fconfig != null)
 				main.setConfig(fconfig);
 
@@ -219,6 +220,13 @@ public class JtlMain {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+		   try {
+            main.shutdown();
+         } catch (InterruptedException e) {
+            System.err.println("error un shutdown: " + e.getLocalizedMessage());
+//            e.printStackTrace();
+         }
 		}
 	}
 

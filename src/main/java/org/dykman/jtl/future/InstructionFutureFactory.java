@@ -538,13 +538,42 @@ public class InstructionFutureFactory {
       si.name = "deferred";
       return memo(meta, new DeferredCall(si, inst, context, t));
    }
+   public static InstructionFuture<JSON> thread(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
 
+         @Override
+         public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg==null) return data;
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  Callable<JSON> callable = new Callable<JSON>() {
+                     @Override
+                     public JSON call() throws Exception {
+                        return arg.call(context, Futures.immediateCheckedFuture( input)).get();
+                     }
+                  };
+                  return context.executor().submit(callable);
+               }
+            });
+         }
+      };
+   }
+   
    public static InstructionFuture<JSON> sum(SourceInfo meta) {
       return new AbstractInstructionFuture(meta) {
 
          @Override
          public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
-               final ListenableFuture<JSON> data) throws ExecutionException {
+               ListenableFuture<JSON> data) throws ExecutionException {
+            InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg!=null) {
+               data = arg.call(context, data);
+            }
+//            final ListenableFuture<JSON> d=data;
             return transform(data, new AsyncFunction<JSON, JSON>() {
 
                @Override
@@ -3170,7 +3199,8 @@ public class InstructionFutureFactory {
                         return immediateCheckedFuture(arr);
                      }
                   }
-                  return immediateCheckedFuture(builder.value(true));
+                  
+                  return immediateCheckedFuture(builder.value(hasType(input.getType())));
                }
             });
          }

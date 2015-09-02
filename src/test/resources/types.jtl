@@ -3,16 +3,25 @@
 		num: numtest(),
 		str: strtest(),
 		arr: arrtest(),
-		val: valtest()
+		val: valtest(),
+		obj: objtest()
 	},
 	numtest: [number(),number(.),*/number(),*/number(.)],
 	strtest: [string(),string(.),*/string(),*/string(.)],
 	arrtest: [array(),array(.),*/array(),*/array(.)],
 	valtest: [value(),*/value()],
+	objtest: [object(),*/object()],
 	
 	$numstr: ["3","1","4"]/xt(),
 	$nmber: [3,1,4]/xt(),
 	$mixed: ["3", 1, [4]]/xt(),
+	$objects: [{
+			id: 7,
+			name: "alice"
+		}, {
+			id: 6,
+			name: "ted"
+		}]/xt(),
 
-	_: {numstr:$numstr,number:$nmber,mixed:$mixed}
+	_: {numstr:$numstr,number:$nmber,mixed:$mixed,objects:$objects}
 }
