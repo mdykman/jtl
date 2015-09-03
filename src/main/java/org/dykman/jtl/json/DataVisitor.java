@@ -75,10 +75,13 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitValue(ValueContext ctx) {
 		ObjectContext oc = ctx.object();
 		if(oc!=null) return visitObject(oc);
+		
 		ArrayContext ac = ctx.array();
 		if(ac!=null) return visitArray(ac);
+		
 		NumberContext nc = ctx.number();
 		if(nc!=null) return visitNumber(nc);
+		
 		StringContext sc = ctx.string();
 		if(sc!=null) return  new DataValue(builder.value(visitString(sc).str));
 		

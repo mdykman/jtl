@@ -8,7 +8,8 @@
  */
 
 
-version='0.9'
+version=0.9
+
 // In this section you declare where to find the dependencies of your project
 repositories {
 	 maven {
@@ -102,17 +103,6 @@ dependencies {
     testCompile "junit:junit:4.11"
 }
 
-/*
-jar {
-  manifest { 
-    attributes "Main-Class": "org.dykman.jtl.core.JtlMain"
-  }  
-
-  from {
-    configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-  }
-}
-*/
 compileJava.dependsOn antlr4
 
 sourceSets.main.java.srcDirs += "target/generated-sources/antlr4"
@@ -127,47 +117,3 @@ clean {
 
 clean.dependsOn cleanCompileJava
 
-/*
-task execute( dependsOn: 'compileJava', type:JavaExec) {
-   classpath = sourceSets.main.runtimeClasspath
-	classpath.add(files("bin"))
-
-	def jtl = System.getProperty("script")
-	def conf = System.getProperty("config") 
-	conf = conf == null ? "src/test/resources/config.json" : conf
-	def data = System.getProperty("data") 
-	data = data == null ? "src/test/resources/generated.json" : data
-	
-   main = "SimpleJtlTest"
-
-	args jtl
-	args data
-	args conf
-
-//   args "src/test/resources/sx.jtl"  
-//   args "src/test/resources/data.json"
-
-//   args "src/test/resources/simple.jtl"  
-//   args "src/test/resources/data.json"
-
-//   args "src/test/resources/n.jtl"  
-//   args "src/test/resources/generated.json"
-
-//   args "src/test/resources/jdbc.jtl"  
-//   args "src/test/resources/data.json"
-
-//   args "src/test/resources/string.jtl"  
- //  args "src/test/resources/generated.json"
-
-//   args "src/test/resources/simple.jtl"  
-//   args "src/test/resources/data.json"
-
-//   args "src/test/resources/re.jtl"  
- //  args "src/test/resources/generated.json"
-
-//   args "src/test/resources/sqlite.jtl"  
-//   args "src/test/resources/generated.json"
-
-//   args "src/test/resources/config.json"
-}
-*/
