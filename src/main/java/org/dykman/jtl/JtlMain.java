@@ -75,7 +75,11 @@ public class JtlMain {
 
 		System.out.println("  examples:");
 		System.out.println("    $ jtl src/test/resources/group.jtl src/test/resources/generated.json");
-		System.out.println("    $ jtl src/test/resources/variables.jtl src/test/resources/data.json");
+      System.out.println("    $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json");
+      System.out.println("    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json");
+      System.out.println("    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl");
+      System.out.println("    $ jtl sample.jtl one.json two.json three.json");
+      System.out.println("    $ cat  one.json two.json three.json | jtl -a sample.jtl");
 		System.out.println();
 	}
 
@@ -84,19 +88,24 @@ public class JtlMain {
 		JtlMain main = null;
 		try {
 			Options options = new Options();
+         options.addOption(new Option("h", "help", false,               "print this help message and exit"));
 			options.addOption(new Option("c", "config", true,					"specify a configuration file"));
+			
 			options.addOption(new Option("x", "jtl", true,					"specify a jtl file"));
+         options.addOption(new Option("d", "data", true,             "specify input data (json file)"));
+         options.addOption(new Option("D", "directory", true,              "specify base directory (default:.)"));
+
+			options.addOption(new Option("s", "server", false,             "run in server mode (default port:7718 * not implemented"));
 			options.addOption(new Option("p", "port", true,					"specify a port number (default:7718) * implies --server * not implemented"));
-			options.addOption(new Option("d", "data", true,					"specify input data (json file)"));
-			options.addOption(new Option("h", "help", false,					"print this help message and exit"));
-			options.addOption(new Option("s", "server", false,					"run in server mode (default port:7718 * not implemented"));
-			options.addOption(new Option("D", "directory", true,					"specify base directory (default:.)"));
+			
+			options.addOption(new Option("k", "canconical", false,              "output canonical JSON (ordered keys)"));
 			options.addOption(new Option("n", "indent", true,					"specify default indent level for output (default:3)"));
 			options.addOption(new Option("q", "quote", false,					"enforce quoting of all object keys (default:false)"));
+
 			options.addOption(new Option("a", "array", false,					"parse a sequence of json entities from the input stream, "
 							+ "assemble them into an array and process"));
 			options.addOption(new Option("b", "batch", true,					"gather n items from a sequence of JSON values and process them as an array"));
-         options.addOption(new Option("k", "canconical", false,              "output canonical JSON (ordered keys)"));
+
 
 			String s = System.getProperty("jtl.home");
 			if(s==null) s = System.getProperty("JTL_HOME");
@@ -226,6 +235,8 @@ public class JtlMain {
 					// name on the argument list
 //					String[] aa = cli.getArgs();
 					if (argList.size() == 0) {
+					   printHelp(options);
+					   System.exit(-1);
 						throw new RuntimeException(
 								"could not determine input script");
 					}
@@ -266,6 +277,13 @@ public class JtlMain {
 //					pw.flush();
 
 				} else {
+				   if(!argIt.hasNext()) {
+                  JSON data = main.parse(System.in);
+                  JSON result = main
+                        .execute(inst, data, cexddir, fconfig);
+                  result.write(pw, indent, enquote);
+				      
+				   } else 
 					while (argIt.hasNext()) {
 						File f = new File(argIt.next());
 						JSON data = main.parse(f);

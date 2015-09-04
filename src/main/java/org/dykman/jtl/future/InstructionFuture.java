@@ -10,7 +10,7 @@ public interface InstructionFuture<T> {
 
 
    public SourceInfo getSourceInfo();
-	public InstructionFuture<T> unwrap(AsyncExecutionContext<T> context);
+	public InstructionFuture<T> unwrap();
 	   public InstructionFuture<JSON> getBareInstruction();
 	   
 	public ListenableFuture<T> call(AsyncExecutionContext<T> context, ListenableFuture<T> data)

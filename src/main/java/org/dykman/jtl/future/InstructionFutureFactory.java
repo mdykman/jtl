@@ -267,7 +267,7 @@ public class InstructionFutureFactory {
 
             final InstructionFuture<JSON> mapfunc;
             if(gbe != null) {
-               mapfunc = gbe.unwrap(context);
+               mapfunc = gbe.unwrap();
             } else {
                return immediateCheckedFuture(context.builder().value());
             }
@@ -329,7 +329,7 @@ public class InstructionFutureFactory {
                throws ExecutionException {
             InstructionFuture<JSON> gbe = context.getdef("1");
             if(gbe != null) {
-               gbe = gbe.unwrap(context);
+               gbe = gbe.unwrap();
             } else {
                return data;
             }
@@ -707,7 +707,7 @@ public class InstructionFutureFactory {
          @Override
          public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
                final ListenableFuture<JSON> data) throws ExecutionException {
-            final InstructionFuture<JSON> inst = context.getdef("1").unwrap(context);
+            final InstructionFuture<JSON> inst = context.getdef("1").unwrap();
             return transform(data, new AsyncFunction<JSON, JSON>() {
 
                @Override
@@ -1915,7 +1915,7 @@ public class InstructionFutureFactory {
                public ListenableFuture<JSON> apply(final JSON input) throws Exception {
                   InstructionFuture<JSON> fexp = context.getdef("1");
                   if(fexp != null) {
-                     fexp = fexp.unwrap(context);
+                     fexp = fexp.unwrap();
                      List<ListenableFuture<JSON>> ll = new ArrayList<>();
                      final boolean isFrame = input instanceof Frame;
                      if(input instanceof JSONArray) {
@@ -2042,7 +2042,7 @@ public class InstructionFutureFactory {
                   if(input.getType() == JSONType.ARRAY || input.getType() == JSONType.FRAME) {
                      InstructionFuture<JSON> fi = context.getdef("1");
                      if(fi != null) {
-                        fi = fi.unwrap(context);
+                        fi = fi.unwrap();
                         List<ListenableFuture<Pair<JSON, JSON>>> ll = new ArrayList<>();
                         for(JSON j : (JSONArray) input) {
                            ll.add(transform(fi.call(context, immediateCheckedFuture(j)),
@@ -2598,7 +2598,7 @@ public class InstructionFutureFactory {
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
             ll.add(data);
             if(ki != null && vi != null) {
-               ai = vi.unwrap(context);
+               ai = vi.unwrap();
                ll.add(ki.call(context, data));
             } else {
                ai = null;
@@ -2656,10 +2656,10 @@ public class InstructionFutureFactory {
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
             ll.add(data);
             if(ki != null && vi != null) {
-               ai = vi.unwrap(context);
+               ai = vi.unwrap();
                ll.add(ki.call(context, data));
             } else if(ki != null) {
-               ai = ki.unwrap(context);
+               ai = ki.unwrap();
             } else {
                ai = null;
             }
@@ -2734,7 +2734,7 @@ public class InstructionFutureFactory {
                public ListenableFuture<JSON> apply(JSON input) throws Exception {
                   if(input.getType() == JSONType.ARRAY) {
                      InstructionFuture<JSON> mf = context.getdef("1");
-                     mf = mf.unwrap(context);
+                     mf = mf.unwrap();
                      List<ListenableFuture<Pair<JSON, JSON>>> ll = new ArrayList<>();
                      for(JSON j : (JSONArray) input) {
                         AsyncExecutionContext<JSON> cc = context.createChild(false, false, data, meta);
@@ -3196,7 +3196,7 @@ public class InstructionFutureFactory {
             if(arg != null && conv != null) {
                conv.setBuilder(context.builder());
                if(arg != null) {
-                  arg = arg.unwrap(context);
+                  arg = arg.unwrap();
                   InstructionFuture<JSON> a = each(meta);
                   AsyncExecutionContext<JSON> fc = context.createChild(true, false, data, meta);
                   fc.define("1", deferred(meta, a, context, null));

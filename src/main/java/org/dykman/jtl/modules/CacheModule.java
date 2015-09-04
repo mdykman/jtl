@@ -121,7 +121,7 @@ public class CacheModule implements Module {
                InstructionFuture<JSON> ff = context.getdef("1");
 //               final InstructionFuture<JSON> func = ff.unwrap(context);
  //              while(ff instanceof MemoInstructionFuture) {
-                  ff = ff.unwrap(context);
+                  ff = ff.unwrap();
 //               }
 
                InstructionFuture<JSON> ffraw = ff;

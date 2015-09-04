@@ -101,7 +101,7 @@ public abstract class AbstractInstructionFuture implements
    protected String code;
    
 	@Override
-	public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
+	public InstructionFuture<JSON> unwrap() {
 		return this;
 	}
 /*

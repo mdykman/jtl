@@ -17,8 +17,8 @@ public class MemoInstructionFuture extends AbstractInstructionFuture {
       this.key = "@memo-"+Long.toHexString(System.identityHashCode(this));
    }
    @Override
-   public InstructionFuture<JSON> unwrap(AsyncExecutionContext<JSON> context) {
-      return inst.unwrap(context);
+   public InstructionFuture<JSON> unwrap() {
+      return inst.unwrap();
    }
 
    @Override
