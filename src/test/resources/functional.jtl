@@ -1,6 +1,6 @@
 {
 	_: "something"/foo(func("one")),
-	foo: "context data"/[$1,$1(),$1("two"),func("something","else"),indirect("last","one")],
+	foo: "context data"/[$1,$1(),$1("two"),func("something","else"),indirect("last","thing")],
 	func: {
 		name: $0,
 		data: $_,

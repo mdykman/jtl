@@ -38,14 +38,19 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	JSONBuilder builder = new JSONBuilderImpl();
+	final JSONBuilder builder;
 	InstructionFutureFactory factory = new InstructionFutureFactory();
-	JtlCompiler compiler = new JtlCompiler(builder, false, false, false);
+	JtlCompiler compiler;
 	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors
 			.newCachedThreadPool());
 
-	JSON config = builder.value();
+	JSON config;
 
+	public JtlMain(boolean canonical) {
+	  builder = new JSONBuilderImpl(canonical);
+	  compiler = new JtlCompiler(builder, false, false, false);
+	  config =  builder.value(); // initial config value
+	}
 	public static void printHelp(Options cl) {
 		System.out.println(
 //				" $ java " + JtlMain.class.getName()
@@ -76,7 +81,7 @@ public class JtlMain {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		JtlMain main = new JtlMain();
+		JtlMain main = null;
 		try {
 			Options options = new Options();
 			options.addOption(new Option("c", "config", true,					"specify a configuration file"));
@@ -85,12 +90,13 @@ public class JtlMain {
 			options.addOption(new Option("d", "data", true,					"specify input data (json file)"));
 			options.addOption(new Option("h", "help", false,					"print this help message and exit"));
 			options.addOption(new Option("s", "server", false,					"run in server mode (default port:7718 * not implemented"));
-			options.addOption(new Option("D", "directory", true,					"specify base directory (default:."));
+			options.addOption(new Option("D", "directory", true,					"specify base directory (default:.)"));
 			options.addOption(new Option("n", "indent", true,					"specify default indent level for output (default:3)"));
 			options.addOption(new Option("q", "quote", false,					"enforce quoting of all object keys (default:false)"));
-			options.addOption(new Option("a", "array", false,					"parse a sequence of json entities from the input stream and "
-							+ "assemble them into an array * not implemented"));
+			options.addOption(new Option("a", "array", false,					"parse a sequence of json entities from the input stream, "
+							+ "assemble them into an array and process"));
 			options.addOption(new Option("b", "batch", true,					"gather n items from a sequence of JSON values and process them as an array"));
+         options.addOption(new Option("k", "canconical", false,              "output canonical JSON (ordered keys)"));
 
 			String s = System.getProperty("jtl.home");
 			if(s==null) s = System.getProperty("JTL_HOME");
@@ -108,6 +114,7 @@ public class JtlMain {
 			File cexddir = new File(".");
 //			File cdordir = new File(".");
 			boolean serverMode = false;
+			boolean canonical = false;
 			int port = 7719; // default port
 
 			CommandLineParser parser = new GnuParser();
@@ -123,6 +130,10 @@ public class JtlMain {
 				throw new RuntimeException("exit didn't");
 			}
 			String oo;
+         if (cli.hasOption('k') || cli.hasOption("canonical")) {
+            canonical = true;
+         }
+         main = new JtlMain(canonical);
 			if (cli.hasOption('D') || cli.hasOption("directory")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)
@@ -139,7 +150,8 @@ public class JtlMain {
 					oo = cli.getOptionValue("batch");
 				batch = Integer.parseInt(oo);
 				if(batch == 0) {
-					throw new RuntimeException("don't know how to process a batch of 0");
+				   batch = null;
+//					throw new RuntimeException("don't know how to process a batch of 0");
 				}
 				array = true;
 			}
@@ -196,16 +208,10 @@ public class JtlMain {
 				indent = Integer.parseInt(oo);
 			}
 
-			if (help) {
-				printHelp(options);
-				System.exit(0);
-			}
-
-			if (fconfig != null) {
-				main.setConfig(fconfig);
-			} else {
+			if (fconfig == null) {
 				fconfig = main.searchConfig("config.json",cexddir,home);
 			}
+         main.setConfig(fconfig);
 
 			if (serverMode) {
 				JtlServer server = main.launchServer(jtl, port);
@@ -218,7 +224,7 @@ public class JtlMain {
 					// if not specified with a switch, the script must be the
 					// first
 					// name on the argument list
-					String[] aa = cli.getArgs();
+//					String[] aa = cli.getArgs();
 					if (argList.size() == 0) {
 						throw new RuntimeException(
 								"could not determine input script");
@@ -235,17 +241,16 @@ public class JtlMain {
 					while (true) {
 						try {
 							JSON j = main.parse(jp);
-							if(j==null) break;
+							if(j==null)  {
+							   break;
+							}
 							arr.add(j);
-System.out.println("BATCH add");								
 							if((batch!=null) && (++cc >= batch)) {
 								JSON result = main.execute(inst, arr, cexddir, fconfig);
-System.out.println("BATCH flush");								
 								result.write(pw, indent, enquote);
 								pw.flush();
 								cc = 0;
 								arr = main.builder.array(null);
-System.out.println("BATCH reset");								
 							}
 						} catch (IOException e) {
 							throw new RuntimeException("while reading sequence: " + e.getLocalizedMessage());
@@ -271,8 +276,14 @@ System.out.println("BATCH reset");
 				}
 				pw.flush();
 			}
+		} catch(ExecutionException e) {
+		   System.err.println(e.report());
 		} catch (Exception e) {
-			e.printStackTrace();
+		   if(e.getCause() instanceof ExecutionException) {
+	         System.err.println(((ExecutionException)e.getCause()).report());
+		   } else {
+		      e.printStackTrace();
+		   }
 		} finally {
 			try {
 				main.shutdown();
@@ -284,8 +295,9 @@ System.out.println("BATCH reset");
 		}
 	}
 
+	
 	public void setConfig(File f) throws IOException {
-		config = builder.parse(f);
+		config = f == null ? null : builder.parse(f);
 	}
 
 	public  File searchConfig(String name,File... f) throws IOException {

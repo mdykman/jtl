@@ -2,16 +2,12 @@ package org.dykman.jtl.json;
 
 
 
-import static org.dykman.jtl.future.InstructionFutureFactory.number;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jsonBaseVisitor;
-import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.jsonParser.ArrayContext;
 import org.dykman.jtl.jsonParser.JsonContext;
-import org.dykman.jtl.jsonParser.JsonseqContext;
 import org.dykman.jtl.jsonParser.KeyContext;
 import org.dykman.jtl.jsonParser.NumberContext;
 import org.dykman.jtl.jsonParser.ObjectContext;
@@ -31,6 +27,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		return visitValue(ctx.value());
 	}
 	
+	/*
 	@Override
 	public DataValue<JSON> visitJsonseq(JsonseqContext ctx) {
 		JSONArray arr = builder.array(null);
@@ -39,6 +36,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		}
 		return new DataValue<JSON>(arr);
 	}
+	*/
 	@Override
 	public DataValue<JSON> visitObject(ObjectContext ctx) {
 		int cap = ctx.getChildCount();

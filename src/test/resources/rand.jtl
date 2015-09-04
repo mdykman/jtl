@@ -1,8 +1,11 @@
 {
+	$items: ["a","couple","of","things","in","this","list"],
 	_: {
 		single: rand(21), // 0-20
 		array: rand(20,21), // 20 * 0-20
 		rangedsingle: rand(21) - 10, // 1 number -10 -> 10
-		rangedarray: rand(20,21)/*/(. - 10) // 20 numbers, -10 -> 10
+		rangedarray: rand(20,21)/*/(. - 10), // 20 `numbers, -10 -> 10
+		one: rand($items)
+//		afew: rand($items,20)
 		}
 }

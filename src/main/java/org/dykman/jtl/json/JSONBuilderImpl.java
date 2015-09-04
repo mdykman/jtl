@@ -8,17 +8,17 @@ import java.io.Reader;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
 import org.dykman.jtl.jsonParser.JsonContext;
-import org.dykman.jtl.jsonParser.JsonseqContext;
 import org.dykman.jtl.factory.CollectionFactory;
 import org.dykman.jtl.factory.MapFactory;
 
@@ -33,15 +33,29 @@ public class JSONBuilderImpl implements JSONBuilder {
 		this.cf = cf;
 	}
 
-	public JSONBuilderImpl() {
-		mf = new MapFactory<String, JSON>() {
-			@Override public Map<String, JSON> createMap() { return new LinkedHashMap<>(); }
-			@Override public Map<String, JSON> createMap(int cap) {	return new LinkedHashMap<>(cap); } 
-			@Override public Map<String, JSON> copyMap(Map<String, JSON> rhs) {	return new LinkedHashMap<>(rhs); } };
-		cf = new CollectionFactory<JSON>() { 
+	private static Map<String, JSON> mapBuilder(boolean canonical) {
+	   return canonical ? new TreeMap<>() : new HashMap<>();
+	}
+   private static Map<String, JSON> mapBuilder(boolean canonical, int cap) {
+      return canonical ? new TreeMap<>() : new HashMap<>(cap);
+   }
+   private static Map<String, JSON> mapBuilder(boolean canonical,Map<String, JSON> rhs) {
+      return canonical ? new TreeMap<>(rhs) : new HashMap<>(rhs);
+   }
+	
+   public JSONBuilderImpl() {
+      this(false);
+   }	
+   
+	public JSONBuilderImpl(final boolean c) {
+		this(new MapFactory<String, JSON>() {
+			@Override public Map<String, JSON> createMap() { return mapBuilder(c); }
+			@Override public Map<String, JSON> createMap(int cap) {	return mapBuilder(c,cap); } 
+			@Override public Map<String, JSON> copyMap(Map<String, JSON> rhs) {	return mapBuilder(c,rhs); } },
+		new CollectionFactory<JSON>() { 
 			@Override public Collection<JSON> createCollection() {return new ArrayList<>(); }
 			@Override public Collection<JSON> createCollection(int cap) { return new ArrayList<>(cap); } 
-			@Override public Collection<JSON> copyCollection(Collection<JSON> rhs) { return new ArrayList<>(rhs); } };
+			@Override public Collection<JSON> copyCollection(Collection<JSON> rhs) { return new ArrayList<>(rhs); } });
 	}
 	private JSON sign(JSON j) {
 		j.setBuilder(this);
@@ -207,8 +221,6 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public JSON parse(jsonLexer lexer) 
 			throws IOException {
 			jsonParser parser = new jsonParser(new CommonTokenStream(lexer));
-//			parser.
-			//parser.setTrace(true);
 			JsonContext tree = parser.json();
 			DataVisitor visitor = new DataVisitor(this);
 			DataValue<JSON> v = visitor.visitJson(tree);

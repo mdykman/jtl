@@ -114,17 +114,17 @@ public class JdbcModule implements Module {
 
    class JdbcConnectionWrapper {
       JSONObject conf;
+      Connection connection = null;
 
       JdbcConnectionWrapper(JSONObject conf) {
          this.conf = conf;
       }
 
-      Connection connection = null;
-
+ 
       public Connection getConnection(SourceInfo src) throws ExecutionException {
          if(connection == null) {
             // naive connection manager ideal for CLI, not so much server
-            synchronized(JdbcModule.class) {
+            synchronized(this) {
                if(connection == null) {
                   String driver = stringValue(conf.get("driver"));
                   String uri = stringValue(conf.get("uri"));
@@ -133,7 +133,7 @@ public class JdbcModule implements Module {
                   if(driver != null) {
                      try {
                         Class<Driver> drc = (Class<Driver>) Class.forName(driver);
-                        Driver drv = drc.newInstance();
+//                        Driver drv = drc.newInstance();
                         Properties properties = new Properties();
                         if(user != null) {
                            properties.setProperty("user", user);
@@ -143,7 +143,7 @@ public class JdbcModule implements Module {
                         } else {
                            connection = DriverManager.getConnection(uri);
                         }
-                     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                     } catch (ClassNotFoundException e) {
                         throw new ExecutionException("JDBC: unable to load class " + driver, src);
                      } catch (SQLException e) {
                         throw new ExecutionException("JDBC: unable to connect to " + uri, src);
@@ -265,11 +265,8 @@ public class JdbcModule implements Module {
       }));
 
       si = meta.clone();
-      si.code = "*internal*";
-      si.name = "execute";
-
       si = meta.clone();
-      si.name = "insert";
+      si.name = "execute";
       si.code = "*internal*";
       context.define("execute", wrapper.query(si, new Executor() {
          @Override
