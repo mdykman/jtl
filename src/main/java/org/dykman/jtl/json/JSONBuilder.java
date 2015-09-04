@@ -1,10 +1,17 @@
 package org.dykman.jtl.json;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
+
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.dykman.jtl.jsonLexer;
+import org.dykman.jtl.jsonParser;
+import org.dykman.jtl.jsonParser.JsonContext;
 
 public interface JSONBuilder {
 	public JSONValue value();
@@ -31,5 +38,22 @@ public interface JSONBuilder {
 	public JSON parse(InputStream in) throws IOException;
 	public JSON parse(Reader in) throws IOException;
 	public JSON parse(String in) throws IOException;
+	
+	
+	
+	public jsonParser createParser(String in) ;
+	public jsonParser createParser(InputStream in) throws IOException;
+	public jsonParser createParser(Reader in) throws IOException ;
+	
+	public jsonParser createParser(File in) 
+		throws IOException ;
+	
+	public jsonParser createParser(jsonLexer lexer);
+	
+	public JSON parse(jsonLexer lexer) 
+			throws IOException ;
+	
+	public JSON parseSequence(jsonParser parser) throws IOException ;
+
 
 }

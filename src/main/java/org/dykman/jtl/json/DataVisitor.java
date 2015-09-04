@@ -2,13 +2,10 @@ package org.dykman.jtl.json;
 
 
 
-import static org.dykman.jtl.future.InstructionFutureFactory.number;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jsonBaseVisitor;
-import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.jsonParser.ArrayContext;
 import org.dykman.jtl.jsonParser.JsonContext;
 import org.dykman.jtl.jsonParser.KeyContext;
@@ -29,6 +26,17 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitJson(JsonContext ctx) {
 		return visitValue(ctx.value());
 	}
+	
+	/*
+	@Override
+	public DataValue<JSON> visitJsonseq(JsonseqContext ctx) {
+		JSONArray arr = builder.array(null);
+		for(JsonContext jc: ctx.json()) {
+			arr.add(visitJson(jc).value);
+		}
+		return new DataValue<JSON>(arr);
+	}
+	*/
 	@Override
 	public DataValue<JSON> visitObject(ObjectContext ctx) {
 		int cap = ctx.getChildCount();
@@ -65,10 +73,13 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	public DataValue<JSON> visitValue(ValueContext ctx) {
 		ObjectContext oc = ctx.object();
 		if(oc!=null) return visitObject(oc);
+		
 		ArrayContext ac = ctx.array();
 		if(ac!=null) return visitArray(ac);
+		
 		NumberContext nc = ctx.number();
 		if(nc!=null) return visitNumber(nc);
+		
 		StringContext sc = ctx.string();
 		if(sc!=null) return  new DataValue(builder.value(visitString(sc).str));
 		

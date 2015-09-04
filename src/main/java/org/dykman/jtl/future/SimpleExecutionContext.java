@@ -186,23 +186,27 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
    @Override
    public InstructionFuture<JSON> getdef(String name) {
 // System.out.println("context seeking " + name + " in " + System.identityHashCode(this));
-      InstructionFuture<JSON> r = null;
+      InstructionFuture<JSON> r = functions.get(name);
+      if(r!=null) return r;
       String[] parts = name.split("[.]", 2);
       if(parts.length > 1) {
          AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
          if(named != null) {
-            return named.getdef(parts[1]);
+            r = named.getdef(parts[1]);
+            if(r!=null) define(name,r);
+            return r;
          }
 
       } else {
          r = functions.get(name);
  //        if(r== null) System.out.println("context " + name + " NOT found");
  //        else System.out.println("context " + name + " found");
-         if(parent != null && r == null && !(functionContext && Character.isDigit(name.charAt(0)))) {
+         if(r == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
             r = parent.getdef(name);
 
          }
       }
+      if(r!=null) define(name,r);
       return r;
    }
 

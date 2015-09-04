@@ -168,27 +168,55 @@ public class InstructionFutureFactory {
                      return immediateCheckedFuture(builder.value(random.nextDouble()));
                   }
                   JSON jf = jit.next();
+                  switch(jf.getType()) {
+                  case ARRAY:
+                  case FRAME: {
+                     JSONArray ja = (JSONArray) jf;
+                     if(n>1) {
+                        JSON js = jit.next();
+                        if(!js.isNumber())
+                           throw new ExecutionException("bad second parameter to rand(): " + js.toString(false), source);
+                        Number ns = (Number) ((JSONValue) js).get();
+                        int cc = ns.intValue();
+                        JSONArray jout = context.builder().array(null);
+                        for(int i = 0; i < cc; ++i) {
+                           JSON jj = ja.get(random.nextInt(ja.size()));
+                           jout.add(jj);
+                        }
+                        return immediateCheckedFuture(jout);
+                     } else {
+                        JSON jj = ja.get(random.nextInt(ja.size()));
+                        return immediateCheckedFuture(jj);
+                     }
+                  }
 
-                  if(!jf.isNumber())
-                     throw new ExecutionException("bad parameter to rand(): " + jf.toString(false), source);
+                  case LONG:
+                  case DOUBLE:
+                     break;
+                  default:
+                     throw new ExecutionException("bad first parameter to rand(): " + jf.toString(false), source);
+
+                  }
                   Number nf = (Number) ((JSONValue) jf).get();
                   if(n == 1) {
                      // 1 param
-//                     Long l = new Long(random.nextInt(nf.intValue()));
+                     // Long l = new Long(random.nextInt(nf.intValue()));
                      return nf.intValue() == 0 ? immediateCheckedFuture(builder.value(random.nextDouble()))
                            : immediateCheckedFuture(builder.value(new Long(random.nextInt(nf.intValue()))));
                   }
                   // 2 params
                   JSON js = jit.next();
                   if(!js.isNumber())
-                     throw new ExecutionException("bad parameter to rand(): " + js.toString(false), source);
+                     throw new ExecutionException("bad second parameter to rand(): " + js.toString(false), source);
                   Number ns = (Number) ((JSONValue) js).get();
                   Integer is = ns.intValue();
                   JSONArray array = builder.array(parent);
                   boolean deci = is == 0;
                   for(int i = 0; i < nf.intValue(); ++i) {
-                     if(deci) array.add(builder.value(random.nextDouble()));
-                     else array.add(builder.value(new Long(random.nextInt(is))));
+                     if(deci)
+                        array.add(builder.value(random.nextDouble()));
+                     else
+                        array.add(builder.value(new Long(random.nextInt(is))));
                   }
                   return immediateCheckedFuture(array);
                }
@@ -434,7 +462,7 @@ public class InstructionFutureFactory {
              * // if(key != null) { ll.add(key.call(context, data)); // } //else
              * { // ll.add(name.call(context, data)); //}
              */
- //           ll.add(name.call(context, data));
+            // ll.add(name.call(context, data));
             InstructionFuture<JSON> ci = context.getdef("2");
             if(ci != null) {
                ll.add(ci.call(context, data));
@@ -539,16 +567,49 @@ public class InstructionFutureFactory {
       return memo(meta, new DeferredCall(si, inst, context, t));
    }
 
-   public static InstructionFuture<JSON> sum(SourceInfo meta) {
+   public static InstructionFuture<JSON> thread(SourceInfo meta) {
       return new AbstractInstructionFuture(meta) {
 
          @Override
-         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
-               final ListenableFuture<JSON> data) throws ExecutionException {
+         public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            final InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg == null)
+               return data;
             return transform(data, new AsyncFunction<JSON, JSON>() {
 
                @Override
                public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  Callable<JSON> callable = new Callable<JSON>() {
+                     @Override
+                     public JSON call() throws Exception {
+                        return arg.call(context, Futures.immediateCheckedFuture(input)).get();
+                     }
+                  };
+                  return context.executor().submit(callable);
+               }
+            });
+         }
+      };
+   }
+
+   public static InstructionFuture<JSON> sum(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+
+         @Override
+         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg != null) {
+               data = arg.call(context, data);
+            }
+            // final ListenableFuture<JSON> d=data;
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  // System.err.println("sum is passed a " +
+                  // input.getClass().getName());
                   if(input instanceof JSONArray) {
                      Long acc = 0L;
                      Double facc = 0.0;
@@ -568,9 +629,9 @@ public class InstructionFutureFactory {
                               facc += n.doubleValue();
                            }
                         }
-                        return islong ? immediateCheckedFuture(context.builder().value(acc))
-                              : immediateCheckedFuture(context.builder().value(facc));
                      }
+                     return islong ? immediateCheckedFuture(context.builder().value(acc))
+                           : immediateCheckedFuture(context.builder().value(facc));
                   }
                   return Futures.immediateCheckedFuture(context.builder().value());
                }
@@ -1551,21 +1612,22 @@ public class InstructionFutureFactory {
       }
 
       @Override
-      public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-            throws ExecutionException {
+      public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
+            final ListenableFuture<JSON> data) throws ExecutionException {
          return dataObject(context, data);
       }
 
    }
 
-   public static InstructionFuture<JSON> singleton(SourceInfo meta,final InstructionFuture<JSON> inst) {
+   public static InstructionFuture<JSON> singleton(SourceInfo meta, final InstructionFuture<JSON> inst) {
       meta.name = "singleton";
       return new AbstractInstructionFuture(meta) {
          ListenableFuture<JSON> result = null;
+
          @Override
          public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                throws ExecutionException {
-            if(result ==null) {
+            if(result == null) {
                synchronized(this) {
                   if(result == null) {
                      result = inst.call(context, data);
@@ -1576,7 +1638,7 @@ public class InstructionFutureFactory {
          }
       };
    }
-   
+
    static abstract class ObjectInstructionBase extends AbstractInstructionFuture {
       final List<Pair<String, InstructionFuture<JSON>>> ll;
 
@@ -1584,39 +1646,35 @@ public class InstructionFutureFactory {
          super(info, true);
          ll = pp;
       }
-      public abstract ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-      throws ExecutionException;
-      
-      public final ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-            throws ExecutionException {
+
+      public abstract ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
+            final ListenableFuture<JSON> data) throws ExecutionException;
+
+      public final ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+            final ListenableFuture<JSON> data) throws ExecutionException {
          if(context.isInclude()) {
             return _import(context, data);
          } else {
             return _callObject(context, data);
          }
-         
+
       }
-      
-      public ListenableFuture<JSON> _import(final AsyncExecutionContext<JSON> context,ListenableFuture<JSON> data) {
+
+      public ListenableFuture<JSON> _import(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data) {
          List<InstructionFuture<JSON>> imperitives = new ArrayList<>(ll.size());
          List<ListenableFuture<JSON>> rr = new ArrayList<>();
 
-         
-         //        ListenableFuture<JSON> initInst = null;
+         // ListenableFuture<JSON> initInst = null;
          InstructionFuture<JSON> init = null;
-         for(Pair<String,InstructionFuture<JSON>> pp: ll) {
+         for(Pair<String, InstructionFuture<JSON>> pp : ll) {
             String k = pp.f;
             InstructionFuture<JSON> inst = pp.s;
             if(k.equals("!init")) {
                init = singleton(inst.getSourceInfo(), inst);
                /*
-               if(init == null)
-                  synchronized(this) {
-                     if(init == null) {
-                        init = singleton(inst.getSourceInfo(), inst);
-                     }
-                  }
-                  */
+                * if(init == null) synchronized(this) { if(init == null) { init
+                * = singleton(inst.getSourceInfo(), inst); } }
+                */
             } else if(k.equals("_")) {
                // ignore in import
             } else if(k.startsWith("!")) {
@@ -1631,7 +1689,7 @@ public class InstructionFutureFactory {
                // define a function
                context.define(k, fixContextData(inst.getSourceInfo(), inst));
             }
-            
+
          }
          return null;
       }
@@ -1675,7 +1733,7 @@ public class InstructionFutureFactory {
       }
 
       protected ListenableFuture<JSON> contextObject(final AsyncExecutionContext<JSON> ctx,
-            final ListenableFuture<JSON> data,boolean imported) throws ExecutionException {
+            final ListenableFuture<JSON> data, boolean imported) throws ExecutionException {
          InstructionFuture<JSON> defaultInstruction = null;
          InstructionFuture<JSON> startInstruction = null;
          InstructionFuture<JSON> init = null;
@@ -1773,8 +1831,8 @@ public class InstructionFutureFactory {
       }
 
       @Override
-      public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-            throws ExecutionException {
+      public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
+            final ListenableFuture<JSON> data) throws ExecutionException {
          final AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, source);
          ctx.define("_", value(data, source));
          return contextObject(ctx, data, context.isInclude());
@@ -1808,8 +1866,7 @@ public class InstructionFutureFactory {
                break;
             }
          }
-      return isContext ? new ContextObjectInstructionFuture(meta, ll) : new ObjectInstructionFuture(meta,
-            ll);
+      return isContext ? new ContextObjectInstructionFuture(meta, ll) : new ObjectInstructionFuture(meta, ll);
    }
 
    // rank: all
@@ -2623,8 +2680,9 @@ public class InstructionFutureFactory {
                                  public ListenableFuture<JSON> apply(JSON input) throws Exception {
 
                                     final JSONObject obj = context.builder().object(inp.getParent());
+                                    // context.builder().o
                                     for(Pair<String, JSON> pp : (JSONObject) inp) {
-                                       if(!pp.f.equals(kj))
+                                       if(!pp.f.equals(ks))
                                           obj.put(pp.f, pp.s);
                                     }
                                     if(input.getType() != JSONType.NULL)
@@ -2640,10 +2698,12 @@ public class InstructionFutureFactory {
                         public ListenableFuture<JSON> apply(JSON input) throws Exception {
                            if(input.getType() == JSONType.OBJECT) {
                               final JSONObject obj = context.builder().object(inp.getParent());
+                              JSONObject inp = (JSONObject) input;
                               for(Pair<String, JSON> pp : (JSONObject) inp) {
-                                 obj.put(pp.f, pp.s);
+                                 if(!inp.containsKey(pp.f))
+                                    obj.put(pp.f, pp.s);
                               }
-                              for(Pair<String, JSON> pp : (JSONObject) input) {
+                              for(Pair<String, JSON> pp : inp) {
                                  if(pp.s.getType() != JSONType.NULL)
                                     obj.put(pp.f, pp.s);
                               }
@@ -2966,40 +3026,43 @@ public class InstructionFutureFactory {
    interface NumberCheck {
       Number check(Number n);
    }
+
    public static InstructionFuture<JSON> isNumber(SourceInfo meta) {
       return isNumberImpl(meta, new NumberCheck() {
-         
+
          @Override
          public Number check(Number n) {
             return n;
          }
-      }, JSONType.LONG,JSONType.DOUBLE);
-   }  
+      }, JSONType.LONG, JSONType.DOUBLE);
+   }
+
    public static InstructionFuture<JSON> isReal(SourceInfo meta) {
       return isNumberImpl(meta, new NumberCheck() {
-         
+
          @Override
          public Number check(Number n) {
-            return n !=null ? n.doubleValue() : null;
+            return n != null ? n.doubleValue() : null;
          }
       }, JSONType.DOUBLE);
-   }  
+   }
+
    public static InstructionFuture<JSON> isInt(SourceInfo meta) {
       return isNumberImpl(meta, new NumberCheck() {
-         
+
          @Override
          public Number check(Number n) {
-            return n!=null ? n.longValue() : null;
+            return n != null ? n.longValue() : null;
          }
       }, JSONType.LONG);
-   }  
-   public static InstructionFuture<JSON> isNumberImpl(SourceInfo meta,NumberCheck check,JSONType... types) {
+   }
+
+   public static InstructionFuture<JSON> isNumberImpl(SourceInfo meta, NumberCheck check, JSONType... types) {
       meta.name = "number";
 
       return isType(meta, new ConverterFunction() {
 
          JSON toNumber(JSON j) {
-
             Number number = null;
             switch(j.getType()) {
             case FRAME: {
@@ -3011,18 +3074,8 @@ public class InstructionFutureFactory {
                return ff;
             }
             case ARRAY:
-               /*
-                * { JSONArray ff = builder.array(null); JSONArray inf =
-                * (JSONArray) j; for(JSON jj:inf) {
-                * ff.add(builder.value(toNumber(jj))); } return ff; }
-                */
-               // number = ((JSONArray) j).size();
-               // break;
             case OBJECT:
-               // number = ((JSONObject) j).size();
-               // break;
             case NULL:
-               // number = 0;
                break;
             case LONG:
                number = ((JSONValue) j).longValue();
@@ -3057,7 +3110,6 @@ public class InstructionFutureFactory {
       }, types);
    }
 
-   
    public static InstructionFuture<JSON> isBoolean(SourceInfo meta) {
       meta.name = "boolean";
       return isType(meta, new ConverterFunction() {
@@ -3167,7 +3219,8 @@ public class InstructionFutureFactory {
                         return immediateCheckedFuture(arr);
                      }
                   }
-                  return immediateCheckedFuture(builder.value(true));
+
+                  return immediateCheckedFuture(builder.value(hasType(input.getType())));
                }
             });
          }

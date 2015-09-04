@@ -8,11 +8,14 @@ import java.io.Reader;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.Token;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
 import org.dykman.jtl.jsonParser.JsonContext;
@@ -30,15 +33,29 @@ public class JSONBuilderImpl implements JSONBuilder {
 		this.cf = cf;
 	}
 
-	public JSONBuilderImpl() {
-		mf = new MapFactory<String, JSON>() {
-			@Override public Map<String, JSON> createMap() { return new LinkedHashMap<>(); }
-			@Override public Map<String, JSON> createMap(int cap) {	return new LinkedHashMap<>(cap); } 
-			@Override public Map<String, JSON> copyMap(Map<String, JSON> rhs) {	return new LinkedHashMap<>(rhs); } };
-		cf = new CollectionFactory<JSON>() { 
+	private static Map<String, JSON> mapBuilder(boolean canonical) {
+	   return canonical ? new TreeMap<>() : new HashMap<>();
+	}
+   private static Map<String, JSON> mapBuilder(boolean canonical, int cap) {
+      return canonical ? new TreeMap<>() : new HashMap<>(cap);
+   }
+   private static Map<String, JSON> mapBuilder(boolean canonical,Map<String, JSON> rhs) {
+      return canonical ? new TreeMap<>(rhs) : new HashMap<>(rhs);
+   }
+	
+   public JSONBuilderImpl() {
+      this(false);
+   }	
+   
+	public JSONBuilderImpl(final boolean c) {
+		this(new MapFactory<String, JSON>() {
+			@Override public Map<String, JSON> createMap() { return mapBuilder(c); }
+			@Override public Map<String, JSON> createMap(int cap) {	return mapBuilder(c,cap); } 
+			@Override public Map<String, JSON> copyMap(Map<String, JSON> rhs) {	return mapBuilder(c,rhs); } },
+		new CollectionFactory<JSON>() { 
 			@Override public Collection<JSON> createCollection() {return new ArrayList<>(); }
 			@Override public Collection<JSON> createCollection(int cap) { return new ArrayList<>(cap); } 
-			@Override public Collection<JSON> copyCollection(Collection<JSON> rhs) { return new ArrayList<>(rhs); } };
+			@Override public Collection<JSON> copyCollection(Collection<JSON> rhs) { return new ArrayList<>(rhs); } });
 	}
 	private JSON sign(JSON j) {
 		j.setBuilder(this);
@@ -158,6 +175,8 @@ public class JSONBuilderImpl implements JSONBuilder {
 	@Override
 	public JSON parse(InputStream in) 
 			throws IOException {
+//		jsonLexer ll= new jsonLexer(new ANTLRInputStream(in));
+		
 			return parse( new jsonLexer(new ANTLRInputStream(in)));
 		}
 	@Override
@@ -176,12 +195,61 @@ public class JSONBuilderImpl implements JSONBuilder {
 			throws IOException {
 			return parse( new jsonLexer(new ANTLRInputStream(in)));
 		}
-	protected JSON parse(jsonLexer lexer) 
+	
+	
+	public jsonParser createParser(String in) {
+		return createParser(new jsonLexer(new ANTLRInputStream(in)));
+	}
+	public jsonParser createParser(InputStream in) throws IOException {
+		return createParser(new jsonLexer(new ANTLRInputStream(in)));
+	}
+	public jsonParser createParser(Reader in) throws IOException {
+		return createParser(new jsonLexer(new ANTLRInputStream(in)));
+	}
+	
+	public jsonParser createParser(File in) 
+		throws IOException {
+//		 new FileInputStream(in)
+		return createParser(new FileInputStream(in));
+	}
+	
+	
+	public jsonParser createParser(jsonLexer lexer) {
+		return new jsonParser(new CommonTokenStream(lexer));
+	}
+	
+	public JSON parse(jsonLexer lexer) 
 			throws IOException {
 			jsonParser parser = new jsonParser(new CommonTokenStream(lexer));
-			//parser.setTrace(true);
 			JsonContext tree = parser.json();
 			DataVisitor visitor = new DataVisitor(this);
+			DataValue<JSON> v = visitor.visitJson(tree);
+			if(v!=null && v.value != null) v.value.setBuilder(this);
+			if(v == null) return  null;
+			v.value.lock();
+			return v.value;
+		}
+	
+	public JSON parseSequence(jsonParser parser) 
+			throws IOException {
+		parser.getCurrentToken();
+		
+			if(Token.EOF == parser.getCurrentToken().getType()) {
+				return null;
+			}
+			JsonContext tree = parser.json();
+//System.out.println("one");			
+			if(tree==null) return null;
+//			System.out.println("two");			
+			
+//			if(tree.value())
+				if(tree.value().getChild(0) == null) {
+//					System.out.println("three");			
+					return null;
+				}
+//				System.out.println("four");			
+			DataVisitor visitor = new DataVisitor(this);
+//			System.out.println("five");			
 			DataValue<JSON> v = visitor.visitJson(tree);
 			if(v!=null && v.value != null) v.value.setBuilder(this);
 			if(v == null) return  null;

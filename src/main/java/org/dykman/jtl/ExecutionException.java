@@ -13,6 +13,8 @@ public class ExecutionException extends Exception {
 		super(message, cause.getCause());
       this.info = info;
 	}
+	
+	
 
 	public ExecutionException(String message,SourceInfo info) {
 		super(message);
@@ -35,5 +37,13 @@ public class ExecutionException extends Exception {
 
 	public SourceInfo getSourceInfo() {
 	   return info;
+	}
+	
+	public String report() {
+	   StringBuilder builder = new StringBuilder();
+	   builder.append("Exception: ").append(getLocalizedMessage())
+	      .append(" -- ").append(info.name).append(" ")
+	      .append(info.line).append(":").append(info.position);
+	   return builder.toString();
 	}
 }

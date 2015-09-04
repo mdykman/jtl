@@ -41,6 +41,7 @@ public class JdbcModule implements Module {
       this.baseConfig = config;
       JSON j = config.get("debug"); 
       if(j!=null) debug = j.isTrue();
+      final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
 
       queryExecutor = new Executor() {
          @Override
@@ -60,26 +61,47 @@ public class JdbcModule implements Module {
          }
       };
       insertExecutor = new Executor() {
-         final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
 
          @Override
          public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
             stat.executeUpdate();
             if(insertIdExpr != null) {
                // stat.execute();
-               PreparedStatement lid = stat.getConnection().prepareStatement(insertIdExpr);
+               final String idstat;
+
+               
+//               String tn = stat.getMetaData().getTableName(1);
+               if(insertIdExpr.contains("$TABLE")) {
+                  ResultSet rs = stat.getGeneratedKeys();
+                  if(rs.next()) {
+                     Object col = rs.getObject(1);
+                     idstat = insertIdExpr.replace("$TABLE", col.toString());
+                     return builder.value(col);
+                  } else {
+                     if(debug) System.err.println("failed to termine the table name for insert: " + insertIdExpr);
+                     throw new SQLException("failed to termine the table name for insert");
+                  }
+               } else {
+                  idstat = insertIdExpr;
+               }
+               PreparedStatement lid = stat.getConnection().prepareStatement(idstat);
                ResultSet rs = lid.executeQuery();
                JSON r = builder.value();
                if(rs.next()) {
-                  r = builder.value(rs.getInt(1));
+                  r = builder.value(new Long(rs.getInt(1)));
                }
                lid.close();
                stat.close();
 
                return r;
             } else {
+               ResultSet rs = stat.getGeneratedKeys();
+               if(rs.next()) {
+                  String col = rs.getString(1);
+                  return builder.value(col);
+               }
                if(debug)
-                  System.err.println("no insert_id statement provided");
+                  System.err.println("no insert_id statement provided and the system could not determine a key");
                return builder.value(true);
             }
          }
@@ -92,16 +114,17 @@ public class JdbcModule implements Module {
 
    class JdbcConnectionWrapper {
       JSONObject conf;
+      Connection connection = null;
 
       JdbcConnectionWrapper(JSONObject conf) {
          this.conf = conf;
       }
 
-      Connection connection = null;
-
+ 
       public Connection getConnection(SourceInfo src) throws ExecutionException {
          if(connection == null) {
-            synchronized(JdbcModule.class) {
+            // naive connection manager ideal for CLI, not so much server
+            synchronized(this) {
                if(connection == null) {
                   String driver = stringValue(conf.get("driver"));
                   String uri = stringValue(conf.get("uri"));
@@ -110,7 +133,7 @@ public class JdbcModule implements Module {
                   if(driver != null) {
                      try {
                         Class<Driver> drc = (Class<Driver>) Class.forName(driver);
-                        Driver drv = drc.newInstance();
+//                        Driver drv = drc.newInstance();
                         Properties properties = new Properties();
                         if(user != null) {
                            properties.setProperty("user", user);
@@ -120,7 +143,7 @@ public class JdbcModule implements Module {
                         } else {
                            connection = DriverManager.getConnection(uri);
                         }
-                     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                     } catch (ClassNotFoundException e) {
                         throw new ExecutionException("JDBC: unable to load class " + driver, src);
                      } catch (SQLException e) {
                         throw new ExecutionException("JDBC: unable to connect to " + uri, src);
@@ -242,11 +265,8 @@ public class JdbcModule implements Module {
       }));
 
       si = meta.clone();
-      si.code = "*internal*";
-      si.name = "execute";
-
       si = meta.clone();
-      si.name = "insert";
+      si.name = "execute";
       si.code = "*internal*";
       context.define("execute", wrapper.query(si, new Executor() {
          @Override

@@ -9,5 +9,5 @@
       })
    },
    
-   _: db.insert("INSERT INTO tt (name) values('michael')")
+   _: db.insert("INSERT INTO tt (name) values(?)","michael-" + (rand(200)+1))
 }
