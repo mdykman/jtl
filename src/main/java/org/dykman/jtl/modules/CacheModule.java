@@ -119,15 +119,11 @@ public class CacheModule implements Module {
             public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
                   throws org.dykman.jtl.ExecutionException {
                InstructionFuture<JSON> ff = context.getdef("1");
-//               final InstructionFuture<JSON> func = ff.unwrap(context);
- //              while(ff instanceof MemoInstructionFuture) {
-                  ff = ff.unwrap();
-//               }
-
-               InstructionFuture<JSON> ffraw = ff;
-               if(ff instanceof DeferredCall) {
+ 
+               InstructionFuture<JSON> ffraw = ff.unwrap();
+               if(ffraw instanceof DeferredCall) {
                   String s = meta.code;
-                  DeferredCall dc = (DeferredCall) ff;
+                  DeferredCall dc = (DeferredCall) ffraw;
                   AsyncExecutionContext<JSON> cc = dc.getContext();
                   List<ListenableFuture<JSON>> ll = new ArrayList<>();
  //                 ll.add(context.config());

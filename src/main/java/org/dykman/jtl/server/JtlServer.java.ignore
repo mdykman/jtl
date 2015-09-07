@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,6 +35,7 @@ public class JtlServer {
 
    final Server server;
    final File base;
+   final File script;
    JSONBuilder builder = new JSONBuilderImpl();
 
    File servletRoot = null;
@@ -43,12 +45,14 @@ public class JtlServer {
    JSON config;
    int port;
 
-   public JtlServer(File base, JSON config, ListeningExecutorService les, int port) {
+   public JtlServer(File base, File script, JSON config, ListeningExecutorService les, int port) {
       this.les = les;
       this.base = base;
+      this.script = script;
       this.port = port;
       this.config = config;
       server = new Server(7719);
+
       ServletHandler handler = new ServletHandler();
       handler.addServletWithMapping(JtlServlet.class, "/*");
       server.setHandler(handler);
@@ -70,7 +74,50 @@ public class JtlServer {
       server.join();
    }
 
-   public class JtlServlet extends HttpServlet {
+   public static class JtlServlet extends HttpServlet {
+
+      final JSONBuilder builder;
+      final JtlCompiler compiler;
+      File serverRoot;
+      File jtlRoot;
+      InstructionFuture<JSON> defInst = null;
+
+      public JtlServlet() {
+         this.builder = new JSONBuilderImpl();
+         this.compiler = new JtlCompiler(builder, false, false, false);
+      }
+
+      @Override
+      public void init(ServletConfig config) throws ServletException {
+         try {
+            String s = config.getInitParameter("jtlbase");
+            jtlRoot = new File(s);
+            s = config.getInitParameter("root");
+            serverRoot = new File(s);
+            s = config.getInitParameter("script");
+            if(s != null) {
+               defInst = compiler.parse(new File(s));
+            }
+         } catch (IOException e) {
+            throw new ServletException(e);
+         }
+      }
+
+      JSONObject config() throws IOException {
+         File f = new File(jtlRoot, "etc/config.json");
+         JSONObject obj = null;
+         if(f.exists()) {
+            JSON j = builder.parse(f);
+            if(!(j instanceof JSONObject)) {
+
+            } else {
+               obj = (JSONObject) j;
+            }
+
+         }
+
+         return obj;
+      }
 
       @Override
       protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -79,53 +126,55 @@ public class JtlServer {
             JSON data = builder.parse(req.getInputStream());
             AsyncExecutionContext<JSON> context = servletContext(req, data);
             try {
-               if(defaultProgram != null) {
-                  ListenableFuture<JSON> j = defaultProgram.call(context, Futures.immediateFuture(data));
-                  int indent=ss == null ? 0 : Integer.parseInt(ss);
+               if(defInst != null) {
+                  ListenableFuture<JSON> j = defInst.call(context, Futures.immediateFuture(data));
+                  int indent = ss == null ? 0 : Integer.parseInt(ss);
                   j.get().write(resp.getWriter(), indent, false);
                   resp.getWriter().flush();
                } else {
-                  reportError(404,"dynamic loading not yet implemented",resp);
+                  req.getRequestURI().split("[/]");
+                  reportError(404, "dynamic loading not yet implemented", resp);
                }
             } catch (ExecutionException | InterruptedException | java.util.concurrent.ExecutionException e) {
-               reportError(500,e.getLocalizedMessage(),resp);
+               reportError(500, e.getLocalizedMessage(), resp);
             }
 
          }
       }
-      
-      protected AsyncExecutionContext<JSON> servletContext(HttpServletRequest req,JSON data) {
-         AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, servletRoot, builder,
-               les);
-//         Pair<String,Integer> meta = new Pair<String, Integer>("http service", 0);
+
+      protected AsyncExecutionContext<JSON> servletContext(HttpServletRequest req, JSON data) {
+         AsyncExecutionContext<JSON> context = JtlCompiler
+               .createInitialContext(data, config, servletRoot, builder, les);
+         // Pair<String,Integer> meta = new Pair<String,
+         // Integer>("http service", 0);
          SourceInfo meta = new SourceInfo();
-         meta.source=meta.code="http service";
-         meta.position=meta.line=0;
-         String [] pp = req.getPathInfo().split("[/]");
-         context.define("0", value(base.getPath(),builder,meta));
+         meta.source = meta.code = "http service";
+         meta.position = meta.line = 0;
+         String[] pp = req.getPathInfo().split("[/]");
+         context.define("0", value(base.getPath(), builder, meta));
          for(int i = 1; i < pp.length; ++i) {
-            context.define(Integer.toString(i), value(pp[i],builder,meta));
+            context.define(Integer.toString(i), value(pp[i], builder, meta));
          }
          JSONObject object = builder.object(null);
-         for(Map.Entry<String,String[]> el : req.getParameterMap().entrySet()) {
+         for(Map.Entry<String, String[]> el : req.getParameterMap().entrySet()) {
             JSONArray arr = builder.array(object);
-            for(String sv: el.getValue()) {
+            for(String sv : el.getValue()) {
                arr.add(builder.value(sv));
             }
             object.put(el.getKey(), arr);
          }
-         context.define("params", value(object,meta));
+         context.define("params", value(object, meta));
 
-         object= builder.object(null);
+         object = builder.object(null);
          Enumeration<String> hk = req.getHeaderNames();
          while(hk.hasMoreElements()) {
             String k = hk.nextElement();
             object.put(k, builder.value(req.getHeader(k)));
          }
-         context.define("headers", value(object,meta));
+         context.define("headers", value(object, meta));
          return context;
       }
-      
+
       protected void reportError(int code, String message, HttpServletResponse resp) {
          resp.setStatus(code);
          try {

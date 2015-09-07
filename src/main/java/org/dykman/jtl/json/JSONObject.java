@@ -3,8 +3,10 @@ package org.dykman.jtl.json;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -29,6 +31,35 @@ public class JSONObject extends AbstractJSON implements
 */
 	public Map<String, JSON> map() {
 		return obj;
+	}
+	
+	public JSONObject overlay(JSONObject rhs) {
+	   
+	   JSONObject newone = builder.object(getParent());
+	   Set<String> seen = new HashSet<>();
+	   for(Pair<String,JSON> pp: this) {
+	      String k = pp.f;
+	      JSON j = pp.s;
+	      if(rhs.containsKey(k)) {
+	         seen.add(k);
+	         JSON other = rhs.get(k);
+	         // maps can merge
+	         if(j instanceof JSONObject && other instanceof JSONObject) {
+	            newone.put(k, ((JSONObject)j).overlay((JSONObject)other));
+	         } else {
+	            // otherwise, RHS overrides
+	            newone.put(k, other);
+	         }
+	      } else {
+	         newone.put(k, j);
+	      }
+	   }
+      for(Pair<String,JSON> pp: rhs) {
+         if(!seen.contains(pp.f)) {
+            newone.put(pp.f, pp.s);
+         }
+      }	   
+	   return newone;
 	}
 	public boolean containsKey(String k) {
 		return obj.containsKey(k);

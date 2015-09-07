@@ -639,6 +639,146 @@ public class InstructionFutureFactory {
          }
       };
    }
+   
+   public static InstructionFuture<JSON> avg(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+
+         @Override
+         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg != null) {
+               data = arg.call(context, data);
+            }
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  if(input instanceof JSONArray) {
+                     int cc = 0;
+                     Double facc = 0.0;
+                     for(JSON j : (JSONArray) input) {
+                        if(j.isNumber()) {
+                          
+                           Number n = (Number) ((JSONValue) j).get();
+                           Double d = n.doubleValue();
+                           
+                           double inc = (d-facc) / (cc++);
+                           facc += inc;
+                        }
+                     }
+                     return immediateCheckedFuture(context.builder().value(facc));
+                  }
+                  return Futures.immediateCheckedFuture(context.builder().value());
+               }
+            });
+         }
+      };
+   }
+
+   public static InstructionFuture<JSON> min(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+
+         @Override
+         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg != null) {
+               data = arg.call(context, data);
+            }
+            // final ListenableFuture<JSON> d=data;
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  if(input instanceof JSONArray) {
+                     JSONArray ina = (JSONArray) input;
+                     if(ina.size() == 0) Futures.immediateCheckedFuture(context.builder().value(0L));
+                     Long acc = null;
+                     Double facc = null;
+                     boolean islong = true;
+                     for(JSON j : ina) {
+                        if(j.isNumber()) {
+                           Number n = (Number) ((JSONValue) j).get();
+                           if (acc == null) acc = n.longValue();
+                           if (facc == null) facc = n.doubleValue();
+                           if(islong) {
+                              if(n instanceof Double) {
+                                 facc = acc.doubleValue();
+                                 Double d = n.doubleValue();
+                                 facc = facc < d ? facc : d;
+                                 islong = false;
+                              } else {
+                                 Long l = n.longValue();
+                                 acc = acc < l ? acc : l;
+                              }
+                           } else {
+                              Double d = n.doubleValue();
+                              facc = facc < d ? facc : d;
+                           }
+                        }
+                     }
+                     return islong ? immediateCheckedFuture(context.builder().value(acc))
+                           : immediateCheckedFuture(context.builder().value(facc));
+                  }
+                  return Futures.immediateCheckedFuture(context.builder().value());
+               }
+            });
+         }
+      };
+   }
+
+   public static InstructionFuture<JSON> max(SourceInfo meta) {
+      return new AbstractInstructionFuture(meta) {
+
+         @Override
+         public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+               throws ExecutionException {
+            InstructionFuture<JSON> arg = context.getdef("1");
+            if(arg != null) {
+               data = arg.call(context, data);
+            }
+            // final ListenableFuture<JSON> d=data;
+            return transform(data, new AsyncFunction<JSON, JSON>() {
+
+               @Override
+               public ListenableFuture<JSON> apply(JSON input) throws Exception {
+                  if(input instanceof JSONArray) {
+                     JSONArray ina = (JSONArray) input;
+                     if(ina.size() == 0) Futures.immediateCheckedFuture(context.builder().value(0L));
+                     Long acc = null;
+                     Double facc = null;
+                     boolean islong = true;
+                     for(JSON j : ina) {
+                        if(j.isNumber()) {
+                           Number n = (Number) ((JSONValue) j).get();
+                           if (acc == null) acc = n.longValue();
+                           if (facc == null) facc = n.doubleValue();
+                           if(islong) {
+                              if(n instanceof Double) {
+                                 facc = acc.doubleValue();
+                                 Double d = n.doubleValue();
+                                 facc = facc > d ? facc : d;
+                                 islong = false;
+                              } else {
+                                 Long l = n.longValue();
+                                 acc = acc > l ? acc : l;
+                              }
+                           } else {
+                              Double d = n.doubleValue();
+                              facc = facc > d ? facc : d;
+                           }
+                        }
+                     }
+                     return islong ? immediateCheckedFuture(context.builder().value(acc))
+                           : immediateCheckedFuture(context.builder().value(facc));
+                  }
+                  return Futures.immediateCheckedFuture(context.builder().value());
+               }
+            });
+         }
+      };
+   }
 
    public static InstructionFuture<JSON> append(SourceInfo meta) {
       return new AbstractInstructionFuture(meta) {
@@ -1519,6 +1659,8 @@ public class InstructionFutureFactory {
 
       };
    }
+
+
 
    // rank all
    public static InstructionFuture<JSON> defaultError(SourceInfo meta) {

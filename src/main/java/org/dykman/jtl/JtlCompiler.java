@@ -160,7 +160,6 @@ public class JtlCompiler {
       define(context,"substr", substr(meta));
 		
 		// list-oriented
-      define(context,"sum", sum(meta));
       define(context,"unique", unique(meta));
 		define(context,"count", count(meta));
 		define(context,"sort", sort(meta,false));
@@ -169,6 +168,10 @@ public class JtlCompiler {
       define(context,"contains", contains(meta));
       define(context,"copy", copy(meta));
       define(context,"append", append(meta));
+      define(context,"sum", sum(meta));
+      define(context,"min", min(meta));
+      define(context,"max", max(meta));
+      define(context,"avg", avg(meta));
       
 
 		// object-oriented

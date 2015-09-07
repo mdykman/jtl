@@ -1,0 +1,9 @@
+{
+	!init: {
+		csv: module("csv", {
+			format: "default", // DEFAULT EXCEL MYSQL RFC4180 TDF
+			charset: "UTF-8" // any names java charset
+		})
+	}
+	_: csv.read("test.csv")
+}
