@@ -40,7 +40,6 @@ public abstract class AbstractInstructionFuture implements
    
    protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
       for(JSON j : ij) {
-//         if(j != null && j.isTrue())
          if(j != null && j.getType() != JSONType.NULL)
             if(recurse && j.getType() == JSONType.FRAME) {
                addToFrame(f, (Frame) j, false);
@@ -54,7 +53,6 @@ public abstract class AbstractInstructionFuture implements
    public final ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
          throws ExecutionException {
       boolean debug = context.debug();
- //     AsyncExecutionContext<JSON> master = null;
       if(debug) {
          System.err.print(source.toString(context));
          System.err.println();
@@ -85,9 +83,7 @@ public abstract class AbstractInstructionFuture implements
                return _call(context, Futures.immediateCheckedFuture(input));
             }
          });
-         
-      }
-      
+      }      
       if(debug) {
          int n = context.getMasterContext().counter("trace",-1);
       }
@@ -104,11 +100,7 @@ public abstract class AbstractInstructionFuture implements
 	public InstructionFuture<JSON> unwrap() {
 		return this;
 	}
-/*
-	protected Pair<String, Integer> getMeta() {
-	   return new Pair<>(code,line);
-	}
-	*/
+
    protected static Long longValue(JSON j) {
       switch(j.getType()) {
       case LONG:
@@ -143,9 +135,5 @@ public abstract class AbstractInstructionFuture implements
 			return null;
 		}
 	}
-/*
-	public abstract ListenableFuture<JSON> call(
-			AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
-			throws ExecutionException;
-*/
+
 }

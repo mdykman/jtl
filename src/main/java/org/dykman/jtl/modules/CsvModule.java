@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -111,28 +112,36 @@ public class CsvModule implements Module {
                   }
                   j = config.get("format");
                   if(j!=null) {
-                     format = CSVFormat.valueOf(stringValue(j));
+                     format = CSVFormat.valueOf(stringValue(j).toUpperCase(Locale.ROOT));
                   }
                   j = config.get("seperator");
                   if(j!=null) {
                      format = CSVFormat.newFormat(stringValue(j).charAt(0));
                   }
                   j = config.get("header");
-                  boolean headers = j == null ? false : j.isTrue();
-                  CSVParser parser =  CSVParser.parse(new File(file), cs, format);
+                  boolean headers = j == null ? true : j.isTrue();
+                  File f = new File(context.currentDirectory(),file);
+                  System.err.println("CSV: parsing file " + f.getAbsolutePath());
+                  CSVParser parser =  CSVParser.parse(f, cs, format);
+
                   JSONArray arr = builder.array(null);
                   Map<String,Integer> headerMap = null;
                   String[] hm=null;
-                  if(headers) {
-                     headerMap = parser.getHeaderMap();
-                     hm = new String[headerMap.size()];
-                     for(Map.Entry<String, Integer> hh : headerMap.entrySet()) {
-                        hm[hh.getValue()] = hh.getKey();
+                  headerMap = parser.getHeaderMap();
+                  hm = new String[headerMap.size()];
+                  for(Map.Entry<String, Integer> hh : headerMap.entrySet()) {
+                     hm[hh.getValue()] = hh.getKey();
+                  }
+                  if(!headers) {
+                     JSONArray a2 = builder.array(arr);
+                     for(String s:hm) {
+                        a2.add(builder.value(s));
                      }
+                     arr.add(a2);
                   }
                   
                   for(CSVRecord rec: parser) {
-                     if(hm!=null) {
+                     if(headers) {
                         int  i = 0;
                         JSONObject obj = builder.object(arr);
                         for(String s : hm) {
@@ -157,9 +166,6 @@ public class CsvModule implements Module {
             });
          }
       });
-
-      // TODO Auto-generated method stub
-
    }
 
 }

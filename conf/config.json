@@ -2,7 +2,8 @@
   modules: {
    	http:{  class:"org.dykman.jtl.modules.HttpModule" },
    	cache:{  class:"org.dykman.jtl.modules.CacheModule" },
-      jdbc: { class:"org.dykman.jtl.modules.JdbcModule" }
+      jdbc: { class:"org.dykman.jtl.modules.JdbcModule" },
+      csv: { class:"org.dykman.jtl.modules.CsvModule" }
   },
   author: {
   	name:"Michael Dykman",
