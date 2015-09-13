@@ -5,17 +5,21 @@ JTL is a JSON Transformation Language designed for accepting json-formatted data
 
 The langauge is a superset of json which allows a jpath expression to be specified anywhere a json value would be expected.
 
+## requirements
+	Java 8
+
 ## installation
 
-initialize with gradle..   details, details
+	to create the command line tool,
 
 `./gradlew distZip`
 
-generates ./build/distributions/jtl.zip
+generates ./build/distributions/jtl-<version>.zip
 
 unzip in the directory of your choice.  You may then either
 * add JTLHOME/bin to your PATH
-* access the jtl script directly via JTLLHOME/bin/jtl
+* add a softlink in a directory already under your path to `JTL_HOME/bin/jtl`
+* access the jtl script directly via `JTL_HOME/bin/jtl`
 
 ## usage
 ### EXAMPLES

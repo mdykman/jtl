@@ -84,15 +84,69 @@ public class JtlServer {
 		final JtlCompiler compiler;
 		final File serverBase;
 		final File jtlBase;
+		final File config;
+		final File init;
+		final File defString;
+		final JSONObject baseConfig;
 		AsyncExecutionContext<JSON> initializedContext = null;
 		final Map<String, InstructionFuture<JSON>> programs = new HashMap<>();
 
-		public JtlExecutor(File base,File\fq) {
-			this.jtlBase = base;
-			this.builder = new JSONBuilderImpl();
-			this.compiler = new JtlCompiler(builder, false, false, false);
+		static JtlExecutor theInstance = null;
+
+		public static JtlExecutor getInstance(
+				File base, // jtl install directory, required
+				File serverBase, // server root, required 
+				File config, // optional config, may be null
+				File init, // optional init, may be null
+				File defScript, boolean canonical) 
+		 throws IOException, ServletException {
+			return new JtlExecutor(base, serverBase, config, init, defScript, canonical);
 		}
-		JSON execute(String uri) {
+		static ListeningExecutorService executorService = null;
+
+		static ListeningExecutorService getExecutorService() {
+			if (executorService == null) {
+				synchronized (JtlServer.class) {
+					if (executorService == null) {
+						executorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+
+					}
+				}
+			}
+			return executorService;
+		}
+
+		
+		public JtlExecutor(
+				File base, // jtl install directory, required
+				File serverBase, // server root, required 
+				File config, // optional config, may be null
+				File init, // optional init, may be null
+				File defScript, boolean canonical) 
+		throws IOException, ServletException {
+			this.jtlBase = base;
+			this.serverBase = serverBase;
+			this.config = config;
+			this.init = init;
+			this.defString = defScript;
+			this.builder = new JSONBuilderImpl(canonical);
+			this.compiler = new JtlCompiler(builder, false, false, false);
+			JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
+			if(config != null) {
+				if (!config.exists()) {
+					throw new ServletException("unable to locate specified config: " + config.getAbsolutePath());
+				}
+				bc = bc.overlay((JSONObject) builder.parse(config));
+			}
+			baseConfig = bc;
+			
+		}
+			
+		
+		JSON execute( 
+				HttpServletRequest req,
+				HttpServletResponse res) 
+			throws ExecutionException {
 			JSON r = null;
 			
 			return r;
@@ -110,105 +164,38 @@ public class JtlServer {
 		InstructionFuture<JSON> initInst = null;
 		AsyncExecutionContext<JSON> initContext;
 
+		JtlExecutor jtlExecutor = null;
 		public JtlServlet() {
 			this.builder = new JSONBuilderImpl();
 			this.compiler = new JtlCompiler(builder, false, false, false);
 		}
 
-		static ListeningExecutorService executorService = null;
-
-		static ListeningExecutorService getExecutorService() {
-			if (executorService == null) {
-				synchronized (JtlServer.class) {
-					if (executorService == null) {
-						executorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
-
-					}
-				}
-			}
-			return executorService;
-		}
 
 		@Override
 		public void init(ServletConfig config) throws ServletException {
 			try {
 				String s = config.getInitParameter("jtlbase");
-				jtlRoot = new File(s);
+				File jtlRoot = new File(s);
+
 				s = config.getInitParameter("root");
-				serverRoot = new File(s);
-				JSONObject baseConfig = (JSONObject) builder.parse(new File(jtlRoot, "conf/config.json"));
+				File serverRoot = new File(s);
+				
 				s = config.getInitParameter("config");
-				if (s != null) {
-					File f = new File(s);
-					if (!f.exists()) {
-						f = new File(serverRoot, s);
-					}
-					if (!f.exists()) {
-						throw new ServletException("unable to locate specified config: " + s);
-					}
-					baseConfig = baseConfig.overlay((JSONObject) builder.parse(new File(s)));
-				}
-				this.config = baseConfig;
+				File conf = s == null ? null : new File(s);
 
 				s = config.getInitParameter("script");
-				if (s != null) {
-					File f = new File(s);
-					if (!f.exists()) {
-						f = new File(serverRoot, s);
-					}
-					if (!f.exists()) {
-						throw new ServletException("unable to locate specified config: " + s);
-					}
-					defInst = compiler.parse(f);
-				}
-
-				AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(this.config, this.config,
-						serverRoot, builder, getExecutorService());
+				File defScript = s == null ? null : new File(s);
 
 				s = config.getInitParameter("init");
-				if (s != null) {
-					ListenableFuture<JSON> asConf = Futures.immediateCheckedFuture(this.config);
-					initContext = context.createChild(false, false, asConf, null);
-					initInst = compiler.parse(new File(s));
-					initInst.call(initContext, asConf);
-				}
+				File init = s == null ? null : new File(s);
 
+				s = config.getInitParameter("canonical");
+				boolean canon = s == null ? false : s.equalsIgnoreCase("true");
+
+				jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript, canon);
 			} catch (IOException e) {
 				throw new ServletException(e);
-			} catch (ExecutionException e) {
-				throw new ServletException(e.report(), e);
 			}
-		}
-
-		protected AsyncExecutionContext<JSON> servletContext(HttpServletRequest req, JSON data) {
-			// Pair<String,Integer> meta = new Pair<String,
-			// Integer>("http service", 0);
-			SourceInfo meta = new SourceInfo();
-			meta.source = meta.code = "http service";
-			meta.position = meta.line = 0;
-			String[] pp = req.getPathInfo().split("[/]");
-			context.define("0", value(base.getPath(), builder, meta));
-			for (int i = 1; i < pp.length; ++i) {
-				context.define(Integer.toString(i), value(pp[i], builder, meta));
-			}
-			JSONObject object = builder.object(null);
-			for (Map.Entry<String, String[]> el : req.getParameterMap().entrySet()) {
-				JSONArray arr = builder.array(object);
-				for (String sv : el.getValue()) {
-					arr.add(builder.value(sv));
-				}
-				object.put(el.getKey(), arr);
-			}
-			context.define("params", value(object, meta));
-
-			object = builder.object(null);
-			Enumeration<String> hk = req.getHeaderNames();
-			while (hk.hasMoreElements()) {
-				String k = hk.nextElement();
-				object.put(k, builder.value(req.getHeader(k)));
-			}
-			context.define("headers", value(object, meta));
-			return context;
 		}
 
 		JSONObject config() throws IOException {
@@ -231,19 +218,12 @@ public class JtlServer {
 		protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 			if (req.getMethod().equalsIgnoreCase("post")) {
 				String ss = req.getParameter("indent");
-				JSON data = builder.parse(req.getInputStream());
-				AsyncExecutionContext<JSON> context = servletContext(req, data);
 				try {
-					if (defInst != null) {
-						ListenableFuture<JSON> j = defInst.call(context, Futures.immediateFuture(data));
-						int indent = ss == null ? 0 : Integer.parseInt(ss);
-						j.get().write(resp.getWriter(), indent, false);
-						resp.getWriter().flush();
-					} else {
-						req.getRequestURI().split("[/]");
-						reportError(404, "dynamic loading not yet implemented", resp);
-					}
-				} catch (ExecutionException | InterruptedException | java.util.concurrent.ExecutionException e) {
+					JSON r = jtlExecutor.execute(req, resp);
+					int indent = ss == null ? 0 : Integer.parseInt(ss);
+					r.write(resp.getWriter(), indent, false);
+					resp.getWriter().flush();
+				} catch (ExecutionException  e) {
 					reportError(500, e.getLocalizedMessage(), resp);
 				}
 
