@@ -2,7 +2,8 @@
 	!init: {
       db: module("jdbc",{
          uri:"jdbc:sqlite:src/test/resources/jtltest.db",
-         driver:"org.sqlite.JDBC"
+         driver:"org.sqlite.JDBC",
+			insert_id: "select last_insert_id()"
       })
 		
 	},
