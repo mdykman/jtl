@@ -23,6 +23,9 @@ public interface AsyncExecutionContext<T> {
 	public File currentDirectory();
 	public File file(String in);
 	public ListenableFuture<T> config();
+	
+	public void setInit(boolean b);
+	public boolean isInit();
 
    public String method();
    public String method(String m);

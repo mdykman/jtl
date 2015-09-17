@@ -95,7 +95,7 @@ public class JtlMain {
          options.addOption(new Option("D", "directory", true, "specify base directory (default:.)"));
          options.addOption(new Option("e", "expression", true, "exaluate an expression against inpt data"));
 
-         options.addOption(new Option("s", "server", false, "run in server mode (default port:7718 * not implemented"));
+         options.addOption(new Option("s", "server", false, "run in server mode (default port:7718) * not implemented"));
          options.addOption(new Option("p", "port", true,
                "specify a port number (default:7718) * implies --server * not implemented"));
 
@@ -106,8 +106,9 @@ public class JtlMain {
          options.addOption(new Option("a", "array", false, "parse a sequence of json entities from the input stream, "
                + "assemble them into an array and process"));
          options.addOption(new Option("b", "batch", true,
-               "gather n items from a sequence of JSON values and process them as an array"));
+               "gather n items from a sequence of JSON values from the input stream, processing them as an array"));
 
+         options.addOption(new Option("z","null",false,"use null input data (cli-only)"));
          String s = System.getProperty("jtl.home");
          if(s == null)
             s = System.getProperty("JTL_HOME");
@@ -126,6 +127,7 @@ public class JtlMain {
          boolean dirSet = false;
          boolean array = false;
          boolean enquote = false;
+         boolean useNull = false;
          File cexddir = new File(".");
          // File cdordir = new File(".");
          boolean serverMode = false;
@@ -149,6 +151,9 @@ public class JtlMain {
          String oo;
          if(cli.hasOption('k') || cli.hasOption("canonical")) {
             canonical = true;
+         }
+         if(cli.hasOption('z') || cli.hasOption("null")) {
+        	 useNull = true;
          }
          main = new JtlMain(canonical);
          if(cli.hasOption('D') || cli.hasOption("directory")) {
@@ -268,7 +273,6 @@ public class JtlMain {
                // if not specified with a switch, the script must be the
                // first
                // name on the argument list
-               // String[] aa = cli.getArgs();
                if(argList.size() == 0 && expr == null) {
                   printHelp(options);
                   System.exit(-1);
@@ -277,10 +281,13 @@ public class JtlMain {
                // System.err.println("running script " + aa[0]);
                if(expr==null) jtl = new File(argIt.next());
             }
+            if(expr == null && jtl == null) throw new RuntimeException("no program specified");
             InstructionFuture<JSON> inst = expr == null ? 
                   main.compile(jtl) : main.compile(expr);
+                  String source = expr !=null ? "--expression" : jtl.getPath();
             PrintWriter pw = new PrintWriter(System.out);
             if(array) {
+            	// declare all of argIt as arguments
                JSONArray arr = main.builder.array(null);
                jsonParser jp = main.createParser(System.in);
                int cc = 0;
@@ -292,7 +299,7 @@ public class JtlMain {
                      }
                      arr.add(j);
                      if((batch != null) && (++cc >= batch)) {
-                        JSON result = main.execute(inst, arr, cexddir, fconfig);
+                        JSON result = main.execute(inst, source,arr, cexddir, fconfig,argIt);
                         result.write(pw, indent, enquote);
                         pw.flush();
                         cc = 0;
@@ -302,26 +309,31 @@ public class JtlMain {
                      throw new RuntimeException("while reading sequence: " + e.getLocalizedMessage());
                   }
                }
-               JSON result = main.execute(inst, arr, cexddir, fconfig);
+               JSON result = main.execute(inst,source, arr, cexddir, fconfig,argIt);
                result.write(pw, indent, enquote);
                pw.flush();
             } else if(fdata != null) {
+            	// declare all of argIt as arguments
                JSON data = main.parse(fdata);
-               JSON result = main.execute(inst, data, cexddir, fconfig);
+               JSON result = main.execute(inst, source, data, cexddir, fconfig,argIt);
                result.write(pw, indent, enquote);
                // pw.flush();
 
             } else {
                if(!argIt.hasNext()) {
+               	// empty arguments
                   JSON data = main.parse(System.in);
-                  JSON result = main.execute(inst, data, cexddir, fconfig);
+                  JSON result = main.execute(inst,source, data, cexddir, fconfig,argIt);
                   result.write(pw, indent, enquote);
 
                } else
-                  while(argIt.hasNext()) {
+                 // while(argIt.hasNext())
+                  {
                      File f = new File(argIt.next());
+                 	// declare all of argIt as arguments
+
                      JSON data = main.parse(f);
-                     JSON result = main.execute(inst, data, cexddir, fconfig);
+                     JSON result = main.execute(inst, source,data, cexddir, fconfig,argIt);
                      result.write(pw, indent, enquote);
                   }
             }
@@ -407,8 +419,7 @@ public class JtlMain {
       return builder.createParser(f);
    }
 
-   public JSON execute(InstructionFuture<JSON> inst, JSON data, File cwd, File config) throws Exception {
-      // JSON d = builder.parse(data);
+   public JSON execute(InstructionFuture<JSON> inst,String source, JSON data, File cwd, File config, Iterator<String> args) throws Exception {
       JSON c;
       if(config != null && config.exists()) {
          c = builder.parse(config);
@@ -416,6 +427,17 @@ public class JtlMain {
          c = builder.value();
       }
       AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, c, cwd, builder, les);
+      context.define("0", InstructionFutureFactory.value(builder.value(source), null));
+      int cc = 1;
+      JSONArray arr = builder.array(null);
+      while(args.hasNext()) {
+    	  JSON v = builder.value(args.next());
+    	  context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, null));
+    	  arr.add(v);
+      }
+      context.define("#", InstructionFutureFactory.value(builder.value(arr.size()), null));
+      context.define("@", InstructionFutureFactory.value(arr, null));
+      context.setInit(true);
       // InstructionFuture<JSON> inst = compiler.parse(jtl);
       ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));
       return j.get();

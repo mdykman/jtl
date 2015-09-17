@@ -20,233 +20,253 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
-   protected final AsyncExecutionContext<JSON> parent;
-   protected final boolean functionContext;
-   protected final boolean include;
-   public boolean isFunctionContext() {
-      return functionContext;
-   }
+	protected final AsyncExecutionContext<JSON> parent;
+	protected final boolean functionContext;
+	protected final boolean include;
+	protected boolean isInit = false;
 
-   public boolean isInclude() {
-      return include;
-   }
+	public boolean isFunctionContext() {
+		return functionContext;
+	}
 
-   protected String method = null;
-   protected final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
-   protected ListeningExecutorService executorService = null;
-   protected JSON conf;
-   protected ListenableFuture<JSON> data;
-   protected AsyncExecutionContext<JSON> declarer;
+	public boolean isInclude() {
+		return include;
+	}
 
-   File currentDirectory = new File(".");
-   JSONBuilder builder = null;
+	protected String method = null;
+	protected final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
+	protected ListeningExecutorService executorService = null;
+	protected JSON conf;
+	protected ListenableFuture<JSON> data;
+	protected AsyncExecutionContext<JSON> declarer;
 
-   boolean debug = false;
-   final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
+	File currentDirectory = new File(".");
+	JSONBuilder builder = null;
 
-   public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
-      return namedContexts;
-   }
+	boolean debug = false;
+	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
 
-   public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
-         JSON conf, File f, boolean fc, boolean include, boolean debug) {
-      this.parent = parent;
-      this.functionContext = fc;
-      this.builder = builder;
-      this.conf = conf;
-      this.data = data;
-      this.currentDirectory = f;
-      this.debug = debug;
-      this.include = include;
-   }
+	public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
+		return namedContexts;
+	}
 
-   public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
-      this(null, builder, data, conf, f, false, false,false);
-   }
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
+			JSON conf, File f, boolean fc, boolean include, boolean debug) {
+		this.parent = parent;
+		this.functionContext = fc;
+		this.builder = builder;
+		this.conf = conf;
+		this.data = data;
+		this.currentDirectory = f;
+		this.debug = debug;
+		this.include = include;
+	}
 
-   public void inject(AsyncExecutionContext<JSON> cc) {
-      SimpleExecutionContext c = (SimpleExecutionContext) cc;
-      functions.putAll(c.functions);
-   }
+	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
+		this(null, builder, data, conf, f, false, false, false);
+	}
 
-   public void inject(String name, AsyncExecutionContext<JSON> cc) {
-      SimpleExecutionContext c = (SimpleExecutionContext) cc;
-      SimpleExecutionContext n = (SimpleExecutionContext) getNamedContext(name, true,false, null);
-      n.functions.putAll(c.functions);
-   }
+	public void inject(AsyncExecutionContext<JSON> cc) {
+		SimpleExecutionContext c = (SimpleExecutionContext) cc;
+		functions.putAll(c.functions);
+	}
 
-   public String method() {
-      return method;
-   }
+	public void inject(String name, AsyncExecutionContext<JSON> cc) {
+		SimpleExecutionContext c = (SimpleExecutionContext) cc;
+		SimpleExecutionContext n = (SimpleExecutionContext) getNamedContext(name, true, false, null);
+		n.functions.putAll(c.functions);
+	}
 
-   public String method(String m) {
-      return method = m;
-   }
+	public String method() {
+		return method;
+	}
 
-   public ListenableFuture<JSON> dataContext() {
-      return data;
-   }
+	public String method(String m) {
+		return method = m;
+	}
 
-   public ListenableFuture<JSON> config() {
-      if(conf == null && parent != null)
-         return parent.config();
-      return immediateFuture(conf);
-   }
+	public ListenableFuture<JSON> dataContext() {
+		return data;
+	}
 
-   @Override
-   public JSONBuilder builder() {
-      JSONBuilder r = this.builder;
-      AsyncExecutionContext<JSON> p = this.getParent();
-      while(r == null && p != null) {
-         r = p.builder();
-         p = p.getParent();
-      }
-      return r;
+	public ListenableFuture<JSON> config() {
+		if (conf == null && parent != null)
+			return parent.config();
+		return immediateFuture(conf);
+	}
 
-   }
+	@Override
+	public JSONBuilder builder() {
+		JSONBuilder r = this.builder;
+		AsyncExecutionContext<JSON> p = this.getParent();
+		while (r == null && p != null) {
+			r = p.builder();
+			p = p.getParent();
+		}
+		return r;
 
-   Map<String, AtomicInteger> counterMap = Collections.synchronizedMap(new HashMap<>());
+	}
 
-   @Override
-   public synchronized int counter(String label, int interval) {
-      AtomicInteger ai = counterMap.get(label);
-      if(ai == null) {
-         ai = new AtomicInteger();
-         counterMap.put(label, ai);
-      }
-      return ai.addAndGet(interval);
-   }
+	Map<String, AtomicInteger> counterMap = Collections.synchronizedMap(new HashMap<>());
 
-   @Override
-   public boolean debug() {
-      return debug;
-   }
+	@Override
+	public synchronized int counter(String label, int interval) {
+		AtomicInteger ai = counterMap.get(label);
+		if (ai == null) {
+			ai = new AtomicInteger();
+			counterMap.put(label, ai);
+		}
+		return ai.addAndGet(interval);
+	}
 
-   @Override
-   public boolean debug(boolean d) {
-      return debug = d;
-   }
+	@Override
+	public boolean debug() {
+		return debug;
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> getParent() {
-      return parent;
-   }
+	@Override
+	public boolean debug(boolean d) {
+		return debug = d;
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> getMasterContext() {
-      AsyncExecutionContext<JSON> c = this;
-      AsyncExecutionContext<JSON> parent = c.getParent();
-      while(parent != null) {
-         c = parent;
-         parent = c.getParent();
-      }
-      return c;
-   }
+	@Override
+	public AsyncExecutionContext<JSON> getParent() {
+		return parent;
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> getNamedContext(String label) {
-      return getNamedContext(label, false,false, null);
-   }
+	@Override
+	public AsyncExecutionContext<JSON> getMasterContext() {
+		AsyncExecutionContext<JSON> c = this;
+		AsyncExecutionContext<JSON> parent = c.getParent();
+		while (parent != null) {
+			c = parent;
+			parent = c.getParent();
+		}
+		return c;
+	}
 
-   public AsyncExecutionContext<JSON> getNamedContext(String label, boolean create,boolean include, SourceInfo info) {
-      AsyncExecutionContext<JSON> c = namedContexts.get(label);
-      if(c == null) {
-         synchronized(this) {
-            c = namedContexts.get(label);
-            if(c == null) {
-               if(parent != null) {
-                  c = parent.getNamedContext(label, false, include, info);
-                  if(c != null)
-                     return c;
-               }
-               if(create) {
-                  c = this.createChild(false, include,null, info);
-                  namedContexts.put(label, c);
-               }
-            }
-         }
-      }
-      return c;
-   }
+	@Override
+	public AsyncExecutionContext<JSON> getNamedContext(String label) {
+		return getNamedContext(label, false, false, null);
+	}
 
-   @Override
-   public void define(String n, InstructionFuture<JSON> i) {
-      functions.put(n, i);
-   }
+	public AsyncExecutionContext<JSON> getNamedContext(String label, boolean create, boolean include, SourceInfo info) {
+		AsyncExecutionContext<JSON> c = namedContexts.get(label);
+		if (c == null) {
+			synchronized (this) {
+				c = namedContexts.get(label);
+				if (c == null) {
+					if (parent != null) {
+						c = parent.getNamedContext(label, false, include, info);
+						if (c != null)
+							return c;
+					}
+					if (create) {
+						c = this.createChild(false, include, null, info);
+						namedContexts.put(label, c);
+					}
+				}
+			}
+		}
+		return c;
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data, SourceInfo source) {
-      AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,include, debug);
-      // if(fc && data!=null)
-      // r.define("_",InstructionFutureFactory.value(data,source));
-//      System.out.println("create context from parent " + System.identityHashCode(this) + " - " + System.identityHashCode(r));
-      return r;
-   }
+	@Override
+	public void define(String n, InstructionFuture<JSON> i) {
+		functions.put(n, i);
+	}
 
-   @Override
-   public InstructionFuture<JSON> getdef(String name) {
-// System.out.println("context seeking " + name + " in " + System.identityHashCode(this));
-      InstructionFuture<JSON> r = functions.get(name);
-      if(r!=null) return r;
-      String[] parts = name.split("[.]", 2);
-      if(parts.length > 1) {
-         AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
-         if(named != null) {
-            r = named.getdef(parts[1]);
-            if(r!=null) define(name,r);
-            return r;
-         }
+	@Override
+	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data,
+			SourceInfo source) {
+		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,
+				include, debug);
+		// if(fc && data!=null)
+		// r.define("_",InstructionFutureFactory.value(data,source));
+		// System.out.println("create context from parent " +
+		// System.identityHashCode(this) + " - " + System.identityHashCode(r));
+		return r;
+	}
 
-      } else {
-         r = functions.get(name);
- //        if(r== null) System.out.println("context " + name + " NOT found");
- //        else System.out.println("context " + name + " found");
-         if(r == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
-            r = parent.getdef(name);
+	@Override
+	public InstructionFuture<JSON> getdef(String name) {
+		// System.out.println("context seeking " + name + " in " +
+		// System.identityHashCode(this));
+		InstructionFuture<JSON> r = functions.get(name);
+		if (r != null)
+			return r;
+		String[] parts = name.split("[.]", 2);
+		if (parts.length > 1) {
+			AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
+			if (named != null) {
+				r = named.getdef(parts[1]);
+				if (r != null)
+					define(name, r);
+				return r;
+			}
 
-         }
-      }
-      if(r!=null) define(name,r);
-      return r;
-   }
+		} else {
+			r = functions.get(name);
+			// if(r== null) System.out.println("context " + name + " NOT
+			// found");
+			// else System.out.println("context " + name + " found");
+			if (r == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
+				r = parent.getdef(name);
 
-   public void setExecutionService(ListeningExecutorService s) {
-      executorService = s;
-   }
+			}
+		}
+		if (r != null)
+			define(name, r);
+		return r;
+	}
 
-   @Override
-   public ListeningExecutorService executor() {
-      if(executorService != null)
-         return executorService;
-      if(parent != null)
-         return parent.executor();
-      return null;
-   }
+	public void setExecutionService(ListeningExecutorService s) {
+		executorService = s;
+	}
 
-   @Override
-   public File currentDirectory() {
-      return currentDirectory;
-   }
+	@Override
+	public ListeningExecutorService executor() {
+		if (executorService != null)
+			return executorService;
+		if (parent != null)
+			return parent.executor();
+		return null;
+	}
 
-   public File file(String f) {
-      return new File(currentDirectory, f);
-   }
+	@Override
+	public File currentDirectory() {
+		return currentDirectory;
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> declaringContext() {
-      AsyncExecutionContext<JSON> d = declarer;
-      SimpleExecutionContext p = (SimpleExecutionContext)getParent();
-      while(d==null && p !=null) {
-         d = p.declarer;
-         p = (SimpleExecutionContext)p.getParent();
-      }
-      return d;
-   }
+	public File file(String f) {
+		return new File(currentDirectory, f);
+	}
 
-   @Override
-   public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
-//      System.out.println("set declaring " + System.identityHashCode(c));
-      return declarer = c;
-   }
+	@Override
+	public AsyncExecutionContext<JSON> declaringContext() {
+		AsyncExecutionContext<JSON> d = declarer;
+		SimpleExecutionContext p = (SimpleExecutionContext) getParent();
+		while (d == null && p != null) {
+			d = p.declarer;
+			p = (SimpleExecutionContext) p.getParent();
+		}
+		return d;
+	}
+
+	@Override
+	public AsyncExecutionContext<JSON> declaringContext(AsyncExecutionContext<JSON> c) {
+		// System.out.println("set declaring " + System.identityHashCode(c));
+		return declarer = c;
+	}
+
+	@Override
+	public void setInit(boolean b) {
+		isInit = b;
+	}
+
+	@Override
+	public boolean isInit() {
+		return isInit;
+	}
 
 }
