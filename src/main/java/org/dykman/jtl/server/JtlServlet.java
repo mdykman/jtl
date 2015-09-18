@@ -2,6 +2,8 @@ package org.dykman.jtl.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -9,11 +11,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.entity.ContentType;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
@@ -30,11 +34,11 @@ public class JtlServlet extends HttpServlet {
 	AsyncExecutionContext<JSON> initContext;
 
 	JtlExecutor jtlExecutor = null;
+
 	public JtlServlet() {
 		this.builder = new JSONBuilderImpl();
 		this.compiler = new JtlCompiler(builder, false, false, false);
 	}
-
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
@@ -44,7 +48,7 @@ public class JtlServlet extends HttpServlet {
 
 			s = config.getInitParameter("root");
 			File serverRoot = new File(s);
-			
+
 			s = config.getInitParameter("config");
 			File conf = s == null ? null : new File(s);
 
@@ -55,9 +59,9 @@ public class JtlServlet extends HttpServlet {
 			File init = s == null ? null : new File(s);
 
 			s = config.getInitParameter("canonical");
-			boolean canon = s == null ? false : s.equalsIgnoreCase("true");
+			boolean canon = "true".equalsIgnoreCase(s);
 
-			jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript,"default.json", canon);
+			jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript, "default.json", canon);
 		} catch (IOException e) {
 			throw new ServletException(e);
 		}
@@ -79,21 +83,50 @@ public class JtlServlet extends HttpServlet {
 		return obj;
 	}
 
+	protected JSON parseData(HttpServletRequest req) throws IOException, ExecutionException {
+		JSON data;
+		switch (req.getMethod()) {
+		case "POST":
+		case "PUT":
+		case "PATCH": {
+			String type = req.getContentType();
+			if ("application/json".equals(type)) {
+				InputStreamReader reader = new InputStreamReader(req.getInputStream(), req.getCharacterEncoding());
+				data = builder.parse(reader);
+			} else if ("application/x-www-form-urlencoded".equals(type)) {
+				JSONObject obj = builder.object(null);
+				for (Map.Entry<String, String[]> pp : req.getParameterMap().entrySet()) {
+					JSONArray arr = builder.array(obj);
+					for (String s : pp.getValue()) {
+						arr.add(builder.value(s));
+					}
+					obj.put(pp.getKey(), arr);
+				}
+				data = obj;
+			} else {
+				throw new ExecutionException("don't know how to deal with content-type " + type, null);
+			}
+			break;
+		}
+		default:
+			data = builder.value();
+		}
+		return data;
+	}
+
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if (req.getMethod().equalsIgnoreCase("post")) {
-			String ss = req.getParameter("indent");
-			try {
-				JSON data = builder.parse(req.getInputStream());
-				JSON r = jtlExecutor.execute(req, resp,data);
-				int indent = ss == null ? 0 : Integer.parseInt(ss);
-				r.write(resp.getWriter(), indent, true);
-				resp.getWriter().flush();
-			} catch (ExecutionException  e) {
-				reportError(500, e.getLocalizedMessage(), resp);
-			}
 
+		String ss = req.getParameter("indent");
+		try {
+			JSON r = jtlExecutor.execute(req, resp, parseData(req));
+			int indent = ss == null ? 0 : Integer.parseInt(ss);
+			r.write(resp.getWriter(), indent, true);
+			resp.getWriter().flush();
+		} catch (ExecutionException e) {
+			reportError(500, e.getLocalizedMessage(), resp);
 		}
+
 	}
 
 	protected void reportError(int code, String message, HttpServletResponse resp) {

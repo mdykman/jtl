@@ -6,7 +6,6 @@ package org.dykman.jtl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.Iterator;
@@ -29,6 +28,7 @@ import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 //import org.dykman.jtl.server.JtlServer;
+import org.dykman.jtl.server.JtlServer;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -44,11 +44,13 @@ public class JtlMain {
    ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
    JSON config;
+   File configFile = null;
 
-   public JtlMain(boolean canonical) {
+   public JtlMain(File conf,boolean canonical) {
       builder = new JSONBuilderImpl(canonical);
       compiler = new JtlCompiler(builder, false, false, false);
       config = builder.value(); // initial config value
+      configFile = conf;
    }
 
    public static void printHelp(Options cl) {
@@ -99,6 +101,10 @@ public class JtlMain {
          options.addOption(new Option("p", "port", true,
                "specify a port number (default:7718) * implies --server * not implemented"));
 
+         options.addOption(new Option("B", "binding", true,
+                 "bind network address (default:127.0.0.1)"));
+
+         options.addOption(new Option("i", "init", true, "specify an init script"));
          options.addOption(new Option("k", "canconical", false, "output canonical JSON (ordered keys)"));
          options.addOption(new Option("n", "indent", true, "specify default indent level for output (default:3)"));
          options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (default:false)"));
@@ -122,6 +128,7 @@ public class JtlMain {
          File fconfig = null;
          File jtl = null;
          File fdata = null;
+         File init = null;
          Integer batch = null;
          int indent = 3;
          boolean dirSet = false;
@@ -134,6 +141,7 @@ public class JtlMain {
          boolean canonical = false;
          String expr = null;
          int port = 7719; // default port
+         String bindAddress = null;
 
          CommandLineParser parser = new GnuParser();
          CommandLine cli;
@@ -152,10 +160,16 @@ public class JtlMain {
          if(cli.hasOption('k') || cli.hasOption("canonical")) {
             canonical = true;
          }
+         if(cli.hasOption('B') || cli.hasOption("binding")) {
+             bindAddress = cli.getOptionValue('B');
+          }
          if(cli.hasOption('z') || cli.hasOption("null")) {
         	 useNull = true;
          }
-         main = new JtlMain(canonical);
+         if(cli.hasOption('i') || cli.hasOption("init")) {
+        	 init = new File(cli.getOptionValue('i'));
+         }
+         main = new JtlMain(fconfig,canonical);
          if(cli.hasOption('D') || cli.hasOption("directory")) {
             oo = cli.getOptionValue('D');
             if(oo == null)
@@ -241,7 +255,7 @@ public class JtlMain {
          List<String> argList = cli.getArgList();
          Iterator<String> argIt = argList.iterator();
          if(serverMode) {
-            /*
+            
             if(jtl == null) {
                if(cexddir == null) {
                   if(!argIt.hasNext()) {
@@ -264,10 +278,11 @@ public class JtlMain {
                }
             }
 //            if(jtl == null) jtl = cexddir;
-            JtlServer server = main.launchServer(cexddir,jtl, port);
+            JtlServer server = main.launchServer(home, cexddir, init, jtl, fconfig, bindAddress, port, canonical);
+            		// main.launchServer(cexddir,jtl, port);
             server.start();
             server.join();
-            */
+            
          } else {
             if(jtl == null) {
                // if not specified with a switch, the script must be the
@@ -320,7 +335,11 @@ public class JtlMain {
                // pw.flush();
 
             } else {
-               if(!argIt.hasNext()) {
+            	if(useNull) {
+                    JSON data = main.empty();
+                    JSON result = main.execute(inst,source, data, cexddir, fconfig,argIt);
+                    result.write(pw, indent, enquote);
+            	} else if(!argIt.hasNext()) {
                	// empty arguments
                   JSON data = main.parse(System.in);
                   JSON result = main.execute(inst,source, data, cexddir, fconfig,argIt);
@@ -380,12 +399,17 @@ public class JtlMain {
       }
       return builder.object(null);
    }
-/*
-   public JtlServer launchServer(File base, File script, int port) {
-      JtlServer server = new JtlServer(base,script, config, les, port);
+
+   public JtlServer launchServer(File jtlBase,File serverBase, File init, File script, File config, 
+		   String bindAddress, int port,boolean canonical) 
+		   throws IOException {
+// 	public JtlServer(File jtlBase,File serverBase, File init, File script, File config, int port,boolean canonical) throws IOException {
+	   
+      JtlServer server = new JtlServer(jtlBase, serverBase, init, script, config, bindAddress, port, canonical);
+    		  //new JtlServer(base,script, configFile, port);
       return server;
    }
-*/
+
    public void shutdown() throws InterruptedException {
       les.shutdownNow();
       les.awaitTermination(2, TimeUnit.SECONDS);
@@ -419,6 +443,9 @@ public class JtlMain {
       return builder.createParser(f);
    }
 
+   public JSON empty() {
+	   return builder.value();
+   }
    public JSON execute(InstructionFuture<JSON> inst,String source, JSON data, File cwd, File config, Iterator<String> args) throws Exception {
       JSON c;
       if(config != null && config.exists()) {

@@ -48,6 +48,7 @@ public class JtlExecutor {
 
 	final Map<String, InstructionFuture<JSON>> programs = new ConcurrentHashMap<>();
 	final Map<String, AsyncExecutionContext<JSON>> contexts = new ConcurrentHashMap<>();
+//	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
 	static JtlExecutor theInstance = null;
 
@@ -210,6 +211,7 @@ public class JtlExecutor {
 				if (initializedContext == null) {
 					AsyncExecutionContext<JSON> baseContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
 							null, builder, getExecutorService());
+					
 					if (init != null) {
 						// shared init, run once ever
 						initializedContext = baseContext.createChild(false, false, dd, null);
