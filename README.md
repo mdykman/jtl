@@ -129,7 +129,7 @@ $ jtl --expr "domain" a.jtl
 ### volcabulary
 
 symbol|meaning
------|-------
+------|-------
 /     | path seperator. When used as a prefix, denote an absolute path into the input data
 \*    | children, return the elements of an array or the values of an object
 \*\*   | children, recursive
@@ -144,6 +144,7 @@ $_identifier_ | define or reference named variable
 
 ### special symbols
 There are a few _special symbols_ in JTL where the meaning is context-dependant.
+
 symbol | cli | http | function
 -------|-----|------|---------
 $\_    | script input data | script input data   | function input data
