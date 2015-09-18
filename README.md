@@ -23,23 +23,36 @@ unzip in the directory of your choice.  You may then either
 
 ## usage
 $ jtl --help
+
  $ jtl  [options ...] arg1 arg2 ...
 
   JTL is a language, library, tool and service for parsing, creating and transforming JSON data
   see: https://github.com/mdykman/jtl
 
   -h --help	print this help message and exit
+
   -c --config	specify a configuration file
+
   -x --jtl	specify a jtl file
+
   -d --data	specify input data (json file)
+
   -D --directory	specify base directory (default:.)
+
   -e --expression	exaluate an expression against inpt data
+
   -s --server	run in server mode (default port:7718 * not implemented
+
   -p --port	specify a port number (default:7718) * implies --server * not implemented
+
   -k --canconical	output canonical JSON (ordered keys)
+
   -n --indent	specify default indent level for output (default:3)
+
   -q --quote	enforce quoting of all object keys (default:false)
+
   -a --array	parse a sequence of json entities from the input stream, assemble them into an array and process
+
   -b --batch	gather n items from a sequence of JSON values and process them as an array
 
 ###  examples:
