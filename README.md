@@ -44,8 +44,21 @@ $ jtl --help
   -a --array	parse a sequence of json entities from the input stream, assemble them into an array and process
   -b --batch	gather n items from a sequence of JSON values and process them as an array
 ```
+	If no script is specified explicitly via '-x', the first argument is assumed to be the jtl script file.
+	If no data has been specified specified explicitly via '-d', the next argument is assumed to be the json input file, unless -a or -b has been specified.
 
-###  examples:
+These invocations will all produce the same result
+
+    $ jtl src/test/resources/group.jtl src/test/resources/generated.json
+    $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json
+    $ jtl -d src/test/resources/generated.json src/test/resources/group.jtl 
+    $ jtl -x src/test/resources/group.jtl -d src/test/resources/generated.json
+    $ cat src/test/resources/generated.json | jtl -x src/test/resources/group.jtl
+    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl
+
+After options and files have been processed, any remaining arguments are passed to the program script.
+
+###  examples
     $ jtl src/test/resources/group.jtl src/test/resources/generated.json
     $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json
     $ jtl src/test/resources/re.jtl < src/test/resources/generated.json
@@ -97,7 +110,7 @@ Unlike XPath expressions, jpath is not string-embedded allowing path components 
 statement implies that jpath and JTL are the same language; for the sake of convenience, the term __jpath__ will be used when refering to line
 statements of path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
 
-Jpath expressions are evaluated against implicit context data.  
+Jpath expressions are evaluated from left to right against implicit context data.  
 
 __data.json__
 ```
@@ -107,11 +120,55 @@ __data.json__
 	year: 2015
 }
 ```
-===========
-__a.jtl__
+
 ```
-domain
+$ jtl --expr "domain" a.jtl
+"dykman.org"
 ```
+
+### volcabulary
+
+symbol|meaning
+-----|-------
+/     | path seperator. When used as a prefix, denote an absolute path into the input data
+\*    | children, return the elements of an array or the values of an object
+\*\*   | children, recursive
+.    | self
+..    | parent - if the context data is a child of an array or object, the parent is returned
+...    | parent, recursive
+\[ \] | dereference - if numeric argument, dereference an array,  if string argument, dereference an object
+_identifier_ | select named element from object
+_identifier_() | invoke function (user or builtin)
+$_identifier_ | define or reference named variable
+!_identifier_ | imperitive: similar to above, but with geedy resolution. see Context Object
+
+### special symbols
+There are a few _special symbols_ in JTL where the meaning is context-dependant.
+symbol | cli | http | function
+-------|-----|------|---------
+$\_    | script input data | script input data   | function input data
+$0     | path of current script|path of current script|name of current function
+$1..$n | command-line arguments|http path arguments|function arguments
+$@     | array of command-line arguments|array of http path arguments|array of function arguments
+$#     | count of command-line arguments|count of http path arguments|count of function arguments
+
+### named contexts
+Using the builtin `module` or `include` functions in an init block (see Init Block) may load additional
+functions and/or variables into a 'named' context. They can be accessed via:
+* variables `identifier . $identifier`
+* functions `identifier . identifier ( )`
+
+examples
+```
+foo.$myvar
+bar.$myfunc()
+```
+
+### reserved words
+As JTL is a superset of JSON, it inherits 3 reserved words from  that language:
+* true
+* false
+* null
 
 ## regular expressions 
 The general syntax for a regex match expression is:
