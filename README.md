@@ -14,7 +14,7 @@ The langauge is a superset of json which allows a jpath expression to be specifi
 
 `./gradlew distZip`
 
-generates ./build/distributions/jtl-<version>.zip
+generates ./build/distributions/jtl-`version`.zip
 
 unzip in the directory of your choice.  You may then either
 * add JTLHOME/bin to your PATH
@@ -22,10 +22,35 @@ unzip in the directory of your choice.  You may then either
 * access the jtl script directly via `JTL_HOME/bin/jtl`
 
 ## usage
-### EXAMPLES
-`$ jtl -c config.json -x variables.jtl -d inputdata`
+$ jtl --help
+ $ jtl  [options ...] arg1 arg2 ...
 
-`$ jtl --help`
+  JTL is a language, library, tool and service for parsing, creating and transforming JSON data
+  see: https://github.com/mdykman/jtl
+
+  -h --help	print this help message and exit
+  -c --config	specify a configuration file
+  -x --jtl	specify a jtl file
+  -d --data	specify input data (json file)
+  -D --directory	specify base directory (default:.)
+  -e --expression	exaluate an expression against inpt data
+  -s --server	run in server mode (default port:7718 * not implemented
+  -p --port	specify a port number (default:7718) * implies --server * not implemented
+  -k --canconical	output canonical JSON (ordered keys)
+  -n --indent	specify default indent level for output (default:3)
+  -q --quote	enforce quoting of all object keys (default:false)
+  -a --array	parse a sequence of json entities from the input stream, assemble them into an array and process
+  -b --batch	gather n items from a sequence of JSON values and process them as an array
+
+###  examples:
+    $ jtl src/test/resources/group.jtl src/test/resources/generated.json
+    $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json
+    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json
+    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl
+    $ jtl sample.jtl one.json two.json three.json
+    $ cat  one.json two.json three.json | jtl -a sample.jtl
+    $ jtl -e "/people/count()"  src/test/resources/generated.json
+
 
 ## data types 
 All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document could be refering to any of these unless specified otherwise.
