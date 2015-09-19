@@ -158,6 +158,7 @@ public class JtlCompiler {
       define(context,"split", split(meta));
       define(context,"join", join(meta));
       define(context,"substr", substr(meta));
+      define(context,"sprintf", sprintf(meta));
 		
 		// list-oriented
       define(context,"unique", unique(meta));

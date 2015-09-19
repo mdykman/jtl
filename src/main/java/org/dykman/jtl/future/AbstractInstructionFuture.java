@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.dykman.jtl.ExecutionException;
-import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.Frame;
 import org.dykman.jtl.json.JSON;
@@ -21,8 +20,9 @@ public abstract class AbstractInstructionFuture implements
    final protected boolean items;
    
    public AbstractInstructionFuture(SourceInfo meta) {
-      this(meta,false);
-   }   
+      this(meta == null ? SourceInfo.internal("default") : meta,false);
+   }
+   
    public AbstractInstructionFuture(SourceInfo meta,boolean i) {
       source=meta;
       items=i;
@@ -85,7 +85,8 @@ public abstract class AbstractInstructionFuture implements
          });
       }      
       if(debug) {
-         int n = context.getMasterContext().counter("trace",-1);
+    	  AsyncExecutionContext<JSON> cc = context.getInit();
+         int n = cc.counter("trace",-1);
       }
       return r;
    }

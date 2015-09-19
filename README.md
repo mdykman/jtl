@@ -167,9 +167,12 @@ bar.$myfunc()
 
 ### reserved words
 As JTL is a superset of JSON, it inherits 3 reserved words from  that language:
-* true
-* false
-* null
+
+	_true_, _false_, _null_
+
+JTL additionally reserves
+
+	_and_, _or_, _nand_, _nor_
 
 ## regular expressions 
 The general syntax for a regex match expression is:

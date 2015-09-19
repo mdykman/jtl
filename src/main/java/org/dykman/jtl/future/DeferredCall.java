@@ -1,16 +1,9 @@
 package org.dykman.jtl.future;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONBuilder;
-
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class DeferredCall implements InstructionFuture<JSON> {
    final SourceInfo info;

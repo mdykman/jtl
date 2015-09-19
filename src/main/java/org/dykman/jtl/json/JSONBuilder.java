@@ -1,17 +1,13 @@
 package org.dykman.jtl.json;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
-import org.dykman.jtl.jsonParser.JsonContext;
 
 public interface JSONBuilder {
 	public JSONValue value();

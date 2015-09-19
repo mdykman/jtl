@@ -1,6 +1,5 @@
 package org.dykman.jtl.modules;
 
-import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;

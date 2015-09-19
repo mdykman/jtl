@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -109,6 +108,7 @@ public class JtlExecutor {
 			File execFile, InstructionFuture<JSON> prog, String selector, String[] path, JSON data)
 					throws IOException, ExecutionException {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
+		ctx.define("_", InstructionFutureFactory.value(data, null));
 		try {
 			return prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
 		} catch (java.util.concurrent.ExecutionException | InterruptedException e) {
@@ -232,6 +232,7 @@ public class JtlExecutor {
 	public AsyncExecutionContext<JSON> httpContext(HttpServletRequest req, HttpServletResponse res,
 			AsyncExecutionContext<JSON> parent, File execFile, String selector, String[] path) throws IOException {
 		AsyncExecutionContext<JSON> ctx = parent.createChild(false, false, null, null);
+		ctx.setRuntime(true);
 		// map the request arguments
 		JSONObject jrq = builder.object(null);
 		for (Map.Entry<String, String[]> kk : req.getParameterMap().entrySet()) {
@@ -264,6 +265,7 @@ public class JtlExecutor {
 		}
 		ctx.define("@", InstructionFutureFactory.value(arr, null));
 		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), null));
+///		ctx.define("_", InstructionFutureFactory.value(builder.value(arr.size()), null));
 		// req.getp
 		// misc. metadata
 		ctx.define("selector", InstructionFutureFactory.value(builder.value(selector), null));

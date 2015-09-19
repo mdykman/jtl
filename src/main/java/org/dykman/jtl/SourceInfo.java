@@ -8,6 +8,12 @@ import org.dykman.jtl.json.JSON;
 
 public class SourceInfo {
 
+   static SourceInfo internal = new SourceInfo();
+   static {
+	   internal.name = "internal";
+	   internal.line = internal.position = internal.endline = internal.endposition = 0;
+	   internal.code = internal.source = "*internal*";
+   }
    public String name;
    public int line;
    public int position;
@@ -16,9 +22,15 @@ public class SourceInfo {
    public String source;
    public String code;
 
+   
    public SourceInfo() {
    }
-
+   
+   public static SourceInfo internal(String name) {
+	   SourceInfo si = internal.clone();
+	   si.name = name;
+	   return si;
+   }
    public SourceInfo clone() {
       SourceInfo si = new SourceInfo();
       si.name = name;
@@ -38,7 +50,8 @@ public class SourceInfo {
       Formatter formatter = new Formatter(sb, Locale.CANADA);
       formatter.format("%12h::", System.identityHashCode(context));
       if(context != null) {
-         AsyncExecutionContext<JSON> master = context.getMasterContext();
+         AsyncExecutionContext<JSON> master = context.getRuntime();
+         if(master == null) master = context.getInit();
          int n = master.counter("trace", 1);
          for(int i = 0; i < n; ++i) {
             sb.append("  ");

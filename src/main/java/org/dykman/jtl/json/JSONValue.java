@@ -1,7 +1,6 @@
 package org.dykman.jtl.json;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 
 import org.apache.commons.lang3.StringEscapeUtils;

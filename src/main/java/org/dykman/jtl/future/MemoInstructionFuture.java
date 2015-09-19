@@ -29,7 +29,9 @@ public class MemoInstructionFuture extends AbstractInstructionFuture {
    @Override
    public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
          throws ExecutionException {
-      AsyncExecutionContext<JSON> pp = context.getMasterContext();
+      AsyncExecutionContext<JSON> pp = context.getRuntime();
+      if(pp == null) pp = context.getInit();
+    		  //context.getMasterContext();
       InstructionFuture<JSON> ic = pp.getdef(key);
       if(ic==null) {
          synchronized(this) {

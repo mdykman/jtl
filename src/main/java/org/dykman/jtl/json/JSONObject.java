@@ -2,18 +2,11 @@ package org.dykman.jtl.json;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.dykman.jtl.Pair;
-import org.dykman.jtl.factory.MapFactory;
-import org.dykman.jtl.json.JSON.JSONType;
 
 public class JSONObject extends AbstractJSON implements
 		Iterable<Pair<String, JSON>> {

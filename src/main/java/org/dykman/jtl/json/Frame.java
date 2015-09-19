@@ -2,8 +2,6 @@ package org.dykman.jtl.json;
 
 import java.util.Collection;
 
-import org.dykman.jtl.json.JSON.JSONType;
-
 public class Frame extends JSONArray {
 
 	public Frame(Collection<JSON> col) {

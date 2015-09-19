@@ -3,7 +3,6 @@ package org.dykman.jtl.future;
 import java.io.File;
 import java.util.Map;
 
-import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
@@ -17,7 +16,7 @@ public interface AsyncExecutionContext<T> {
 	public ListeningExecutorService executor();
 
 	public JSONBuilder builder();
-	public AsyncExecutionContext<T> getMasterContext();
+//	public AsyncExecutionContext<T> getMasterContext();
 
 
 	public File currentDirectory();
@@ -27,11 +26,16 @@ public interface AsyncExecutionContext<T> {
 	public void setInit(boolean b);
 	public boolean isInit();
 
+	public void setRuntime(boolean b);
+	public boolean isRuntime();
+
    public String method();
    public String method(String m);
 	public ListenableFuture<T> dataContext();
 
 	public AsyncExecutionContext<T> getParent();
+	public AsyncExecutionContext<T> getInit();
+	public AsyncExecutionContext<T> getRuntime();
 
    public AsyncExecutionContext<T> declaringContext();
    public AsyncExecutionContext<T> declaringContext(AsyncExecutionContext<T> c);

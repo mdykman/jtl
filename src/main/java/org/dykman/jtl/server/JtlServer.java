@@ -4,19 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.antlr.v4.codegen.model.ListenerDispatchMethod;
-import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSONBuilder;
-import org.dykman.jtl.json.JSONBuilderImpl;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle.Listener;
-
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class JtlServer {
 

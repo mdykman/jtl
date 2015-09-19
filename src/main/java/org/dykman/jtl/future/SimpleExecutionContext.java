@@ -1,6 +1,5 @@
 package org.dykman.jtl.future;
 
-import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.io.File;
@@ -10,7 +9,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
@@ -24,6 +22,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected final boolean functionContext;
 	protected final boolean include;
 	protected boolean isInit = false;
+	protected boolean isRuntime = false;
 
 	public boolean isFunctionContext() {
 		return functionContext;
@@ -133,7 +132,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public AsyncExecutionContext<JSON> getParent() {
 		return parent;
 	}
-
+/*
 	@Override
 	public AsyncExecutionContext<JSON> getMasterContext() {
 		AsyncExecutionContext<JSON> c = this;
@@ -143,6 +142,29 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			parent = c.getParent();
 		}
 		return c;
+	}
+*/
+	AsyncExecutionContext<JSON> initContext = null; 
+	AsyncExecutionContext<JSON> runtimeContext = null;
+
+	@Override
+	public AsyncExecutionContext<JSON> getInit() {
+		if(isInit) return this;
+		if(initContext!=null) return initContext;
+		if(parent!=null) {
+			initContext = parent.getInit();
+		}
+		return initContext;
+	}
+
+	@Override
+	public AsyncExecutionContext<JSON> getRuntime() {
+		if(isRuntime) return this;
+		if(runtimeContext!=null) return runtimeContext;
+		if(parent!=null) {
+			runtimeContext = parent.getRuntime();
+		}
+		return runtimeContext;
 	}
 
 	@Override
@@ -268,5 +290,15 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public boolean isInit() {
 		return isInit;
 	}
+	@Override
+	public void setRuntime(boolean b) {
+		isRuntime = b;
+	}
+
+	@Override
+	public boolean isRuntime() {
+		return isRuntime;
+	}
+
 
 }

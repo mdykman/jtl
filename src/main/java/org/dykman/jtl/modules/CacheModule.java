@@ -1,12 +1,9 @@
 package org.dykman.jtl.modules;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.dykman.jtl.Pair;
@@ -15,22 +12,17 @@ import org.dykman.jtl.future.*;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.DeferredCall;
 import org.dykman.jtl.future.InstructionFuture;
-import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
-import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class CacheModule implements Module {
 
