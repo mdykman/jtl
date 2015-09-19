@@ -179,7 +179,7 @@ public class InstructionFutureFactory {
                      return immediateCheckedFuture(builder.value(random.nextDouble()));
                   }
                   JSON jf = jit.next();
-                  JSON js = jit.hasNext() ? jit.next() : null;
+//                  JSON js = jit.hasNext() ? jit.next() : null;
                   
                   switch(jf.getType()) {
                   case ARRAY:
