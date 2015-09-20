@@ -240,7 +240,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			}
 
 		} else {
-			r = functions.get(name);
+//			r = functions.get(name);
 			// if(r== null) System.out.println("context " + name + " NOT
 			// found");
 			// else System.out.println("context " + name + " found");

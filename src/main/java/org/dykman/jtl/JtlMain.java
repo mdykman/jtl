@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.ServletException;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -46,10 +48,20 @@ public class JtlMain {
 	JSON config;
 	File configFile = null;
 
-	public JtlMain(File conf, boolean canonical) {
+	public JtlMain(File jtlBase,File conf, boolean canonical) throws IOException {
 		builder = new JSONBuilderImpl(canonical);
 		compiler = new JtlCompiler(builder, false, false, false);
-		config = builder.value(); // initial config value
+		
+		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
+		if (conf != null) {
+			if (!conf.exists()) {
+				throw new RuntimeException("unable to locate specified config: " + conf.getAbsolutePath());
+			}
+			bc = bc.overlay((JSONObject) builder.parse(conf));
+		}
+		
+
+		config = bc; // initial config value
 		configFile = conf;
 	}
 
@@ -187,7 +199,9 @@ public class JtlMain {
 			if (cli.hasOption('i') || cli.hasOption("init")) {
 				init = new File(cli.getOptionValue('i'));
 			}
-			main = new JtlMain(fconfig, canonical);
+			
+			
+			main = new JtlMain(home,fconfig, canonical);
 			if (cli.hasOption('D') || cli.hasOption("dir")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)
@@ -260,10 +274,10 @@ public class JtlMain {
 				canonical = true;
 			}
 
-			if (fconfig == null) {
-				fconfig = main.searchConfig("config.json", cexddir, home);
-			}
-			main.setConfig(fconfig);
+//			if (fconfig == null) {
+//				fconfig = main.searchConfig("config.json", cexddir, home);
+//			}
+//			main.setConfig(fconfig);
 
 			List<String> argList = cli.getArgList();
 			Iterator<String> argIt = argList.iterator();
@@ -334,7 +348,7 @@ public class JtlMain {
 							}
 							arr.add(j);
 							if ((batch != null) && (++cc >= batch)) {
-								JSON result = main.execute(inst, source, arr, cexddir, fconfig, argIt);
+								JSON result = main.execute(inst, source, arr, cexddir, argIt);
 								result.write(pw, indent, enquote);
 								pw.flush();
 								cc = 0;
@@ -344,25 +358,25 @@ public class JtlMain {
 							throw new RuntimeException("while reading sequence: " + e.getLocalizedMessage());
 						}
 					}
-					JSON result = main.execute(inst, source, arr, cexddir, fconfig, argIt);
+					JSON result = main.execute(inst, source, arr, cexddir, argIt);
 					result.write(pw, indent, enquote);
 					pw.flush();
 				} else if (fdata != null) {
 					// declare all of argIt as arguments
 					JSON data = main.parse(fdata);
-					JSON result = main.execute(inst, source, data, cexddir, fconfig, argIt);
+					JSON result = main.execute(inst, source, data, cexddir, argIt);
 					result.write(pw, indent, enquote);
 					// pw.flush();
 
 				} else {
 					if (useNull) {
 						JSON data = main.empty();
-						JSON result = main.execute(inst, source, data, cexddir, fconfig, argIt);
+						JSON result = main.execute(inst, source, data, cexddir,  argIt);
 						result.write(pw, indent, enquote);
 					} else if (!argIt.hasNext()) {
 						// empty arguments
 						JSON data = main.parse(System.in);
-						JSON result = main.execute(inst, source, data, cexddir, fconfig, argIt);
+						JSON result = main.execute(inst, source, data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 
 					} else
@@ -372,7 +386,7 @@ public class JtlMain {
 						// declare all of argIt as arguments
 
 						JSON data = main.parse(f);
-						JSON result = main.execute(inst, source, data, cexddir, fconfig, argIt);
+						JSON result = main.execute(inst, source, data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 					}
 				}
@@ -436,7 +450,7 @@ public class JtlMain {
 		les.awaitTermination(2, TimeUnit.SECONDS);
 	}
 
-	public InstructionFuture<JSON> compile(File f) throws IOException {
+	public InstructionFuture<JSON> compile(File f) throws IOException {	
 		return compiler.parse(f);
 	}
 
@@ -468,15 +482,15 @@ public class JtlMain {
 		return builder.value();
 	}
 
-	public JSON execute(InstructionFuture<JSON> inst, String source, JSON data, File cwd, File config,
+	public JSON execute(InstructionFuture<JSON> inst, String source, JSON data, File cwd,
 			Iterator<String> args) throws Exception {
-		JSON c;
-		if (config != null && config.exists()) {
-			c = builder.parse(config);
-		} else {
-			c = builder.value();
-		}
-		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, c, cwd, builder, les);
+		;
+//		if (config != null && config.exists()) {
+//			c = builder.parse(config);
+//		} else {
+//			c = builder.value();
+//		}
+		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, cwd, builder, les);
 		context.setInit(true);
 		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;

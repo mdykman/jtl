@@ -7,5 +7,7 @@
 	params: $req,
 	url: $url,
 	uri: $uri,
-	input: .
+	input: .,
+	useragent: $headers/User_Agent,
+	ua: $headers/.["User_Agent"]
 }
