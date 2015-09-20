@@ -1,5 +1,6 @@
 {
 	people: people/*/filter(name =~ "^B.*" )/*/{name:name,email:email},
 	collated: people/*/filter(name =~ "^B.*" )/*/{name:name,email:email}/collate(),
-	parsed: people/*/(name =~ "(^[A-Za-z]+) ([A-Za-z]+)")/{first:.[1],last:.[2]}/sort(last)
+	parsed: people/*/(name =~ "(^[A-Za-z]+) ([A-Za-z]+)")/{first:.[1],last:.[2]}/sort(last),
+	parsedx: people/*/(name =~ "(^[A-Za-z]+) ([A-Za-z]+)")/{first:.[1],last:.[2]}
 }

@@ -3,6 +3,7 @@ package org.dykman.jtl.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -89,8 +90,8 @@ public class JtlServlet extends HttpServlet {
 		case "PUT":
 		case "PATCH": {
 			String type = req.getContentType();
-			if ("application/json".equals(type)) {
-				InputStreamReader reader = new InputStreamReader(req.getInputStream(), req.getCharacterEncoding());
+			if ("application/json".equals(type) || "text/json".equals(type)) {
+				Reader reader = req.getReader();
 				data = builder.parse(reader);
 			} else if ("application/x-www-form-urlencoded".equals(type)) {
 				JSONObject obj = builder.object(null);
