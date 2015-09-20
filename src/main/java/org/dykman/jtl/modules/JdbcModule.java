@@ -20,6 +20,7 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
+import org.dykman.jtl.future.ContextComplete;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.json.Frame;
 import org.dykman.jtl.json.JSON;
@@ -34,266 +35,292 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class JdbcModule implements Module {
 
-   final JSONObject baseConfig;
-   boolean debug = false;
+	final JSONObject baseConfig;
+	final String key;
+	boolean debug = false;
 
-   public JdbcModule(JSONObject config) {
-      this.baseConfig = config;
-      JSON j = config.get("debug"); 
-      if(j!=null) debug = j.isTrue();
-      final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
+	public JdbcModule(JSONObject config) {
+		this.baseConfig = config;
+		JSON j = config.get("debug");
+		if (j != null)
+			debug = j.isTrue();
+		final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
+		this.key = "@jdbc-connection-" + Long.toHexString(System.identityHashCode(this));
 
-      queryExecutor = new Executor() {
-         @Override
-         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-            ResultSet rs = stat.executeQuery();
-            Frame frame = builder.frame();
-            ResultSetMetaData rsm = rs.getMetaData();
-            int n = rsm.getColumnCount();
-            while(rs.next()) {
-               JSONObject obj = builder.object(frame);
-               for(int i = 1; i <= n; ++i) {
-                  obj.put(rsm.getColumnLabel(i), builder.value(rs.getObject(i)));
-               }
-               frame.add(obj);
-            }
-            return frame;
-         }
-      };
-      insertExecutor = new Executor() {
+		queryExecutor = new Executor() {
+			@Override
+			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+				ResultSet rs = stat.executeQuery();
+				Frame frame = builder.frame();
+				ResultSetMetaData rsm = rs.getMetaData();
+				int n = rsm.getColumnCount();
+				while (rs.next()) {
+					JSONObject obj = builder.object(frame);
+					for (int i = 1; i <= n; ++i) {
+						obj.put(rsm.getColumnLabel(i), builder.value(rs.getObject(i)));
+					}
+					frame.add(obj);
+				}
+				return frame;
+			}
+		};
+		insertExecutor = new Executor() {
 
-         @Override
-         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-            stat.executeUpdate();
-            if(insertIdExpr != null) {
-               // stat.execute();
-               final String idstat;
+			@Override
+			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+				stat.executeUpdate();
+				if (insertIdExpr != null) {
+					// stat.execute();
+					final String idstat;
 
-               
-//               String tn = stat.getMetaData().getTableName(1);
-               if(insertIdExpr.contains("$TABLE")) {
-                  ResultSet rs = stat.getGeneratedKeys();
-                  if(rs.next()) {
-                     Object col = rs.getObject(1);
-                     idstat = insertIdExpr.replace("$TABLE", col.toString());
-                     return builder.value(col);
-                  } else {
-                     if(debug) System.err.println("failed to termine the table name for insert: " + insertIdExpr);
-                     throw new SQLException("failed to termine the table name for insert");
-                  }
-               } else {
-                  idstat = insertIdExpr;
-               }
-               PreparedStatement lid = stat.getConnection().prepareStatement(idstat);
-               ResultSet rs = lid.executeQuery();
-               JSON r = builder.value();
-               if(rs.next()) {
-                  r = builder.value(new Long(rs.getInt(1)));
-               }
-               lid.close();
-               stat.close();
+					if (insertIdExpr.contains("$TABLE")) {
+						// TODO:: for table-name dependent last insert
+						// expression.
+						// this is seriously broken. probably easy to fix
+						ResultSet rs = stat.getGeneratedKeys();
+						if (rs.next()) {
+							Object col = rs.getObject(1);
+							idstat = insertIdExpr.replace("$TABLE", col.toString());
+							return builder.value(col);
+						} else {
+							if (debug)
+								System.err.println("failed to determine the table name for insert: " + insertIdExpr);
+							throw new SQLException("failed to determine the table name for insert");
+						}
+					} else {
+						idstat = insertIdExpr;
+					}
+					PreparedStatement lid = stat.getConnection().prepareStatement(idstat);
+					ResultSet rs = lid.executeQuery();
+					JSON r = builder.value();
+					if (rs.next()) {
+						r = builder.value(new Long(rs.getInt(1)));
+					}
+					lid.close();
+					stat.close();
 
-               return r;
-            } else {
-               ResultSet rs = stat.getGeneratedKeys();
-               if(rs.next()) {
-                  String col = rs.getString(1);
-                  return builder.value(col);
-               }
-               if(debug)
-                  System.err.println("no insert_id statement provided and the system could not determine a key");
-               return builder.value(true);
-            }
-         }
-      };
-   }
+					return r;
+				} else {
+					ResultSet rs = stat.getGeneratedKeys();
+					if (rs.next()) {
+						String col = rs.getString(1);
+						return builder.value(col);
+					}
+					if (debug)
+						System.err.println("no insert_id statement provided and the system could not determine a key");
+					return builder.value(true);
+				}
+			}
+		};
+	}
 
-   interface Executor {
-      JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException;
-   }
+	interface Executor {
+		JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException;
+	}
 
-   class JdbcConnectionWrapper {
-      JSONObject conf;
-      Connection connection = null;
+	class JdbcConnectionWrapper {
+		JSONObject conf;
 
-      JdbcConnectionWrapper(JSONObject conf) {
-         this.conf = conf;
-      }
+		JdbcConnectionWrapper(JSONObject conf) {
+			this.conf = conf;
+		}
 
- 
-      public Connection getConnection(SourceInfo src) throws ExecutionException {
-         if(connection == null) {
-            // naive connection manager ideal for CLI, not so much server
-            synchronized(this) {
-               if(connection == null) {
-                  String driver = stringValue(conf.get("driver"));
-                  String uri = stringValue(conf.get("uri"));
-                  String user = stringValue(conf.get("user"));
-                  String password = stringValue(conf.get("password"));
-                  if(driver != null) {
-                     try {
-                        Class<Driver> drc = (Class<Driver>) Class.forName(driver);
-//                        Driver drv = drc.newInstance();
-                        Properties properties = new Properties();
-                        if(user != null) {
-                           properties.setProperty("user", user);
-                           properties.setProperty("password", password);
-                           // connection = drv.connect(uri,properties);
-                           connection = DriverManager.getConnection(uri, properties);
-                        } else {
-                           connection = DriverManager.getConnection(uri);
-                        }
-                     } catch (ClassNotFoundException e) {
-                        throw new ExecutionException("JDBC: unable to load class " + driver, src);
-                     } catch (SQLException e) {
-                        throw new ExecutionException("JDBC: unable to connect to " + uri, src);
-                     }
-                  }
-               }
-            }
-         }
-         return connection;
-      }
+		public Connection getConnection(SourceInfo src, AsyncExecutionContext<JSON> context) throws ExecutionException {
+			final AsyncExecutionContext<JSON> rc = context.getRuntime();
+			Connection connection = (Connection) rc.get(key);
+			if (connection == null) {
+				// naive connection manager ideal for CLI, not so much server
+				synchronized (this) {
+					connection = (Connection) rc.get(key);
+					if (connection == null) {
+						String driver = stringValue(conf.get("driver"));
+						String uri = stringValue(conf.get("uri"));
+						String user = stringValue(conf.get("user"));
+						String password = stringValue(conf.get("password"));
+						if (driver != null) {
+							try {
+								Class<Driver> drc = (Class<Driver>) Class.forName(driver);
+								// Driver drv = drc.newInstance();
+								Properties properties = new Properties();
+								if (user != null) {
+									properties.setProperty("user", user);
+									properties.setProperty("password", password);
+									// connection = drv.connect(uri,properties);
+									connection = DriverManager.getConnection(uri, properties);
+								} else {
+									connection = DriverManager.getConnection(uri);
+								}
+								final Connection theConnection = connection;
+								rc.onCleanUp(new ContextComplete() {
 
-      public InstructionFuture<JSON> query(SourceInfo meta, Executor exec) {
-         // Connection c = getConnection();
-         return new AbstractInstructionFuture(meta) {
-            @Override
-            public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
-                  final ListenableFuture<JSON> data) throws ExecutionException {
-               InstructionFuture<JSON> q = context.getdef("1");
-               InstructionFuture<JSON> p = context.getdef("2");
-               List<ListenableFuture<JSON>> ll = new ArrayList<>();
-               ll.add(q.call(context, data));
-               if(p != null) {
-                  ll.add(p.call(context, data));
-               }
-               return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-                  @Override
-                  public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
-                     Iterator<JSON> jit = input.iterator();
-                     final JSON qq = jit.next();
-                     if(!qq.isValue())
-                        return Futures.immediateFailedCheckedFuture(new ExecutionException("query is not a string: "
-                              + qq.toString(), meta));
-                     final JSON pp = jit.hasNext() ? jit.next() : null;
+									@Override
+									public boolean complete() {
+										try {
+											theConnection.close();
+											return true;
+										} catch (SQLException e) {
+											System.err.println("there was an error while closing a jdbc connection: "
+													+ e.getLocalizedMessage());
+											return false;
+										}
 
-                     Callable<JSON> cc = new Callable<JSON>() {
-                        @Override
-                        public JSON call() throws Exception {
-                           Connection connection = getConnection(source);
-                           PreparedStatement prep = connection.prepareStatement(stringValue(qq));
-                           if(debug) {
-                              System.err.print("query:" + stringValue(qq));
-                              if(pp != null)
-                                 System.err.println(" " + pp.toString());
-                              System.err.println();
-                           }
-                           if(pp != null) {
-                              switch(pp.getType()) {
-                              case FRAME:
-                              case ARRAY:
-                                 JSONArray arr = (JSONArray) pp;
-                                 int i = 1;
-                                 for(JSON j : arr) {
-                                    if(!j.isValue())
-                                       throw new ExecutionException("parameter element" + (i - 1)
-                                             + " is not a scalar value: " + j.toString(), source);
+									}
+								});
+							} catch (ClassNotFoundException e) {
+								throw new ExecutionException("JDBC: unable to load class " + driver, src);
+							} catch (SQLException e) {
+								throw new ExecutionException("JDBC: unable to connect to " + uri, src);
+							}
+						}
+					}
+				}
+			}
+			rc.set(key, connection);
+			return connection;
+		}
 
-                                    prep.setObject(i++, ((JSONValue) j).get());
-                                 }
-                                 break;
-                              case NULL:
-                              case STRING:
-                              case LONG:
-                              case BOOLEAN:
-                              case DOUBLE:
-                                 prep.setObject(1, ((JSONValue) pp).get());
-                                 break;
-                              default:
-                                 throw new ExecutionException(
-                                       "single parameter is not a scalar value:" + pp.toString(), source);
-                              }
+		public InstructionFuture<JSON> query(SourceInfo meta, Executor exec) {
+			// Connection c = getConnection();
+			return new AbstractInstructionFuture(meta) {
+				@Override
+				public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+						final ListenableFuture<JSON> data) throws ExecutionException {
+					InstructionFuture<JSON> q = context.getdef("1");
+					InstructionFuture<JSON> p = context.getdef("2");
+					List<ListenableFuture<JSON>> ll = new ArrayList<>();
+					ll.add(q.call(context, data));
+					if (p != null) {
+						ll.add(p.call(context, data));
+					}
+					return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+						@Override
+						public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+							Iterator<JSON> jit = input.iterator();
+							final JSON qq = jit.next();
+							if (!qq.isValue())
+								return Futures.immediateFailedCheckedFuture(
+										new ExecutionException("query is not a string: " + qq.toString(), meta));
+							final JSON pp = jit.hasNext() ? jit.next() : null;
 
-                           }
-                           return exec.process(prep, context.builder());
-                        }
-                     };
-                     return context.executor().submit(cc);
+							Callable<JSON> cc = new Callable<JSON>() {
+								@Override
+								public JSON call() throws Exception {
+									Connection connection = getConnection(source, context);
+									synchronized(connection) {
+										PreparedStatement prep = connection.prepareStatement(stringValue(qq));
+										if (debug) {
+											System.err.print("query:" + stringValue(qq));
+											if (pp != null)
+												System.err.println(" " + pp.toString());
+											System.err.println();
+										}
+										if (pp != null) {
+											switch (pp.getType()) {
+											case FRAME:
+											case ARRAY:
+												JSONArray arr = (JSONArray) pp;
+												int i = 1;
+												for (JSON j : arr) {
+													if (!j.isValue())
+														throw new ExecutionException(
+																"parameter element" + (i - 1)
+																		+ " is not a scalar value: " + j.toString(),
+																source);
 
-                  }
-               });
-            }
-         };
-      }
-   }
+													prep.setObject(i++, ((JSONValue) j).get());
+												}
+												break;
+											case NULL:
+											case STRING:
+											case LONG:
+											case BOOLEAN:
+											case DOUBLE:
+												prep.setObject(1, ((JSONValue) pp).get());
+												break;
+											default:
+												throw new ExecutionException(
+														"single parameter is not a scalar value:" + pp.toString(),
+														source);
+											}
 
-   final Executor queryExecutor;
-   final Executor insertExecutor;
+										}
+										return exec.process(prep, context.builder());
+									}
+								}
+							};
+							return context.executor().submit(cc);
 
-   @Override
-   public void define(SourceInfo meta, AsyncExecutionContext<JSON> context) {
-      JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
-      SourceInfo si = meta.clone();
-      si.name = "query";
-      si.code = "*internal*";
-      context.define("query", wrapper.query(si, queryExecutor));
+						}
+					});
+				}
+			};
+		}
+	}
 
-      si = meta.clone();
-      si.name = "cquery";
-      si.code = "*internal*";
-      context.define("cquery", wrapper.query(si, new Executor() {
-         @Override
-         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-            ResultSet rs = stat.executeQuery();
-            ResultSetMetaData rsm = rs.getMetaData();
-            int n = rsm.getColumnCount();
-            JSONObject obj = builder.object(null);
-            JSONArray[] aar = new JSONArray[n];
-            for(int i = 1; i <= n; ++i) {
-               JSONArray arr = builder.array(obj);
-               aar[i - 1] = arr;
-               obj.put(rsm.getColumnLabel(i), arr);
-            }
-            while(rs.next()) {
-               for(int i = 1; i <= n; ++i) {
-                  aar[i - 1].add(builder.value(rs.getObject(i)));
-               }
-            }
-            return obj;
-         }
-      }));
+	final Executor queryExecutor;
+	final Executor insertExecutor;
 
-      si = meta.clone();
-      si = meta.clone();
-      si.name = "execute";
-      si.code = "*internal*";
-      context.define("execute", wrapper.query(si, new Executor() {
-         @Override
-         public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-            stat.execute();
-            return builder.value(true);
-         }
+	@Override
+	public void define(SourceInfo meta, AsyncExecutionContext<JSON> context) {
+		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
+		SourceInfo si = meta.clone();
+		si.name = "query";
+		si.code = "*internal*";
+		context.define("query", wrapper.query(si, queryExecutor));
 
-      }));
+		si = meta.clone();
+		si.name = "cquery";
+		si.code = "*internal*";
+		context.define("cquery", wrapper.query(si, new Executor() {
+			@Override
+			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+				ResultSet rs = stat.executeQuery();
+				ResultSetMetaData rsm = rs.getMetaData();
+				int n = rsm.getColumnCount();
+				JSONObject obj = builder.object(null);
+				JSONArray[] aar = new JSONArray[n];
+				for (int i = 1; i <= n; ++i) {
+					JSONArray arr = builder.array(obj);
+					aar[i - 1] = arr;
+					obj.put(rsm.getColumnLabel(i), arr);
+				}
+				while (rs.next()) {
+					for (int i = 1; i <= n; ++i) {
+						aar[i - 1].add(builder.value(rs.getObject(i)));
+					}
+				}
+				return obj;
+			}
+		}));
 
+		si = meta.clone();
+		si = meta.clone();
+		si.name = "execute";
+		si.code = "*internal*";
+		context.define("execute", wrapper.query(si, new Executor() {
+			@Override
+			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+				stat.execute();
+				return builder.value(true);
+			}
 
-	    context.define("insert", wrapper.query(si,insertExecutor));
+		}));
+
+		context.define("insert", wrapper.query(si, insertExecutor));
 
 	}
 
-
-   protected static String stringValue(JSON j) {
-      if(j == null)
-         return null;
-      switch(j.getType()) {
-      case STRING:
-      case DOUBLE:
-      case LONG:
-         return ((JSONValue) j).stringValue();
-      default:
-         return null;
-      }
-   }
+	protected static String stringValue(JSON j) {
+		if (j == null)
+			return null;
+		switch (j.getType()) {
+		case STRING:
+		case DOUBLE:
+		case LONG:
+			return ((JSONValue) j).stringValue();
+		default:
+			return null;
+		}
+	}
 
 }

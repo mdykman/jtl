@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.future.InstructionFutureFactory;
@@ -104,15 +105,22 @@ public class JtlExecutor {
 	}
 
 
+	public void  cleanUp() {
+		for(AsyncExecutionContext<JSON> cc: contexts.values()) {
+			cc.cleanUp();
+		}
+	}
 	public JSON executeScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
 			File execFile, InstructionFuture<JSON> prog, String selector, String[] path, JSON data)
 					throws IOException, ExecutionException {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
-		ctx.define("_", InstructionFutureFactory.value(data, null));
+		ctx.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("http")));
 		try {
-			return prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
+			JSON j =  prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
+			ctx.getRuntime().cleanUp();
+			return j;
 		} catch (java.util.concurrent.ExecutionException | InterruptedException e) {
-			throw new ExecutionException(e, null);
+			throw new ExecutionException(e, SourceInfo.internal("http"));
 		}
 	}
 
@@ -125,9 +133,8 @@ public class JtlExecutor {
 				prog = compiler.parse(execFile);
 				AsyncExecutionContext<JSON> ctx = baseContext.createChild(false, false, null, null);
 				contexts.put(execFile.getPath(), ctx);
-				JSON j = executeScript(req, res, ctx, execFile, prog,
-						String.join("/", Arrays.copyOfRange(path, 0, cc + 1)),
-						Arrays.copyOfRange(path, cc + 1, path.length), data);
+				Arrays.copyOfRange(path, 0, cc + 1);
+				JSON j = executeScript(req, res, ctx, execFile, prog, selector,path, data);
 				programs.put(execFile.getPath(), prog);
 				return j;
 			}
@@ -226,7 +233,6 @@ public class JtlExecutor {
 			}
 		}
 		return preExec(req, res, initializedContext, data);
-
 	}
 
 	public AsyncExecutionContext<JSON> httpContext(HttpServletRequest req, HttpServletResponse res,
@@ -240,9 +246,9 @@ public class JtlExecutor {
 			for (String v : kk.getValue()) {
 				arr.add(builder.value(v));
 			}
-			jrq.put(kk.getKey(), arr);
+			jrq.put(kk.getKey().replaceAll("[-]", "_"), arr);
 		}
-		ctx.define("req", InstructionFutureFactory.value(jrq, null));
+		ctx.define("req", InstructionFutureFactory.value(jrq, SourceInfo.internal("http")));
 
 		// map the request headers
 		Enumeration<String> en = req.getHeaderNames();
@@ -250,28 +256,29 @@ public class JtlExecutor {
 
 		while (en.hasMoreElements()) {
 			String k = en.nextElement();
-			jrq.put(k, builder.value(req.getHeader(k)));
+			jrq.put(k.replaceAll("[-]", "_"), builder.value(req.getHeader(k)));
 		}
-		ctx.define("headers", InstructionFutureFactory.value(jrq, null));
+		ctx.define("headers", InstructionFutureFactory.value(jrq, SourceInfo.internal("http")));
 
 		// path arguments
-		ctx.define("0", InstructionFutureFactory.value(builder.value(execFile.getCanonicalPath()), null));
+		ctx.define("0", InstructionFutureFactory.value(builder.value(execFile.getCanonicalPath()), 
+				SourceInfo.internal("http")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
 		for (String s : path) {
 			JSON v = builder.value(s);
-			ctx.define(Integer.toString(cc++), InstructionFutureFactory.value(v, null));
+			ctx.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("http")));
 			arr.add(v);
 		}
-		ctx.define("@", InstructionFutureFactory.value(arr, null));
-		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), null));
+		ctx.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("http")));
+		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("http")));
 ///		ctx.define("_", InstructionFutureFactory.value(builder.value(arr.size()), null));
 		// req.getp
 		// misc. metadata
-		ctx.define("selector", InstructionFutureFactory.value(builder.value(selector), null));
-		ctx.define("uri", InstructionFutureFactory.value(builder.value(req.getRequestURI()), null));
-		ctx.define("url", InstructionFutureFactory.value(builder.value(req.getRequestURL().toString()), null));
-		ctx.define("method", InstructionFutureFactory.value(builder.value(req.getMethod()), null));
+		ctx.define("selector", InstructionFutureFactory.value(builder.value(selector), SourceInfo.internal("http")));
+		ctx.define("uri", InstructionFutureFactory.value(builder.value(req.getRequestURI()), SourceInfo.internal("http")));
+		ctx.define("url", InstructionFutureFactory.value(builder.value(req.getRequestURL().toString()), SourceInfo.internal("http")));
+		ctx.define("method", InstructionFutureFactory.value(builder.value(req.getMethod()), SourceInfo.internal("http")));
 		return ctx;
 	}
 

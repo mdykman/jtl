@@ -3,11 +3,14 @@ package org.dykman.jtl.future;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
@@ -31,6 +34,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public boolean isInclude() {
 		return include;
 	}
+	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
 	protected String method = null;
 	protected final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
@@ -49,6 +53,14 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return namedContexts;
 	}
 
+	@Override
+	public Object get(String key) {
+		return things.get(key);
+	}
+	@Override
+	public void set(String key,Object o) {
+		things.put(key,o);
+	}
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
 			JSON conf, File f, boolean fc, boolean include, boolean debug) {
 		this.parent = parent;
@@ -300,5 +312,18 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return isRuntime;
 	}
 
+	List<ContextComplete> closers = new ArrayList<>();
+	@Override
+	public boolean cleanUp() {
+		boolean result = true;
+		for(ContextComplete f:closers) {
+			result = result && f.complete();
+		}
+		return result;
+	}
+	
+	public void onCleanUp(ContextComplete func) {
+		closers.add(func);
+	}
 
 }

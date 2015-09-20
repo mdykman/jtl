@@ -9,6 +9,7 @@ import org.dykman.jtl.json.JSON;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle.Listener;
 
@@ -31,35 +32,21 @@ public class JtlServer {
 	public JtlServer(File jtlBase,File serverBase, File init, File script, File config, String bindAddress, int port,boolean canonical) 
 			throws IOException {
 		this.serverBase = serverBase;
-		InetSocketAddress binding = bindAddress == null ?
-				new InetSocketAddress("127.0.0.1", port)
-				: new InetSocketAddress(bindAddress, port);
+		String host = bindAddress == null ? "127.0.0.1" : bindAddress;
+		InetSocketAddress binding = new InetSocketAddress(host	, port);
 				
 		server = new Server(binding);
-		server.addLifeCycleListener(new Listener() {
-
+		server.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
 			@Override
 			public void lifeCycleStarting(LifeCycle event) {
-				System.err.println("starting server");
+				System.err.println("starting jtl server serving directory " + serverBase.getPath());
 			}
 
 			@Override
 			public void lifeCycleStarted(LifeCycle event) {
-				System.err.println("server started at port " + port);
+				System.err.println("server started, listening on " + binding.toString());
 			}
-
-			@Override
-			public void lifeCycleFailure(LifeCycle event, Throwable cause) {
-			}
-
-			@Override
-			public void lifeCycleStopping(LifeCycle event) {
-			}
-
-			@Override
-			public void lifeCycleStopped(LifeCycle event) {
-			}
-		});
+		}); 
 
 		ServletHandler handler = new ServletHandler();
 		ServletHolder holder = new ServletHolder(new JtlServlet());

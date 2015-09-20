@@ -27,7 +27,7 @@ import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
-//import org.dykman.jtl.server.JtlServer;
+
 import org.dykman.jtl.server.JtlServer;
 
 import com.google.common.util.concurrent.Futures;
@@ -58,11 +58,11 @@ public class JtlMain {
 				// " $ java " + JtlMain.class.getName()
 				" $ jtl " + " [options ...] [arg1 ... ]");
 		System.out.println();
-		System.out.println(
-				"  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
-		System.out.println("  see: https://github.com/mdykman/jtl/README.md");
+		System.out.println("  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
+		System.out.println("    see: https://github.com/mdykman/jtl/README.md");
 		System.out.println();
 		System.out.println("  options:");
+		System.out.println();
 
 		Iterator<Option> oit = cl.getOptions().iterator();
 		while (oit.hasNext()) {
@@ -75,6 +75,8 @@ public class JtlMain {
 		System.out.println();
 
 		System.out.println("  examples:");
+		System.out.println();
+		
 		System.out.println("    $ jtl src/test/resources/group.jtl src/test/resources/generated.json");
 		System.out.println("    $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json");
 		System.out.println("    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json");
@@ -91,11 +93,14 @@ public class JtlMain {
 			Options options = new Options();
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));
+			options.addOption(new Option("i", "init", true, "specify an init script"));
 
+			
 			options.addOption(new Option("x", "jtl", true, "specify a jtl file"));
 			options.addOption(new Option("d", "data", true, "specify an input json file"));
-			options.addOption(new Option("D", "directory", true, "specify base directory (default:.)"));
+			options.addOption(new Option("D", "dir", true, "specify base directory (default:.)"));
 			options.addOption(new Option("e", "expr", true, "evaluate an expression against input data"));
+			options.addOption(new Option("o", "output", true, "specify an output file (cli-only)"));
 
 			options.addOption(
 					new Option("s", "server", false, "run in server mode (default port:7718)"));
@@ -105,8 +110,8 @@ public class JtlMain {
 			options.addOption(
 					new Option("B", "binding", true, "bind network address * implies --server (default:127.0.0.1)"));
 
-			options.addOption(new Option("i", "init", true, "specify an init script"));
-			options.addOption(new Option("k", "canonical", false, "output canonical JSON (ordered keys)"));
+
+			options.addOption(new Option("k", "canon", false, "output canonical JSON (ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (default:3)"));
 			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (default:false)"));
 
@@ -130,6 +135,7 @@ public class JtlMain {
 			File jtl = null;
 			File fdata = null;
 			File init = null;
+			File output = null;
 			Integer batch = null;
 			int indent = 3;
 			boolean dirSet = false;
@@ -141,7 +147,7 @@ public class JtlMain {
 			boolean serverMode = false;
 			boolean canonical = false;
 			String expr = null;
-			int port = 7719; // default port
+			int port = 7718; // default port
 			String bindAddress = null;
 
 			CommandLineParser parser = new GnuParser();
@@ -171,6 +177,10 @@ public class JtlMain {
 				bindAddress = cli.getOptionValue('B');
 				serverMode = true;
 			}
+			if (cli.hasOption('o') || cli.hasOption("output")) {
+				oo = cli.getOptionValue('o');
+				output = new File(oo);
+			}
 			if (cli.hasOption('z') || cli.hasOption("null")) {
 				useNull = true;
 			}
@@ -178,7 +188,7 @@ public class JtlMain {
 				init = new File(cli.getOptionValue('i'));
 			}
 			main = new JtlMain(fconfig, canonical);
-			if (cli.hasOption('D') || cli.hasOption("directory")) {
+			if (cli.hasOption('D') || cli.hasOption("dir")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)
 					oo = cli.getOptionValue("directory");
@@ -246,7 +256,7 @@ public class JtlMain {
 					oo = cli.getOptionValue("indent");
 				indent = Integer.parseInt(oo);
 			}
-			if (cli.hasOption('k') || cli.hasOption("canonical")) {
+			if (cli.hasOption('k') || cli.hasOption("canon")) {
 				canonical = true;
 			}
 
@@ -269,11 +279,11 @@ public class JtlMain {
 						jtl = new File(argIt.next());
 						cexddir = jtl.getParentFile();
 					} else {
-						System.err.println("server bound to directory " + cexddir.getAbsolutePath());
-						File def = new File(cexddir, "default.jtl");
-						if (!def.exists()) {
-							System.err.println("no default script found");
-						}
+//						System.err.println("server bound to directory " + cexddir.getAbsolutePath());
+//						File def = new File(cexddir, "default.jtl");
+//						if (!def.exists()) {
+//							System.err.println("no default script found");
+//						}
 					}
 				} else {
 					if (cexddir == null) {
@@ -304,7 +314,13 @@ public class JtlMain {
 					throw new RuntimeException("no program specified");
 				InstructionFuture<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
 				String source = expr != null ? "--expr" : jtl.getPath();
-				PrintWriter pw = new PrintWriter(System.out);
+				PrintWriter pw;
+				if(output == null) {
+					pw = new PrintWriter(System.out);
+				} else {
+					
+					pw = new PrintWriter(output, "UTF-8");
+				}
 				if (array) {
 					// declare all of argIt as arguments
 					JSONArray arr = main.builder.array(null);
@@ -361,6 +377,7 @@ public class JtlMain {
 					}
 				}
 				pw.flush();
+				if(output != null) pw.close();
 			}
 		} catch (ExecutionException e) {
 			System.err.println(e.report());

@@ -8,7 +8,7 @@
  */
 
 
-version='0.9.1'
+version='0.9.2'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -70,7 +70,10 @@ antlr4 {
 
 
 dependencies {
-    compile 'org.slf4j:slf4j-api:1.7.7'
+    compile 'org.slf4j:slf4j-api:1.7.12'
+	 runtime 'org.slf4j:slf4j-simple:1.7.12'
+
+//	compile 'javax.naming:jndi:1.2.1'
     
     compile 'com.google.guava:guava:18.0'
     

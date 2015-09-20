@@ -2,6 +2,7 @@ package org.dykman.jtl.future;
 
 import java.io.File;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
@@ -37,12 +38,19 @@ public interface AsyncExecutionContext<T> {
 	public AsyncExecutionContext<T> getInit();
 	public AsyncExecutionContext<T> getRuntime();
 
-   public AsyncExecutionContext<T> declaringContext();
+	public boolean cleanUp();
+	public void onCleanUp(ContextComplete func);
+
+	public AsyncExecutionContext<T> declaringContext();
    public AsyncExecutionContext<T> declaringContext(AsyncExecutionContext<T> c);
 
    public boolean isFunctionContext() ;
    public boolean isInclude() ;
 	
+	public Object get(String key);
+	public void set(String key,Object o);
+
+   
 	public boolean debug();
    public boolean debug(boolean d);
 	public int counter(String label, int increment);

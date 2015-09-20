@@ -1,0 +1,11 @@
+{
+	script: $0,
+	path: $@,
+	pcnt: $#,
+	method: $method,
+	headers: $headers,
+	params: $req,
+	url: $url,
+	uri: $uri,
+	input: .
+}
