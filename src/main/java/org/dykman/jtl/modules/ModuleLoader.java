@@ -22,8 +22,8 @@ public class ModuleLoader {
    JSONBuilder builder;
    JSONObject modules;
 
-   Set<Pair<String, String>> loaded = new HashSet<>();
-   Map<String, String> _loaded = new HashMap<>();
+//   Set<Pair<String, String>> loaded = new HashSet<>();
+//   Map<String, String> _loaded = new HashMap<>();
 
    public ModuleLoader(JSONBuilder builder, JSONObject conf) {
       this.builder = builder;
@@ -77,25 +77,12 @@ public class ModuleLoader {
             throw new ExecutionException("module " + name + " is not defined",info);
          }
          klass = stringValue(mod.get("class"));
-         String kk  = _loaded.get(name);
-         if(kk == null) {
-            synchronized(this) {
-               kk  = _loaded.get(name);
-               if(kk==null) {
                   Class<Module> kl = (Class<Module>) Class.forName(klass);
                   Constructor<Module> mc = kl.getConstructor(config.getClass());
                   Module o = mc.newInstance(config);
                   o.define(info, context);                  
-                  _loaded.put(name, klass);
-               }
-            }
-         } else {
-            if(! kk.equals(klass)) {
-               System.err.println("attempt to overwrite name " + name + " from " + kk + " to " +klass);
-               throw new ExecutionException("attempt to overwrite name " + name + " from " + kk + " to " +klass,info);
-            }
-         }
-         return 1;
+ 
+        return 1;
       } catch (Exception e) {
          System.err.println("error loading module " + name + " with class " + klass + ": " + e.getLocalizedMessage());
          throw new ExecutionException("error loading module " + name, e,info);
