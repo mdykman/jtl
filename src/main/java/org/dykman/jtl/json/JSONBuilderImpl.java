@@ -8,8 +8,11 @@ import java.io.Reader;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -33,15 +36,31 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	private static Map<String, JSON> mapBuilder(boolean canonical) {
-	   return canonical ? new TreeMap<>() : new HashMap<>();
+	   return canonical ? new TreeMap<>(mapComparator) : new LinkedHashMap<>();
 	}
    private static Map<String, JSON> mapBuilder(boolean canonical, int cap) {
-      return canonical ? new TreeMap<>() : new HashMap<>(cap);
+      return canonical ? new TreeMap<>(mapComparator) : new LinkedHashMap<>(cap);
    }
    private static Map<String, JSON> mapBuilder(boolean canonical,Map<String, JSON> rhs) {
-      return canonical ? new TreeMap<>(rhs) : new HashMap<>(rhs);
+      if(canonical) {
+    	  TreeMap<String,JSON> m =  new TreeMap<>(rhs);
+    	  m.putAll(rhs);
+    	  return m;
+      } else {
+    	return  new LinkedHashMap<>(rhs);
+      }
+    		 
    }
 	
+//   TreeMap.<String, JSON>
+   static CaseInsensitiveComparator mapComparator = new CaseInsensitiveComparator();
+   static class CaseInsensitiveComparator implements Comparator<String> {
+
+	@Override
+	public int compare(String o1, String o2) {
+		return o1.compareToIgnoreCase(o2);
+	}
+   }
    public JSONBuilderImpl() {
       this(false);
    }	
