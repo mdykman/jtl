@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -48,10 +49,30 @@ public class JtlExecutor {
 
 	final Map<String, InstructionFuture<JSON>> programs = new ConcurrentHashMap<>();
 	final Map<String, AsyncExecutionContext<JSON>> contexts = new ConcurrentHashMap<>();
+	final Map<String, Long> lastModified = new ConcurrentHashMap<>();
 	// ListeningExecutorService les =
 	// MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
 	static JtlExecutor theInstance = null;
+	
+	static Map<String,File> filelocks = new HashMap<>();
+	static synchronized File lockingFile(String path) {
+		File f = filelocks.get(path);
+		if(f == null) {
+			f = new File(path);
+			filelocks.put(path, f);
+		}
+		return f;		
+	}
+	static synchronized File lockingFile(File fin) {
+		String p = fin.getPath();
+		File f = filelocks.get(p);
+		if(f == null) {
+			filelocks.put(p, fin);
+			f = fin;
+		}
+		return f;		
+	}
 
 	public static JtlExecutor getInstance(File base, // jtl install directory,
 														// required
@@ -117,6 +138,7 @@ public class JtlExecutor {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
 		ctx.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("http")));
 		try {
+			// TODO:: remove assert
 			JSON j = prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
 			ctx.getRuntime().cleanUp();
 			return j;
@@ -128,8 +150,9 @@ public class JtlExecutor {
 	public JSON initScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
 			File execFile, InstructionFuture<JSON> prog,String selector, String[] path, JSON data, int cc)
 					throws IOException, ExecutionException {
+		execFile = lockingFile(execFile);
 //		InstructionFuture<JSON> prog = programs.get(p);
-		if(prog == null) synchronized (this) {
+		if(prog == null) synchronized (execFile) {
 			final  String p = execFile.getPath();
 			prog = programs.get(p);
 			if (prog == null) {
@@ -138,8 +161,9 @@ public class JtlExecutor {
 				AsyncExecutionContext<JSON> ctx = baseContext.createChild(false, false, null, null);
 				ctx.setInit(true);
 				JSON j = executeScript(req, res, ctx, execFile, prog, selector, path, data);
-				contexts.put(execFile.getPath(), ctx);
-				programs.put(execFile.getPath(), prog);
+				contexts.put(p, ctx);
+				programs.put(p, prog);
+				lastModified.put(p, execFile.lastModified());
 				return j;
 			}
 		}
@@ -150,13 +174,20 @@ public class JtlExecutor {
 			File execFile, JSON data, String[] parts, int cc) throws IOException, ExecutionException {
 		JSON j = null;
 		if (execFile.exists()) {
-			InstructionFuture<JSON> prog = programs.get(execFile.getPath());
+			String p = execFile.getPath();
+			InstructionFuture<JSON> prog = null;
+			if(lastModified.containsKey(p) && (execFile.lastModified() == lastModified.get(p))) {
+				prog = programs.get(execFile.getPath());
+			} else {
+				programs.remove(p);
+			}
 			String sel = String.join("/", Arrays.copyOfRange(parts, 0, cc + 1));
 			String[] path = Arrays.copyOfRange(parts, cc + 1, parts.length);
 			if (prog == null) {
 				j = initScript(req, res, baseContext, execFile, prog, sel, path, data, cc);
 				if (j != null)
 					return j;
+				prog = programs.get(execFile.getPath());;
 			}
 			AsyncExecutionContext<JSON> ctx = contexts.get(execFile.getPath());
 			return executeScript(req, res, ctx, execFile, prog, sel, path, data);
