@@ -194,8 +194,6 @@ key
 id 
      : ident
      | id '.' ident
-//     | '!' id
-//     | '$' id
      ;
  
  
@@ -204,13 +202,3 @@ string
 	| SSTRING
 	;
 
-
-
-//jstring : SSTR strc ESTR
-//     | string
-//     ;
-     
-//strc : SS
-//	| START_BLOCK jtl END_BLOCK
-//	| strc strc+
-//	; 
