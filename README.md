@@ -5,6 +5,7 @@ JTL is a JSON Transformation Language designed for accepting json-formatted data
 
 The langauge is a superset of json which allows a jpath expression to be specified anywhere a json value would be expected.
 
+An extensible Module System provides to JDBC, CSV datasources, caching and an embedded http client.
 ## requirements
 	Java 8
 
@@ -104,13 +105,11 @@ All other values evaluate as true
 ## jpath
 Jpath is a notation for navigating and manipulating json data, analogous to XPath and it's relationship with XML. 
 
-Like XPath, jpath expressions are evaluated against implicit context data. 
+Like XPath, jpath expressions are evaluated from left to right against implicit context data. 
 
 Unlike XPath expressions, jpath is not string-embedded allowing path components to be freely intermixed with literal data expressions. The latter
 statement implies that jpath and JTL are the same language; for the sake of convenience, the term __jpath__ will be used when refering to line
 statements of path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
-
-Jpath expressions are evaluated from left to right against implicit context data.  
 
 __data.json__
 ```
@@ -126,7 +125,7 @@ $ jtl --expr "domain" a.jtl
 "dykman.org"
 ```
 
-### volcabulary
+### path elements
 
 symbol|meaning
 ------|-------
@@ -136,11 +135,11 @@ symbol|meaning
 .    | self
 ..    | parent - if the context data is a child of an array or object, the parent is returned
 ...    | parent, recursive
-\[ \] | dereference - if numeric argument, dereference an array,  if string argument, dereference an object
 _identifier_ | select named element from object
 _identifier_() | invoke function (user or builtin)
 $_identifier_ | define or reference named variable
 !_identifier_ | imperitive: similar to above, but with geedy resolution. see Context Object
+_jsonexpr_ | any valid json expression
 
 ### special symbols
 There are a few _special symbols_ in JTL where the meaning is context-dependant.

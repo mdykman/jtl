@@ -131,7 +131,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		if (arr.size() == 0)
 			return false;
 		JSON j = arr.iterator().next();
-		if (j.getType() == JSONType.ARRAY || j.getType() == JSONType.FRAME) {
+		if (j.getType() == JSONType.ARRAY || j.getType() == JSONType.LIST) {
 			return true;
 		}
 		return false;
@@ -143,7 +143,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 
 		boolean first = true;
 		JSONType ctype = firstChildType();
-		if (ctype != JSONType.ARRAY && ctype != JSONType.FRAME) {
+		if (ctype != JSONType.ARRAY && ctype != JSONType.LIST) {
 			if (indent > 0 && ctype!=JSONType.OBJECT)
 				out.write(' ');
 			for (JSON j : arr) {
@@ -171,7 +171,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 
 		}
 
-		if (indent > 0 && ctype != JSONType.ARRAY && ctype != JSONType.FRAME && ctype!=JSONType.OBJECT)
+		if (indent > 0 && ctype != JSONType.ARRAY && ctype != JSONType.LIST && ctype!=JSONType.OBJECT)
 			out.write(' ');
 		out.write(']');
 	}

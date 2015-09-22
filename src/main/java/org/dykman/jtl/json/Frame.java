@@ -13,7 +13,7 @@ public class Frame extends JSONArray {
 	}
 	@Override
 	public JSONType getType() {
-		return JSONType.FRAME;
+		return JSONType.LIST;
 	}
 
 	public JSON cloneJSON() {

@@ -28,11 +28,11 @@ public class DefaultPolymorphicOperator implements
 		builder = context.builder();
 		JSONType ltype = l.getType();
 		JSONType rtype = r.getType();
-		if ((ltype == JSONType.ARRAY || ltype == JSONType.FRAME) && (rtype == JSONType.ARRAY || rtype == JSONType.FRAME))
+		if ((ltype == JSONType.ARRAY || ltype == JSONType.LIST) && (rtype == JSONType.ARRAY || rtype == JSONType.LIST))
 			return op(context, (JSONArray) l, (JSONArray) r);
 
 		switch (l.getType()) {
-			case FRAME:
+			case LIST:
 			case ARRAY: {
 				JSONArray left = (JSONArray) l;
 				switch (r.getType()) {
@@ -52,7 +52,7 @@ public class DefaultPolymorphicOperator implements
 				switch (r.getType()) {
 					case OBJECT:
 						return op(context, left, (JSONObject) r);
-					case FRAME:
+					case LIST:
 					case ARRAY:
 						return op(context, left, (JSONArray) r);
 					case BOOLEAN:
@@ -75,7 +75,7 @@ public class DefaultPolymorphicOperator implements
 						return builder.value(op(context, left ? 1L : 0L, (Long) ((JSONValue) r).get()));
 					case OBJECT:
 					case ARRAY:
-					case FRAME:
+					case LIST:
 					case NULL:
 					case STRING:
 						return builder.value(op(context, left, r.isTrue()));
@@ -96,7 +96,7 @@ public class DefaultPolymorphicOperator implements
 					case NULL:
 						return builder.value();
 					case ARRAY:
-					case FRAME:
+					case LIST:
 					case OBJECT:
 						return op(context, left, r);
 				}
@@ -116,7 +116,7 @@ public class DefaultPolymorphicOperator implements
 					case NULL:
 						// return new JSONValue(null);
 					case ARRAY:
-					case FRAME:
+					case LIST:
 					case OBJECT:
 						return op(context, left, r);
 				}
@@ -132,7 +132,7 @@ public class DefaultPolymorphicOperator implements
 						return builder.value(op(context, left, ((JSONValue) r).stringValue()));
 					case NULL:
 					case ARRAY:
-					case FRAME:
+					case LIST:
 					case BOOLEAN:
 					case OBJECT:
 						return op(context, left, r);

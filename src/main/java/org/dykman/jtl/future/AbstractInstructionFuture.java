@@ -41,7 +41,7 @@ public abstract class AbstractInstructionFuture implements
    protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
       for(JSON j : ij) {
          if(j != null && j.getType() != JSONType.NULL)
-            if(recurse && j.getType() == JSONType.FRAME) {
+            if(recurse && j.getType() == JSONType.LIST) {
                addToFrame(f, (Frame) j, false);
             } else {
                f.add(j);
@@ -65,7 +65,7 @@ public abstract class AbstractInstructionFuture implements
          return Futures.transform(data, new AsyncFunction<JSON, JSON>() {
             @Override
             public ListenableFuture<JSON> apply(final JSON input) throws Exception {
-               if(input.getType() == JSONType.FRAME) {
+               if(input.getType() == JSONType.LIST) {
                   List<ListenableFuture<JSON>> ll = new ArrayList<>();
                   for(JSON j : (Frame) input) {
                      ll.add(_call(context, Futures.immediateCheckedFuture(j)));

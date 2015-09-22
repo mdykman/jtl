@@ -216,7 +216,7 @@ public class JdbcModule implements Module {
 										}
 										if (pp != null) {
 											switch (pp.getType()) {
-											case FRAME:
+											case LIST:
 											case ARRAY:
 												JSONArray arr = (JSONArray) pp;
 												int i = 1;

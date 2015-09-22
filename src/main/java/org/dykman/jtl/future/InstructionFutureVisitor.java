@@ -83,7 +83,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	protected void sealResult(JSON j) {
 		JSONType type = j.getType();
 		switch (type) {
-			case FRAME:
+			case LIST:
 			case ARRAY: {
 				JSONArray a = (JSONArray) j;
 				int index = 0;
@@ -356,7 +356,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 				new DyadicAsyncFunction<JSON>() {
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
-						if (a.getType() == JSONType.FRAME) {
+						if (a.getType() == JSONType.LIST) {
 							Frame newf = builder.frame((Frame) a);
 							if (b.isTrue())
 								((Frame) a).add(b);
