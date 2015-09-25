@@ -25,6 +25,7 @@ public abstract class AbstractJSON implements JSON {
 		this.parent = parent;
 	}
 
+	
 	@Override
 	public boolean isValue() {
 		return false;
@@ -39,9 +40,9 @@ public abstract class AbstractJSON implements JSON {
 		case OBJECT:
 			if(rtype != JSONType.OBJECT) return 1;
 			return ((JSONObject) this).deepCompare((JSONObject) r);
-		case FRAME:
+		case LIST:
 		case ARRAY:
-			if(rtype != JSONType.ARRAY && rtype != JSONType.FRAME) return rtype == JSONType.OBJECT ? -1 : 1;
+			if(rtype != JSONType.ARRAY && rtype != JSONType.LIST) return rtype == JSONType.OBJECT ? -1 : 1;
 			if(rtype != JSONType.OBJECT) return 1;
 			return ((JSONArray) this).deepCompare((JSONArray) r);
 		case BOOLEAN:

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -48,9 +49,30 @@ public class JtlExecutor {
 
 	final Map<String, InstructionFuture<JSON>> programs = new ConcurrentHashMap<>();
 	final Map<String, AsyncExecutionContext<JSON>> contexts = new ConcurrentHashMap<>();
-//	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+	final Map<String, Long> lastModified = new ConcurrentHashMap<>();
+	// ListeningExecutorService les =
+	// MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
 	static JtlExecutor theInstance = null;
+	
+	static Map<String,File> filelocks = new HashMap<>();
+	static synchronized File lockingFile(String path) {
+		File f = filelocks.get(path);
+		if(f == null) {
+			f = new File(path);
+			filelocks.put(path, f);
+		}
+		return f;		
+	}
+	static synchronized File lockingFile(File fin) {
+		String p = fin.getPath();
+		File f = filelocks.get(p);
+		if(f == null) {
+			filelocks.put(p, fin);
+			f = fin;
+		}
+		return f;		
+	}
 
 	public static JtlExecutor getInstance(File base, // jtl install directory,
 														// required
@@ -104,19 +126,20 @@ public class JtlExecutor {
 			boundInst = compiler.parse(boundScript);
 	}
 
-
-	public void  cleanUp() {
-		for(AsyncExecutionContext<JSON> cc: contexts.values()) {
+	public void cleanUp() {
+		for (AsyncExecutionContext<JSON> cc : contexts.values()) {
 			cc.cleanUp();
 		}
 	}
+
 	public JSON executeScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
 			File execFile, InstructionFuture<JSON> prog, String selector, String[] path, JSON data)
 					throws IOException, ExecutionException {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
 		ctx.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("http")));
 		try {
-			JSON j =  prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
+			// TODO:: remove assert
+			JSON j = prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
 			ctx.getRuntime().cleanUp();
 			return j;
 		} catch (java.util.concurrent.ExecutionException | InterruptedException e) {
@@ -125,34 +148,46 @@ public class JtlExecutor {
 	}
 
 	public JSON initScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
-			File execFile, InstructionFuture<JSON> prog, String selector, String[] path, JSON data, int cc)
+			File execFile, InstructionFuture<JSON> prog,String selector, String[] path, JSON data, int cc)
 					throws IOException, ExecutionException {
-		synchronized (this) {
-			prog = programs.get(execFile.getPath());
+		execFile = lockingFile(execFile);
+//		InstructionFuture<JSON> prog = programs.get(p);
+		if(prog == null) synchronized (execFile) {
+			final  String p = execFile.getPath();
+			prog = programs.get(p);
 			if (prog == null) {
 				prog = compiler.parse(execFile);
+				// per-script init context
 				AsyncExecutionContext<JSON> ctx = baseContext.createChild(false, false, null, null);
-				contexts.put(execFile.getPath(), ctx);
-				Arrays.copyOfRange(path, 0, cc + 1);
-				JSON j = executeScript(req, res, ctx, execFile, prog, selector,path, data);
-				programs.put(execFile.getPath(), prog);
+				ctx.setInit(true);
+				JSON j = executeScript(req, res, ctx, execFile, prog, selector, path, data);
+				contexts.put(p, ctx);
+				programs.put(p, prog);
+				lastModified.put(p, execFile.lastModified());
 				return j;
 			}
-			return null;
 		}
+		return null;
 	}
 
 	public JSON tryFile(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
 			File execFile, JSON data, String[] parts, int cc) throws IOException, ExecutionException {
 		JSON j = null;
 		if (execFile.exists()) {
-			InstructionFuture<JSON> prog = programs.get(execFile.getPath());
+			String p = execFile.getPath();
+			InstructionFuture<JSON> prog = null;
+			if(lastModified.containsKey(p) && (execFile.lastModified() == lastModified.get(p))) {
+				prog = programs.get(execFile.getPath());
+			} else {
+				programs.remove(p);
+			}
 			String sel = String.join("/", Arrays.copyOfRange(parts, 0, cc + 1));
 			String[] path = Arrays.copyOfRange(parts, cc + 1, parts.length);
 			if (prog == null) {
 				j = initScript(req, res, baseContext, execFile, prog, sel, path, data, cc);
 				if (j != null)
 					return j;
+				prog = programs.get(execFile.getPath());;
 			}
 			AsyncExecutionContext<JSON> ctx = contexts.get(execFile.getPath());
 			return executeScript(req, res, ctx, execFile, prog, sel, path, data);
@@ -171,8 +206,9 @@ public class JtlExecutor {
 				synchronized (this) {
 					if (boundContext == null) {
 						boundContext = baseContext.createChild(false, false, null, null);
-						return executeScript(req, res, boundContext, this.boundScript, boundInst, "/", parts, data);
+						boundContext.setInit(true);
 					}
+					return executeScript(req, res, boundContext, this.boundScript, boundInst, "/", parts, data);
 				}
 			} else {
 				return executeScript(req, res, boundContext, this.boundScript, boundInst, "/", parts, data);
@@ -187,12 +223,12 @@ public class JtlExecutor {
 				if (j != null)
 					return j;
 				bb = new File(bb, ss);
-				if (bb.exists() && bb.isDirectory()) {
+				if (bb.isDirectory()) {
 					f = new File(bb, this.dirDefault);
 					j = tryFile(req, res, baseContext, f, data, parts, cc);
 					if (j != null)
 						return j;
-					//else return notfound(uri);
+					// else return notfound(uri);
 					++cc;
 				} else {
 					return notfound(uri);
@@ -201,7 +237,6 @@ public class JtlExecutor {
 			return notfound(uri);
 
 		}
-		return j;
 	}
 
 	public JSON notfound(String path) {
@@ -213,20 +248,16 @@ public class JtlExecutor {
 	public JSON execute(HttpServletRequest req, HttpServletResponse res, JSON data)
 			throws ExecutionException, IOException {
 		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(baseConfig);
+		// global server init block
 		if (initializedContext == null) {
 			synchronized (this) {
 				if (initializedContext == null) {
-					AsyncExecutionContext<JSON> baseContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
+					initializedContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
 							null, builder, getExecutorService());
-					
+					initializedContext.setInit(true);
 					if (init != null) {
-						// shared init, run once ever
-						initializedContext = baseContext.createChild(false, false, dd, null);
-						initializedContext.setInit(true);
 						InstructionFuture<JSON> initf = compiler.parse(init);
 						initResult = initf.call(initializedContext, dd);
-					} else {
-						initializedContext = baseContext;
 					}
 					return preExec(req, res, initializedContext, data);
 				}
@@ -261,7 +292,7 @@ public class JtlExecutor {
 		ctx.define("headers", InstructionFutureFactory.value(jrq, SourceInfo.internal("http")));
 
 		// path arguments
-		ctx.define("0", InstructionFutureFactory.value(builder.value(execFile.getCanonicalPath()), 
+		ctx.define("0", InstructionFutureFactory.value(builder.value(execFile.getCanonicalPath()),
 				SourceInfo.internal("http")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
@@ -272,13 +303,17 @@ public class JtlExecutor {
 		}
 		ctx.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("http")));
 		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("http")));
-///		ctx.define("_", InstructionFutureFactory.value(builder.value(arr.size()), null));
+		/// ctx.define("_",
+		/// InstructionFutureFactory.value(builder.value(arr.size()), null));
 		// req.getp
 		// misc. metadata
 		ctx.define("selector", InstructionFutureFactory.value(builder.value(selector), SourceInfo.internal("http")));
-		ctx.define("uri", InstructionFutureFactory.value(builder.value(req.getRequestURI()), SourceInfo.internal("http")));
-		ctx.define("url", InstructionFutureFactory.value(builder.value(req.getRequestURL().toString()), SourceInfo.internal("http")));
-		ctx.define("method", InstructionFutureFactory.value(builder.value(req.getMethod()), SourceInfo.internal("http")));
+		ctx.define("uri",
+				InstructionFutureFactory.value(builder.value(req.getRequestURI()), SourceInfo.internal("http")));
+		ctx.define("url", InstructionFutureFactory.value(builder.value(req.getRequestURL().toString()),
+				SourceInfo.internal("http")));
+		ctx.define("method",
+				InstructionFutureFactory.value(builder.value(req.getMethod()), SourceInfo.internal("http")));
 		return ctx;
 	}
 
