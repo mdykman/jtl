@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.json.Frame;
+import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONValue;
@@ -38,11 +38,11 @@ public abstract class AbstractInstructionFuture implements
       return this;
    }
    
-   protected void addToFrame(Frame f, Iterable<JSON> ij, boolean recurse) {
+   protected void addToFrame(JList f, Iterable<JSON> ij, boolean recurse) {
       for(JSON j : ij) {
          if(j != null && j.getType() != JSONType.NULL)
             if(recurse && j.getType() == JSONType.LIST) {
-               addToFrame(f, (Frame) j, false);
+               addToFrame(f, (JList) j, false);
             } else {
                f.add(j);
             }
@@ -67,14 +67,14 @@ public abstract class AbstractInstructionFuture implements
             public ListenableFuture<JSON> apply(final JSON input) throws Exception {
                if(input.getType() == JSONType.LIST) {
                   List<ListenableFuture<JSON>> ll = new ArrayList<>();
-                  for(JSON j : (Frame) input) {
+                  for(JSON j : (JList) input) {
                      ll.add(_call(context, Futures.immediateCheckedFuture(j)));
                   }
                   return Futures.transform(Futures.allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
                      @Override
                      public ListenableFuture<JSON> apply(List<JSON> input2) throws Exception {
-                        Frame frame = context.builder().frame(input.getParent());
+                        JList frame = context.builder().frame(input.getParent());
                         addToFrame(frame, input2, true);
                         return Futures.immediateCheckedFuture(frame);
                      }

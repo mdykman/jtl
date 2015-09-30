@@ -123,7 +123,13 @@ indexlist
 indexl
 	: value ('..' value)?
 	;
-	
+
+array
+  :   '[' value (',' value)* ']' 
+  |   '[' ']' // empty array
+//  | '[' indexlist ']'
+  ;
+
 pathstep 
    : id
    | recurs

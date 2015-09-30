@@ -41,6 +41,7 @@ public class JtlExecutor {
 
 	InstructionFuture<JSON> boundInst = null;
 	AsyncExecutionContext<JSON> boundContext = null;
+	ListenableFuture<JSON> configFuture;
 
 	final String dirDefault;
 	final JSONObject baseConfig;
@@ -122,6 +123,7 @@ public class JtlExecutor {
 			bc = bc.overlay((JSONObject) builder.parse(config));
 		}
 		baseConfig = bc;
+		configFuture = Futures.immediateCheckedFuture(baseConfig);
 		if (boundScript != null)
 			boundInst = compiler.parse(boundScript);
 	}
@@ -247,7 +249,6 @@ public class JtlExecutor {
 
 	public JSON execute(HttpServletRequest req, HttpServletResponse res, JSON data)
 			throws ExecutionException, IOException {
-		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(baseConfig);
 		// global server init block
 		if (initializedContext == null) {
 			synchronized (this) {
@@ -257,7 +258,7 @@ public class JtlExecutor {
 					initializedContext.setInit(true);
 					if (init != null) {
 						InstructionFuture<JSON> initf = compiler.parse(init);
-						initResult = initf.call(initializedContext, dd);
+						initResult = initf.call(initializedContext, configFuture);
 					}
 					return preExec(req, res, initializedContext, data);
 				}
@@ -302,7 +303,7 @@ public class JtlExecutor {
 			arr.add(v);
 		}
 		ctx.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("http")));
-		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("http")));
+//		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("http")));
 		/// ctx.define("_",
 		/// InstructionFutureFactory.value(builder.value(arr.size()), null));
 		// req.getp

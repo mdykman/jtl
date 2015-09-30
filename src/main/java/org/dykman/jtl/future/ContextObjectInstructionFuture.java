@@ -1,6 +1,8 @@
 package org.dykman.jtl.future;
 
 import static com.google.common.util.concurrent.Futures.allAsList;
+
+
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
 
@@ -10,6 +12,7 @@ import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
+import static org.dykman.jtl.future.InstructionFutureFactory.*;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 
@@ -71,16 +74,18 @@ import com.google.common.util.concurrent.ListenableFuture;
                if(initInst == null)
                   synchronized(this) {
                      if(initInst == null) {
-                        initInst = init = InstructionFutureFactory.memo(inst.getSourceInfo(), inst);
+                        initInst = init = fixContextData(memo(inst.getSourceInfo(), inst));
                      }
                   }
+               context.define("init", initInst);
             } else if(k.equals("_")) {
-               defaultInstruction = InstructionFutureFactory.fixContextData(inst.getSourceInfo(), inst);
+               defaultInstruction = fixContextData( inst);
             } else if(k.equals(entryPoint)) {
-               startInstruction = InstructionFutureFactory.fixContextData(inst.getSourceInfo(), inst);
+               startInstruction = fixContextData(inst);
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
-               InstructionFuture<JSON> imp = inst;
+                InstructionFuture<JSON> imp = inst;
+//                InstructionFuture<JSON> imp = fixContextData(inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
@@ -88,7 +93,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                context.define(k.substring(1), InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data));
             } else {
                // define a function
-               context.define(k, InstructionFutureFactory.fixContextData(inst.getSourceInfo(), inst));
+               context.define(k,fixContextData(inst));
             }
          }
          try {
@@ -109,7 +114,8 @@ import com.google.common.util.concurrent.ListenableFuture;
                AsyncFunction<JSON, JSON> ff = new AsyncFunction<JSON, JSON>() {
                   @Override
                   public ListenableFuture<JSON> apply(final JSON input2) throws Exception {
-                     context.define("init", InstructionFutureFactory.value(input2, source));
+                	  // let the memo do it's job
+  //                   context.define("init", InstructionFutureFactory.value(input2, source));
                      List<ListenableFuture<JSON>> ll = new ArrayList<>();
                      for(InstructionFuture<JSON> imp : imperitives) {
                         ll.add(imp.call(context, data));
@@ -121,7 +127,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                      return immediateCheckedFuture(context.builder().value(true));
                   }
                };
-               return transform(initializeContext(context, initInst, context.config()), ff);
+               return transform(initializeContext(context.getInit(), initInst, context.config()), ff);
             }
 
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
@@ -151,7 +157,7 @@ import com.google.common.util.concurrent.ListenableFuture;
       public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
             final ListenableFuture<JSON> data) throws ExecutionException {
          final AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, source);
-         ctx.define("_", InstructionFutureFactory.value(data, source));
+ //        ctx.define("_", InstructionFutureFactory.value(data, source));
          return contextObject(ctx, data, context.isInclude());
 
       }

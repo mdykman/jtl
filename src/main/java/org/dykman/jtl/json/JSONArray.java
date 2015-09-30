@@ -14,6 +14,15 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	int hash = 45860934;
 	private ArrayList<JSON> theList = null;
 	private boolean bound = true;
+	
+	private boolean ranged = false;
+	
+	public boolean isRanged() {
+		return ranged;
+	}
+	public void setRanged(boolean ranged) {
+		this.ranged = ranged;
+	}
 	public JSONArray(JSON parent, Collection<JSON> coll) {
 		this(parent,coll,true);
 	}

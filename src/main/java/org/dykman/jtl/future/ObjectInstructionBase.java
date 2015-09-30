@@ -10,7 +10,7 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-abstract class ObjectInstructionBase extends AbstractInstructionFuture {
+public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
       final List<Pair<String, InstructionFuture<JSON>>> ll;
 
       public ObjectInstructionBase(SourceInfo info, List<Pair<String, InstructionFuture<JSON>>> pp, boolean itemize) {
@@ -23,11 +23,11 @@ abstract class ObjectInstructionBase extends AbstractInstructionFuture {
 
       public final ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
             final ListenableFuture<JSON> data) throws ExecutionException {
-         if(context.isInclude()) {
-            return _import(context, data);
-         } else {
+ ///        if(context.isInclude()) {
+  //          return _import(context, data);
+  //       } else {
             return _callObject(context, data);
-         }
+  //       }
 
       }
 
@@ -58,7 +58,7 @@ abstract class ObjectInstructionBase extends AbstractInstructionFuture {
                context.define(k.substring(1), InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data));
             } else {
                // define a function
-               context.define(k, InstructionFutureFactory.fixContextData(inst.getSourceInfo(), inst));
+               context.define(k, InstructionFutureFactory.fixContextData( inst));
             }
 
          }

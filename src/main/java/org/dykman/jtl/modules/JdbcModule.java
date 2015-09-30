@@ -22,7 +22,7 @@ import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.ContextComplete;
 import org.dykman.jtl.future.InstructionFuture;
-import org.dykman.jtl.json.Frame;
+import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
@@ -51,7 +51,7 @@ public class JdbcModule implements Module {
 			@Override
 			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
-				Frame frame = builder.frame();
+				JList frame = builder.frame();
 				ResultSetMetaData rsm = rs.getMetaData();
 				int n = rsm.getColumnCount();
 				while (rs.next()) {

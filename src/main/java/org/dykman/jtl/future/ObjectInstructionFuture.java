@@ -32,8 +32,9 @@ import com.google.common.util.concurrent.ListenableFuture;
             final String kk = ii.f;
             final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
             InstructionFuture<JSON> ki = InstructionFutureFactory.value(kk, context.builder(), getSourceInfo());
-            newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
+  //          newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
             newc.define("key", ki);
+            newc.define(":", ki);
             ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(newc, data),
                   new AsyncFunction<JSON, Pair<String, JSON>>() {
                      @Override

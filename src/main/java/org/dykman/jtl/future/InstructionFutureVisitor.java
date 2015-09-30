@@ -50,7 +50,7 @@ import org.dykman.jtl.jtlParser.Unary_exprContext;
 import org.dykman.jtl.jtlParser.Union_exprContext;
 import org.dykman.jtl.jtlParser.ValueContext;
 import org.dykman.jtl.jtlParser.VariableContext;
-import org.dykman.jtl.json.Frame;
+import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
@@ -357,9 +357,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
 						if (a.getType() == JSONType.LIST) {
-							Frame newf = builder.frame((Frame) a);
+							JList newf = builder.frame((JList) a);
 							if (b.isTrue())
-								((Frame) a).add(b);
+								((JList) a).add(b);
 						}
 						return builder.value(a.isTrue() && b.isTrue());
 					}
@@ -686,7 +686,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 			List<InstructionFuture<JSON>> elements = new ArrayList<>();
 			elements.add(inst);
 			elements.add(visitValue(cl.get(1)).inst);
-			return new InstructionFutureValue<>(array(elements,getSource(ctx)));
+			return new InstructionFutureValue<>(
+					new RangeInstruction(inst, visitValue(cl.get(1)).inst, getSource(ctx)));
+//			return new InstructionFutureValue<>(array(elements,getSource(ctx)));
 		} else {
 			return new InstructionFutureValue<>(inst);
 		}

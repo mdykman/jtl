@@ -23,6 +23,27 @@ unzip in the directory of your choice.  You may then either
 * add a softlink in a directory already under your path to `JTL\_HOME/bin/jtl`
 * access the jtl script directly via `JTL\_HOME/bin/jtl`
 
+## library 
+To use JTL as an embedded library, it may be accessed via a maven repository.
+
+Here is an example of accessing that respository with gradle by adding the following blocks
+to build.gradle.
+
+```
+repositories {
+  mavenCentral()
+  maven {
+    url 'https://raw.github.com/mdykman/mvn-repo/master/'
+  }
+}
+
+
+dependencies {
+   compile 'org.dykman:jtl:0.9.3'
+}
+
+```
+
 ## usage
 ```
 $ jtl --help
@@ -33,24 +54,30 @@ $ jtl --help
   see: https://github.com/mdykman/jtl
 
   -h --help	print this help message and exit
+  -v --version	print jtl version
   -c --config	specify a configuration file
+  -i --init	specify an init script
   -x --jtl	specify a jtl file
-  -d --data	specify input data (json file)
-  -D --directory	specify base directory (default:.)
-  -e --expression	exaluate an expression against inpt data
-  -s --server	run in server mode (default port:7718 * not implemented
-  -p --port	specify a port number (default:7718) * implies --server * not implemented
-  -k --canconical	output canonical JSON (ordered keys)
+  -d --data	specify an input json file
+  -D --dir	specify base directory (default:.)
+  -e --expr	evaluate an expression against input data
+  -o --output	specify an output file (cli-only)
+  -s --server	run in server mode (default port:7718)
+  -p --port	specify a port number (default:7718) * implies --server
+  -B --binding	bind network address * implies --server (default:127.0.0.1)
+  -k --canon	output canonical JSON (ordered keys)
   -n --indent	specify default indent level for output (default:3)
   -q --quote	enforce quoting of all object keys (default:false)
   -a --array	parse a sequence of json entities from the input stream, assemble them into an array and process
-  -b --batch	gather n items from a sequence of JSON values and process them as an array
+  -b --batch	gather n items from a sequence of JSON values from the input stream, processing them as an array
+  -z --null	use null input data (cli-only)
+
 ```
 If no script is specified explicitly via '-x', the first argument is assumed to be the jtl script file.
 
 If no data is specified specified explicitly via '-d', the next argument is assumed to be the json input file, unless -a or -b has been specified.
 
-In CLI mode, all addition arguments will be passed to the script as $1, $2, ...
+In CLI mode, all additional arguments will be passed to the script as $1, $2, ...
 
 These invocations will all produce the same result
 
