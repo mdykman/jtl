@@ -84,13 +84,13 @@ import com.google.common.util.concurrent.ListenableFuture;
                startInstruction = fixContextData(inst);
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
-                InstructionFuture<JSON> imp = inst;
-//                InstructionFuture<JSON> imp = fixContextData(inst);
+//                InstructionFuture<JSON> imp = inst;
+                InstructionFuture<JSON> imp = fixContextData(inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
                // variable, deferred evaluation
-               context.define(k.substring(1), InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data));
+               context.define(k.substring(1), fixContextData(InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data)));
             } else {
                // define a function
                context.define(k,fixContextData(inst));

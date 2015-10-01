@@ -10,6 +10,7 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import static org.dykman.jtl.future.InstructionFutureFactory.*;
 public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
       final List<Pair<String, InstructionFuture<JSON>>> ll;
 
@@ -41,7 +42,7 @@ public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
             String k = pp.f;
             InstructionFuture<JSON> inst = pp.s;
             if(k.equals("!init")) {
-               init = InstructionFutureFactory.singleton(inst.getSourceInfo(), inst);
+               init = fixContextData(singleton(inst.getSourceInfo(), inst));
                /*
                 * if(init == null) synchronized(this) { if(init == null) { init
                 * = singleton(inst.getSourceInfo(), inst); } }
@@ -50,12 +51,12 @@ public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
                // ignore in import
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
-               InstructionFuture<JSON> imp = inst;
+               InstructionFuture<JSON> imp = fixContextData(inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
                // variable, deferred evaluation
-               context.define(k.substring(1), InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data));
+               context.define(k.substring(1), fixContextData(deferred(inst.getSourceInfo(), inst, context, data)));
             } else {
                // define a function
                context.define(k, InstructionFutureFactory.fixContextData( inst));

@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
+import javax.sql.DataSource;
+
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AbstractInstructionFuture;
@@ -32,6 +34,8 @@ import org.dykman.jtl.json.JSONValue;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 public class JdbcModule implements Module {
 
@@ -44,7 +48,8 @@ public class JdbcModule implements Module {
 		JSON j = config.get("debug");
 		if (j != null)
 			debug = j.isTrue();
-		final String insertIdExpr = stringValue(baseConfig.get("insert_id"));
+		j = baseConfig.get("insert_id");
+		final String insertIdExpr = j == null ? null : j.stringValue();
 		this.key = "@jdbc-connection-" + Long.toHexString(System.identityHashCode(this));
 
 		queryExecutor = new Executor() {
@@ -119,10 +124,29 @@ public class JdbcModule implements Module {
 	}
 
 	class JdbcConnectionWrapper {
-		JSONObject conf;
+		final JSONObject conf;
+		final HikariConfig hkc;
+///		final DataSource dataSource;
+		final HikariDataSource hds;
+		String databaseName;
 
 		JdbcConnectionWrapper(JSONObject conf) {
 			this.conf = conf;
+			this.hkc = new HikariConfig();
+//			try {
+//				Class<Driver> drc = (Class<Driver>) Class.forName(conf.get("driver").stringValue());
+				this.hkc.setDataSourceClassName(conf.get("driver").stringValue());
+				this.hkc.setUsername(conf.get("user").stringValue());
+				this.hkc.setPassword(conf.get("password").stringValue());
+				this.hkc.setJdbcUrl(conf.get("uri").stringValue());
+				hkc.setMaximumPoolSize(20);
+				databaseName = conf.get("database").stringValue();
+				this.hkc.setCatalog(databaseName);
+				hds = new HikariDataSource(hkc);
+//				this.dataSource = hkc.getDataSource();
+//			} catch (ClassNotFoundException e) {
+//				throw new ExceptionInInitializerError(e);
+//			}
 		}
 
 		public Connection getConnection(SourceInfo src, AsyncExecutionContext<JSON> context) throws ExecutionException {
@@ -133,13 +157,39 @@ public class JdbcModule implements Module {
 				synchronized (this) {
 					connection = (Connection) rc.get(key);
 					if (connection == null) {
-						String driver = stringValue(conf.get("driver"));
-						String uri = stringValue(conf.get("uri"));
-						String user = stringValue(conf.get("user"));
-						String password = stringValue(conf.get("password"));
+						try {
+							connection = hds.getConnection();
+//							connection = this.dataSource.getConnection();
+							rc.set(key, connection);
+							final Connection theConnection = connection;
+							rc.onCleanUp(new ContextComplete() {
+
+								@Override
+								public boolean complete() {
+									try {
+										theConnection.close();
+										return true;
+									} catch (SQLException e) {
+										System.err.println("there was an error while closing a jdbc connection: "
+												+ e.getLocalizedMessage());
+										return false;
+									}
+
+								}
+							});
+							
+						} catch (Throwable e) {
+							e.printStackTrace();
+							throw new ExecutionException(e,src);
+						}
+						/*
+						String driver = conf.get("driver").stringValue();
+						String uri = conf.get("uri").stringValue();
+						String user = conf.get("user").stringValue();
+						String password = conf.get("password").stringValue();
 						if (driver != null) {
 							try {
-								Class<Driver> drc = (Class<Driver>) Class.forName(driver);
+	//							Class<Driver> drc = (Class<Driver>) Class.forName(driver);
 								// Driver drv = drc.newInstance();
 								Properties properties = new Properties();
 								if (user != null) {
@@ -150,6 +200,7 @@ public class JdbcModule implements Module {
 								} else {
 									connection = DriverManager.getConnection(uri);
 								}
+								
 								final Connection theConnection = connection;
 								rc.onCleanUp(new ContextComplete() {
 
@@ -166,12 +217,15 @@ public class JdbcModule implements Module {
 
 									}
 								});
-							} catch (ClassNotFoundException e) {
-								throw new ExecutionException("JDBC: unable to load class " + driver, src);
+								
+//							} catch (ClassNotFoundException e) {
+//								throw new ExecutionException("JDBC: unable to load class " + driver, src);
 							} catch (SQLException e) {
 								throw new ExecutionException("JDBC: unable to connect to " + uri, src);
 							}
+							
 						}
+						*/
 					}
 				}
 			}
@@ -309,7 +363,7 @@ public class JdbcModule implements Module {
 		context.define("insert", wrapper.query(si, insertExecutor));
 
 	}
-
+/*
 	protected static String stringValue(JSON j) {
 		if (j == null)
 			return null;
@@ -322,5 +376,5 @@ public class JdbcModule implements Module {
 			return null;
 		}
 	}
-
+*/
 }

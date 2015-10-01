@@ -55,6 +55,7 @@ public interface AsyncExecutionContext<T> {
    public boolean debug(boolean d);
 	public int counter(String label, int increment);
 	public InstructionFuture<T> getdef(String name);
+	public InstructionFuture<T> getdef(String ns,String name);
 
 	public void inject(AsyncExecutionContext<T> cc);
    public void inject(String name,AsyncExecutionContext<T> cc);

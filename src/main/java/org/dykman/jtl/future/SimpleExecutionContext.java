@@ -215,38 +215,47 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			SourceInfo source) {
 		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,
 				include, debug);
+	
 		// if(fc && data!=null)
 		// r.define("_",InstructionFutureFactory.value(data,source));
 		// System.out.println("create context from parent " +
 		// System.identityHashCode(this) + " - " + System.identityHashCode(r));
 		return r;
 	}
-
+	
+	
+	
+	
+	protected String namespace = null;
+	public InstructionFuture<JSON> getdef(String ns, String name) {
+		InstructionFuture<JSON> r = null;
+		AsyncExecutionContext<JSON> named = getNamedContext(ns);
+		if (named != null) {
+			r = named.getdef(name);
+		}
+		return r;
+	}
 	@Override
 	public InstructionFuture<JSON> getdef(String name) {
 		// System.out.println("context seeking " + name + " in " +
 		// System.identityHashCode(this));
-		InstructionFuture<JSON> r = functions.get(name);
+		InstructionFuture<JSON> r = namespace!=null  ? getdef(namespace,name) : null;
+		if (r != null) {
+			define(name, r);
+			return r;
+		}
+		r = functions.get(name);
 		if (r != null)
 			return r;
-		String[] parts = name.split("[.]", 2);
-		if (parts.length > 1) {
-			AsyncExecutionContext<JSON> named = getNamedContext(parts[0]);
-			if (named != null) {
-				r = named.getdef(parts[1]);
-				if (r != null)
-					define(name, r);
-				return r;
-			}
+		
 
+	String[] parts = name.split("[.]", 2);
+		if (parts.length > 1) {
+			r = getdef(parts[0],parts[1]);
 		} else {
-//			r = functions.get(name);
-			// if(r== null) System.out.println("context " + name + " NOT
-			// found");
-			// else System.out.println("context " + name + " found");
+			if(namespace!=null) r = getdef(namespace,name);
 			if (r == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
 				r = parent.getdef(name);
-
 			}
 		}
 		if (r != null)

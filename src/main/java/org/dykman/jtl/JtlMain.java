@@ -65,7 +65,7 @@ public class JtlMain {
 		configFile = conf;
 	}
 
-	static final String JTL_VERSION = "0.9.3";
+	static final String JTL_VERSION = "0.9.4";
 	public static void printHelp(Options cl) {
 		System.out.println(
 				// " $ java " + JtlMain.class.getName()

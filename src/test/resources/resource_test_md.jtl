@@ -1,18 +1,21 @@
 {
 	!init: {
       db: module("jdbc",{
-              uri:"jdbc:mysql://localhost:3306/pantheon",
-              driver:"com.mysql.jdbc.Driver",
+					driver : 'com.mysql.jdbc.jdbc2.optional.MysqlDataSource',
+					database: 'pantheon',
+              uri:"jdbc:mysql://localhost:3306/",
+//              driver:"com.mysql.jdbc.Driver",
               user:"root",
               password:"password"
       }),
 		cache: module("cache",{
+			pq: { max: 5000, on: "read", ttl: 30000 },
 			cr: { max: 5000, on: "read", ttl: 30000 },
 			cat: { max: 10000, on: "read", ttl: 30000 },
 			th: { max: 10000, on: "read", ttl: 30000 }
 		})
 	},
-	_:  recipes/primaryQuery()/amend("Recipe",thingId/ii() or null),
+	_:  recipes/cache.pq(primaryQuery(.))/amend("Recipe",thingId/ii() or null),
 	ii: cy(.)/amend("Recipe",thingId/ii() or null),
 	cy: cache.cr(cq($1)),
 	ty: cache.th(thingQ($1))/amend({
@@ -24,7 +27,7 @@
 		amount:$2,
 		minQuality: $3
 	}),
-	primaryQuery: db.query("select * from things where thingId = ?"/copy(count($_))/join(" UNION "),$_),
+	primaryQuery: db.query("select * from things where thingId = ?"/copy(count($1))/join(" UNION "),$1),
 
 	cq: db.query("select * from coreRecipe where createId = ?",[$1])/*/(resourceId ? 
 		ty(resourceId,amount,minQuality) : 
