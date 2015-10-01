@@ -142,10 +142,11 @@ public class JtlExecutor {
 		try {
 			// TODO:: remove assert
 			JSON j = prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
-			ctx.getRuntime().cleanUp();
 			return j;
 		} catch (java.util.concurrent.ExecutionException | InterruptedException e) {
 			throw new ExecutionException(e, SourceInfo.internal("http"));
+		} finally {
+			ctx.getRuntime().cleanUp();
 		}
 	}
 
