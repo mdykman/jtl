@@ -65,6 +65,7 @@ public class JtlMain {
 		configFile = conf;
 	}
 
+	static final String JTL_VERSION = "0.9.3";
 	public static void printHelp(Options cl) {
 		System.out.println(
 				// " $ java " + JtlMain.class.getName()
@@ -104,6 +105,7 @@ public class JtlMain {
 		try {
 			Options options = new Options();
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
+			options.addOption(new Option("v", "version", false, "print jtl version"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));
 			options.addOption(new Option("i", "init", true, "specify an init script"));
 
@@ -181,6 +183,12 @@ public class JtlMain {
 				oo = oo != null ? oo : cli.getOptionValue("port");
 				port = Integer.parseInt(oo);
 				serverMode = true;
+			}
+			
+			if(cli.hasOption('v')) {
+				System.out.print("jtl version " + JTL_VERSION);
+				System.out.println(" - see https://github.com/mdykman/jtl");
+				System.exit(0);
 			}
 			if (cli.hasOption('s') || cli.hasOption("server")) {
 				serverMode = true;
@@ -406,7 +414,6 @@ public class JtlMain {
 				main.shutdown();
 			} catch (InterruptedException e) {
 				System.err.println("error on shutdown: " + e.getLocalizedMessage());
-				// e.printStackTrace();
 			}
 		}
 	}
@@ -495,14 +502,14 @@ public class JtlMain {
 		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
-		while (args.hasNext()) {
+		if(args!=null) while (args.hasNext()) {
 			JSON v = builder.value(args.next());
 			context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("cli")));
 			arr.add(v);
 		}
 		ListenableFuture<JSON> dd= Futures.immediateCheckedFuture(data);
 		
-		context.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("cli")));
+//		context.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("cli")));
 		context.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("cli")));
 		context.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("cli")));
 

@@ -25,7 +25,12 @@ public abstract class AbstractJSON implements JSON {
 		this.parent = parent;
 	}
 
-	
+
+	@Override
+	public String stringValue() {
+		return toString();
+	}
+
 	@Override
 	public boolean isValue() {
 		return false;

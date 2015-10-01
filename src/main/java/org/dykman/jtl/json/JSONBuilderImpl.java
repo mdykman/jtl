@@ -174,26 +174,26 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	@Override
-	public Frame frame() {
-		Frame f = new Frame(cf.createCollection());
-		return (Frame) sign(f);
+	public JList frame() {
+		JList f = new JList(cf.createCollection());
+		return (JList) sign(f);
 	}
 
 	@Override
-	public Frame frame(JSON parent, Collection<JSON> col) {
-		return (Frame) sign(new Frame(parent, col));
+	public JList frame(JSON parent, Collection<JSON> col) {
+		return (JList) sign(new JList(parent, col));
 	}
 
 	// @Override
-	public Frame frame(Frame f) {
+	public JList frame(JList f) {
 		Collection<JSON> cc = cf.copyCollection(f.collection());
-		return (Frame) sign(new Frame(cc));
+		return (JList) sign(new JList(cc));
 	}
 
 	@Override
-	public Frame frame(JSON parent) {
+	public JList frame(JSON parent) {
 		// Collection<JSON> cc = cf.copyCollection(f.collection());
-		return (Frame) sign(new Frame(parent, cf.createCollection()));
+		return (JList) sign(new JList(parent, cf.createCollection()));
 	}
 
 	@Override

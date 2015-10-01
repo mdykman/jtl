@@ -2,12 +2,12 @@ package org.dykman.jtl.json;
 
 import java.util.Collection;
 
-public class Frame extends JSONArray {
+public class JList extends JSONArray {
 
-	public Frame(Collection<JSON> col) {
+	public JList(Collection<JSON> col) {
 		this(null,col);
 	}
-	public Frame(JSON parent,Collection<JSON> col) {
+	public JList(JSON parent,Collection<JSON> col) {
 		super(parent,col);
 		hash = 45763478;
 	}
@@ -17,7 +17,7 @@ public class Frame extends JSONArray {
 	}
 
 	public JSON cloneJSON() {
-		Frame res = builder.frame();
+		JList res = builder.frame();
 		int i = 0;
 		for(JSON j:arr) {
 			res.add(j);

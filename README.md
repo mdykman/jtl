@@ -1,11 +1,12 @@
 # jtl / jpath
 
 
-JTL is a JSON Transformation Language designed for accepting json-formatted data as input, operating on thata data and returning arbitrary json data as output.
+JTL is a JSON Transformation Language designed for accepting json-formatted data as input, operating on that data and returning arbitrary json data as output.
 
-The langauge is a superset of json which allows a jpath expression to be specified anywhere a json value would be expected.
+The langauge is a superset of json which allows a jpath expression to be specified anywhere that a json value would be expected.
 
 An extensible Module System provides to JDBC, CSV datasources, caching and an embedded http client.
+
 ## requirements
 	Java 8
 
@@ -15,12 +16,33 @@ An extensible Module System provides to JDBC, CSV datasources, caching and an em
 
 `./gradlew distZip`
 
-generates ./build/distributions/jtl-`version`.zip
+generates ./build/distributions/jtl-\<`version`\>.zip
 
 unzip in the directory of your choice.  You may then either
-* add JTLHOME/bin to your PATH
-* add a softlink in a directory already under your path to `JTL_HOME/bin/jtl`
-* access the jtl script directly via `JTL_HOME/bin/jtl`
+* add JTL\_HOME/bin to your PATH
+* add a softlink in a directory already under your path to `JTL\_HOME/bin/jtl`
+* access the jtl script directly via `JTL\_HOME/bin/jtl`
+
+## library 
+To use JTL as an embedded library, it may be accessed via a maven repository.
+
+Here is an example of accessing that respository with gradle by adding the following blocks
+to build.gradle.
+
+```
+repositories {
+  mavenCentral()
+  maven {
+    url 'https://raw.github.com/mdykman/mvn-repo/master/'
+  }
+}
+
+
+dependencies {
+   compile 'org.dykman:jtl:0.9.3'
+}
+
+```
 
 ## usage
 ```
@@ -32,21 +54,30 @@ $ jtl --help
   see: https://github.com/mdykman/jtl
 
   -h --help	print this help message and exit
+  -v --version	print jtl version
   -c --config	specify a configuration file
+  -i --init	specify an init script
   -x --jtl	specify a jtl file
-  -d --data	specify input data (json file)
-  -D --directory	specify base directory (default:.)
-  -e --expression	exaluate an expression against inpt data
-  -s --server	run in server mode (default port:7718 * not implemented
-  -p --port	specify a port number (default:7718) * implies --server * not implemented
-  -k --canconical	output canonical JSON (ordered keys)
+  -d --data	specify an input json file
+  -D --dir	specify base directory (default:.)
+  -e --expr	evaluate an expression against input data
+  -o --output	specify an output file (cli-only)
+  -s --server	run in server mode (default port:7718)
+  -p --port	specify a port number (default:7718) * implies --server
+  -B --binding	bind network address * implies --server (default:127.0.0.1)
+  -k --canon	output canonical JSON (ordered keys)
   -n --indent	specify default indent level for output (default:3)
   -q --quote	enforce quoting of all object keys (default:false)
   -a --array	parse a sequence of json entities from the input stream, assemble them into an array and process
-  -b --batch	gather n items from a sequence of JSON values and process them as an array
+  -b --batch	gather n items from a sequence of JSON values from the input stream, processing them as an array
+  -z --null	use null input data (cli-only)
+
 ```
-	If no script is specified explicitly via '-x', the first argument is assumed to be the jtl script file.
-	If no data has been specified specified explicitly via '-d', the next argument is assumed to be the json input file, unless -a or -b has been specified.
+If no script is specified explicitly via '-x', the first argument is assumed to be the jtl script file.
+
+If no data is specified specified explicitly via '-d', the next argument is assumed to be the json input file, unless -a or -b has been specified.
+
+In CLI mode, all additional arguments will be passed to the script as $1, $2, ...
 
 These invocations will all produce the same result
 
@@ -56,27 +87,29 @@ These invocations will all produce the same result
     $ jtl -x src/test/resources/group.jtl -d src/test/resources/generated.json
     $ cat src/test/resources/generated.json | jtl -x src/test/resources/group.jtl
     $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl
+    $ jtl src/test/resources/group.jtl < src/test/resources/generated.json
 
 After options and files have been processed, any remaining arguments are passed to the program script.
 
 ###  examples
-    $ jtl src/test/resources/group.jtl src/test/resources/generated.json
-    $ jtl -x src/test/resources/group.jtl src/test/resources/generated.json
-    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json
-    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl
-    $ jtl sample.jtl one.json two.json three.json
-    $ cat  one.json two.json three.json | jtl -a sample.jtl
+	 # evaluate an jtl script with null input data
+    $ jtl -z  test.jtl
+
+	 # evaluate an ad-hoc expression against an input file
     $ jtl -e "/people/count()"  src/test/resources/generated.json
 
+	
+	 # launch a server bound to all interfaces based at a specified directory
+    $ jtl --binding 0.0.0.0 -D src/test/resources
 
 ## data types 
 All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document could be refering to any of these unless specified otherwise.
 
 ### objects 
-Objects are containers mapping string keys to JSON values.  Values may be of any JSON type
+Objects are containers mapping string keys to JSON values.  Values may be of any JSON type or jpath expression
 
 ### array 
-Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any JSON type
+Arrays are conainers which hold a continuous sequence of JSON values.  Values may be of any JSON type or jpath expression
 
 ### scalars 
 Scalars can be of severals types
@@ -107,9 +140,7 @@ Jpath is a notation for navigating and manipulating json data, analogous to XPat
 
 Like XPath, jpath expressions are evaluated from left to right against implicit context data. 
 
-Unlike XPath expressions, jpath is not string-embedded allowing path components to be freely intermixed with literal data expressions. The latter
-statement implies that jpath and JTL are the same language; for the sake of convenience, the term __jpath__ will be used when refering to line
-statements of path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
+Unlike XPath expressions, jpath is not string-embedded allowing path components to be freely intermixed with literal data expressions. For the sake of convenience, the term __jpath__ will be used when refering to path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
 
 __data.json__
 ```
@@ -123,6 +154,9 @@ __data.json__
 ```
 $ jtl --expr "domain" a.jtl
 "dykman.org"
+```
+$ jtl --expr "author" a.jtl
+"michael"
 ```
 
 ### path elements
@@ -141,10 +175,45 @@ $_identifier_ | define or reference named variable
 !_identifier_ | imperitive: similar to above, but with geedy resolution. see Context Object
 _jsonexpr_ | any valid json expression
 
+
+### dereferencing  \[ ... \]
+Any jpath element may optionally be suffixed with the dereference operator, \[ ... \].
+
+
+NOTE: when square bracket notation is used without a prefix, it is direct array notation. 
+The dereferening behaviour only applies when it is suffixed to another element within the same path segment.
+```
+# select a single element from the array denoted by 'sales'
+sales[3]
+#select an array of several elements
+sales[1,3]
+#select an array from a range
+sales[1..3]
+#select mix ranges and single items
+sales[1..3,5]
+# create a an array of numbers from 1 to 5 (inclusive) ignoring data in 'sales'
+sales/[1..5]
+```
+
+When the data on the left is an array and the contents of the dereference operator is numeric,
+elements are selected from that array.
+
+### mixing json and jpath expressions
+Json object and arrays may contain embedded jpath expressions anywhere a json value might be used.
+
+```
+{
+	name: details/(first + ' ' + last)
+}
+
+
+details/[first,last,dob,17]
+```
+
 ### special symbols
 There are a few _special symbols_ in JTL where the meaning is context-dependant.
 
-symbol | cli | http | function
+SYMBOL | CLI | HTTP | FUNCTION
 -------|-----|------|---------
 $\_    | script input data | script input data   | function input data
 $0     | path of current script|path of current script|name of current function
@@ -154,24 +223,24 @@ $#     | count of command-line arguments|count of http path arguments|count of f
 
 ### named contexts
 Using the builtin `module` or `include` functions in an init block (see Init Block) may load additional
-functions and/or variables into a 'named' context. They can be accessed via:
+functions and/or variables into a named context. They can be accessed via:
 * variables `identifier . $identifier`
 * functions `identifier . identifier ( )`
 
 examples
 ```
 foo.$myvar
-bar.$myfunc()
+bar.myfunc()
 ```
 
 ### reserved words
 As JTL is a superset of JSON, it inherits 3 reserved words from  that language:
 
-	_true_, _false_, _null_
+	true, false, null
 
 JTL additionally reserves
 
-	_and_, _or_, _nand_, _nor_
+	and, or, nand, nor
 
 ## regular expressions 
 The general syntax for a regex match expression is:
