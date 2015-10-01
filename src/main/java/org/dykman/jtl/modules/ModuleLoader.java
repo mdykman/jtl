@@ -84,6 +84,7 @@ public class ModuleLoader {
  
         return 1;
       } catch (Exception e) {
+    	 e.printStackTrace();
          System.err.println("error loading module " + name + " with class " + klass + ": " + e.getLocalizedMessage());
          throw new ExecutionException("error loading module " + name, e,info);
       }
