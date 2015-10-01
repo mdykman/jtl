@@ -138,6 +138,7 @@ public class JdbcModule implements Module {
 				this.hkc.setDataSourceClassName(conf.get("driver").stringValue());
 				this.hkc.setUsername(conf.get("user").stringValue());
 				this.hkc.setPassword(conf.get("password").stringValue());
+//				this.hkc.set(conf.get("password").stringValue());
 				this.hkc.setJdbcUrl(conf.get("uri").stringValue());
 				hkc.setMaximumPoolSize(20);
 				databaseName = conf.get("database").stringValue();

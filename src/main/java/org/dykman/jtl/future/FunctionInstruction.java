@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 
@@ -111,17 +112,32 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 	@Override
 	public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
 			throws ExecutionException {
-		String[] ss = name.split("[.]", 2);
-		InstructionFuture<JSON> func;
-		if (ss.length == 1) {
-			func = context.getdef(name);
-		} else {
-			func = context.getdef(ss[0], ss[1]);
-		}
+		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
+//		String[] ss = name.split("[.]", 2);
+		String ns = fc == null ? null : context.getFunctionContext().getNamespace();
+		InstructionFuture<JSON> func  = null;
+//		if(ns == null) {
+//			func = context.getdef(name);
+//		} else {
+			Pair<String, InstructionFuture<JSON>> rr = context.getDefInternal(ns, name);
+			if(rr!=null) {
+				func = rr.s;
+				ns = rr.f;
+			} 
+	//	}
+//		if (ss.length == 1) {
+//			func = context.getdef(name);
+//		} else {
+//			func = context.getdef(ss[0], ss[1]);
+//		}
 		if (func == null) {
 			throw new ExecutionException("no function found named " + name, source);
 		}
 		AsyncExecutionContext<JSON> childContext = setupArguments(context, name, iargs, data);
+		if(ns!=null) {
+			childContext.setNamespace(ns);
+		}
+		
 		return func.call(childContext, data);
 	}
 }

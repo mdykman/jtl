@@ -1,0 +1,9 @@
+{
+	foo: {
+		name: $0,
+		args: $@,
+		one: $1,
+		bar: bar()
+	},
+	bar: "this is bar"
+}
