@@ -47,7 +47,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class InstructionFutureFactory {
 
 	protected static final String JTL_INTERNAL = "_jtl_internal_";
-//	protected static final String JTL_INTERNAL_KEY = JTL_INTERNAL + "key_";
+	// protected static final String JTL_INTERNAL_KEY = JTL_INTERNAL + "key_";
 
 	protected static final Method stringFormatter;
 
@@ -256,7 +256,7 @@ public class InstructionFutureFactory {
 								AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, meta);
 								ctx.define("0", value(context.builder().value("map"), getSourceInfo()));
 								InstructionFuture<JSON> ki = value(context.builder().value(pp.f), getSourceInfo());
-//								ctx.define(JTL_INTERNAL_KEY, ki);
+								// ctx.define(JTL_INTERNAL_KEY, ki);
 								ctx.define("key", ki);
 								ctx.define(":", ki);
 								final String kk = pp.f;
@@ -363,7 +363,8 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> data) throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>(3);
-//				InstructionFuture<JSON> key = context.getdef(JTL_INTERNAL_KEY);
+				// InstructionFuture<JSON> key =
+				// context.getdef(JTL_INTERNAL_KEY);
 				InstructionFuture<JSON> key = context.getdef(":");
 
 				ll.add(key.call(context, data));
@@ -390,55 +391,61 @@ public class InstructionFutureFactory {
 						InstructionFuture<JSON> initInst = null;
 						while (jit.hasNext()) {
 							String ff = stringValue(jit.next());
-							InstructionFuture<JSON> inst = compiler.parse(new File(ff));
+							File toParse = new File(context.currentDirectory(), ff);
+							InstructionFuture<JSON> inst = compiler.parse(toParse);
+							if(inst instanceof FixedContext) {
+								FixedContext fi = (FixedContext) inst;
+								inst = fi.getIntruction();
 							if (inst instanceof ObjectInstructionBase) {
 								ObjectInstructionBase oib = (ObjectInstructionBase) inst;
 								List<Pair<String, InstructionFuture<JSON>>> prs = oib.pairs();
 								for (Pair<String, InstructionFuture<JSON>> ip : prs) {
 									String k = ip.f;
+									InstructionFuture<JSON> fii = fixContextData(ip.s);
 									if ("!init".equals(k)) {
-										initInst = InstructionFutureFactory.memo(ip.s.getSourceInfo(),ip.s);
+										initInst = InstructionFutureFactory.memo(fii.getSourceInfo(), fii);
 										mc.define(k.substring(1), initInst);
 									} else if ("_".equals(k)) {
-										context.getInit().define(key, ip.s);
+										context.getInit().define(key, fii);
 									} else {
 										char ic = k.charAt(0);
 										if (ic == '$') {
 											mc.define(k.substring(1), InstructionFutureFactory
-													.deferred(ip.s.getSourceInfo(), ip.s, context, data));
+													.deferred(fii.getSourceInfo(), fii, context, data));
 										} else if (ic == '!') {
 											InstructionFuture<JSON> imp = InstructionFutureFactory
-													.memo(ip.s.getSourceInfo(), ip.s);
+													.memo(fii.getSourceInfo(), fii);
 											mc.define(k.substring(1), imp);
 											imperitives.add(imp);
 										} else {
-											mc.define(k, ip.s);
+											mc.define(k, fii);
 										}
 									}
 								}
 							}
+						}
 							AsyncFunction<List<JSON>, JSON> impSync = new AsyncFunction<List<JSON>, JSON>() {
 
 								@Override
 								public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 									JSONArray arr = context.builder().array(null);
-									for(JSON j: input) {
+									for (JSON j : input) {
 										arr.add(j);
 									}
 									return immediateCheckedFuture(arr);
 								}
 							};
-							
+
 							if (initInst != null) {
 								AsyncFunction<JSON, JSON> func = new AsyncFunction<JSON, JSON>() {
 
 									@Override
 									public ListenableFuture<JSON> apply(JSON input) throws Exception {
 										List<ListenableFuture<JSON>> ll = new ArrayList<>();
-										
-										for(InstructionFuture<JSON> ii: imperitives) {
+
+										for (InstructionFuture<JSON> ii : imperitives) {
 											ll.add(ii.call(context, data));
-											
+
 										}
 										return transform(allAsList(ll), impSync);
 									}
@@ -446,14 +453,13 @@ public class InstructionFutureFactory {
 
 							} else {
 								List<ListenableFuture<JSON>> ll = new ArrayList<>();
-								for(InstructionFuture<JSON> ii: imperitives) {
+								for (InstructionFuture<JSON> ii : imperitives) {
 									ll.add(ii.call(context, data));
 								}
 								return transform(allAsList(ll), impSync);
 							}
 						}
-						
-						
+
 						return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
 							@Override
@@ -482,7 +488,8 @@ public class InstructionFutureFactory {
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>(2);
-//				InstructionFuture<JSON> key = context.getdef(JTL_INTERNAL_KEY);
+				// InstructionFuture<JSON> key =
+				// context.getdef(JTL_INTERNAL_KEY);
 				InstructionFuture<JSON> key = context.getdef(":");
 				InstructionFuture<JSON> name = context.getdef("1");
 				ll.add(key.call(context, data));
@@ -1708,16 +1715,7 @@ public class InstructionFutureFactory {
 	}
 
 	public static InstructionFuture<JSON> fixContextData(final InstructionFuture<JSON> inst) {
-		return new AbstractInstructionFuture(inst.getSourceInfo()) {
-
-			@Override
-			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
-					throws ExecutionException {
-				context.define("_", value(data, inst.getSourceInfo()));
-				context.declaringContext(context);
-				return inst.call(context, data);
-			}
-		};
+		return new FixedContext(inst);
 	}
 
 	// rank all
@@ -3159,26 +3157,28 @@ public class InstructionFutureFactory {
 		};
 	}
 
-	
+	public static InstructionFuture<JSON> index(SourceInfo meta, String sel) {
+		return pref(meta, "#");
+	}
 
-	public static InstructionFuture<JSON> index(SourceInfo meta,String sel) {
-		return pref(meta,"#");
+	public static InstructionFuture<JSON> key(SourceInfo meta, String sel) {
+		return pref(meta, ":");
 	}
-	public static InstructionFuture<JSON> key(SourceInfo meta,String sel) {
-		return pref(meta,":");
-	}
-	public static InstructionFuture<JSON> pref(SourceInfo meta,String sel) {
+
+	public static InstructionFuture<JSON> pref(SourceInfo meta, String sel) {
 		return new AbstractInstructionFuture(meta) {
 
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				InstructionFuture<JSON> inst = context.getdef(sel);
-				if(inst == null) return immediateCheckedFuture(context.builder().value());
+				if (inst == null)
+					return immediateCheckedFuture(context.builder().value());
 				return inst.call(context, data);
 			}
 		};
 	}
+
 	public static InstructionFuture<JSON> keys(SourceInfo meta) {
 		return new AbstractInstructionFuture(meta) {
 

@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
@@ -34,6 +35,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public boolean isInclude() {
 		return include;
 	}
+
 	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
 	protected String method = null;
@@ -57,10 +59,12 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public Object get(String key) {
 		return things.get(key);
 	}
+
 	@Override
-	public void set(String key,Object o) {
-		things.put(key,o);
+	public void set(String key, Object o) {
+		things.put(key, o);
 	}
+
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
 			JSON conf, File f, boolean fc, boolean include, boolean debug) {
 		this.parent = parent;
@@ -144,26 +148,23 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public AsyncExecutionContext<JSON> getParent() {
 		return parent;
 	}
-/*
-	@Override
-	public AsyncExecutionContext<JSON> getMasterContext() {
-		AsyncExecutionContext<JSON> c = this;
-		AsyncExecutionContext<JSON> parent = c.getParent();
-		while (parent != null) {
-			c = parent;
-			parent = c.getParent();
-		}
-		return c;
-	}
-*/
-	AsyncExecutionContext<JSON> initContext = null; 
+
+	/*
+	 * @Override public AsyncExecutionContext<JSON> getMasterContext() {
+	 * AsyncExecutionContext<JSON> c = this; AsyncExecutionContext<JSON> parent
+	 * = c.getParent(); while (parent != null) { c = parent; parent =
+	 * c.getParent(); } return c; }
+	 */
+	AsyncExecutionContext<JSON> initContext = null;
 	AsyncExecutionContext<JSON> runtimeContext = null;
 
 	@Override
 	public AsyncExecutionContext<JSON> getInit() {
-		if(isInit) return this;
-		if(initContext!=null) return initContext;
-		if(parent!=null) {
+		if (isInit)
+			return this;
+		if (initContext != null)
+			return initContext;
+		if (parent != null) {
 			initContext = parent.getInit();
 		}
 		return initContext;
@@ -171,12 +172,24 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	@Override
 	public AsyncExecutionContext<JSON> getRuntime() {
-		if(isRuntime) return this;
-		if(runtimeContext!=null) return runtimeContext;
-		if(parent!=null) {
+		if (isRuntime)
+			return this;
+		if (runtimeContext != null)
+			return runtimeContext;
+		if (parent != null) {
 			runtimeContext = parent.getRuntime();
 		}
 		return runtimeContext;
+	}
+
+	@Override
+	public AsyncExecutionContext<JSON> getFunctionContext() {
+		if (functionContext)
+			return this;
+		if (parent != null) {
+			return parent.getFunctionContext();
+		}
+		return null;
 	}
 
 	@Override
@@ -215,52 +228,75 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			SourceInfo source) {
 		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,
 				include, debug);
-	
+
 		// if(fc && data!=null)
 		// r.define("_",InstructionFutureFactory.value(data,source));
 		// System.out.println("create context from parent " +
 		// System.identityHashCode(this) + " - " + System.identityHashCode(r));
 		return r;
 	}
-	
-	
-	
-	
-	protected String namespace = null;
-	public InstructionFuture<JSON> getdef(String ns, String name) {
-		InstructionFuture<JSON> r = null;
-		AsyncExecutionContext<JSON> named = getNamedContext(ns);
-		if (named != null) {
-			r = named.getdef(name);
-		}
-		return r;
-	}
-	@Override
-	public InstructionFuture<JSON> getdef(String name) {
-		// System.out.println("context seeking " + name + " in " +
-		// System.identityHashCode(this));
-		InstructionFuture<JSON> r = namespace!=null  ? getdef(namespace,name) : null;
-		if (r != null) {
-			define(name, r);
-			return r;
-		}
-		r = functions.get(name);
-		if (r != null)
-			return r;
-		
 
-	String[] parts = name.split("[.]", 2);
-		if (parts.length > 1) {
-			r = getdef(parts[0],parts[1]);
-		} else {
-			if(namespace!=null) r = getdef(namespace,name);
-			if (r == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
-				r = parent.getdef(name);
+	protected String namespace = null;
+
+	// @Override
+	public Pair<String, InstructionFuture<JSON>> getdef(String ns, String name) {
+		InstructionFuture<JSON> r = null;
+		Pair<String, InstructionFuture<JSON>> rr = null;
+		if (ns != null) {
+			AsyncExecutionContext<JSON> named = getNamedContext(ns);
+			if (named != null) {
+				rr = named.getDefInternal(null, name);
+				if (rr != null) {
+					rr = new Pair<>(ns, rr.s);
+				}
 			}
 		}
+		if (rr == null) {
+			InstructionFuture<JSON> def = getdef(name);
+			if (def != null) {
+				rr = new Pair<>(null, def);
+			}
+		}
+		return rr;
+	}
+
+	@Override
+	public InstructionFuture<JSON> getdef(String name) {
+		Pair<String, InstructionFuture<JSON>> rr = getDefInternal(null, name);
+		if (rr != null)
+			return rr.s;
+		return null;
+	}
+
+	// @Override
+	public Pair<String, InstructionFuture<JSON>> getDefInternal(String ns, String name) {
+		// System.out.println("context seeking " + name + " in " +
+		// System.identityHashCode(this));
+
+		InstructionFuture<JSON> r = functions.get(name);
+		// r = functions.get(name);
 		if (r != null)
-			define(name, r);
-		return r;
+			return new Pair<>(null, r);
+
+		String[] parts = name.split("[.]", 2);
+		Pair<String, InstructionFuture<JSON>> rr = null;
+		if (parts.length > 1) {
+			rr = ns != null ? getdef(ns, name) : null;
+			if (rr != null) {
+				define(name, rr.s);
+				return rr;
+			}
+			rr = getdef(parts[0], parts[1]);
+		} else {
+			if (ns != null)
+				rr = getdef(ns, name);
+			if (rr == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
+				rr = parent.getDefInternal(null, name);
+			}
+		}
+		if (rr != null)
+			define(name, rr.s);
+		return rr;
 	}
 
 	public void setExecutionService(ListeningExecutorService s) {
@@ -311,6 +347,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public boolean isInit() {
 		return isInit;
 	}
+
 	@Override
 	public void setRuntime(boolean b) {
 		isRuntime = b;
@@ -322,17 +359,26 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	List<ContextComplete> closers = new ArrayList<>();
+
 	@Override
 	public boolean cleanUp() {
 		boolean result = true;
-		for(ContextComplete f:closers) {
+		for (ContextComplete f : closers) {
 			result = result && f.complete();
 		}
 		return result;
 	}
-	
+
 	public void onCleanUp(ContextComplete func) {
 		closers.add(func);
+	}
+
+	public String getNamespace() {
+		return namespace;
+	}
+
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
 	}
 
 }

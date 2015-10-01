@@ -1,0 +1,6 @@
+{
+	!init: {
+		new: import("import-test.jtl")
+	},
+	_: new.foo("one",2)
+}
