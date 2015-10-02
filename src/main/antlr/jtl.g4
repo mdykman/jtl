@@ -6,9 +6,6 @@ grammar jtl;
 
 import json;
 
-
-//tokens {S1CONTENT, S2CONTENT}
-
 options {
     language = Java;
     tokenVocab=jtllex;
@@ -181,6 +178,8 @@ variable
       | '$' INTEGER
       | '$' '@'
       | '$' '#'
+      | '$' ':'
+      | '$' '$'
       ;
 
 

@@ -1,9 +1,10 @@
 {
 	foo: {
+		namespace: $$,
 		name: $0,
 		args: $@,
-		one: $1,
-		bar: bar()
+		numargs: [$1,$2,$3],
+		bar: bar($$,$0)
 	},
-	bar: "this is bar"
+	bar: "this is " + $0 + "(). I was called from " + $1 + "." + $2 + "()"
 }

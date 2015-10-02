@@ -50,7 +50,7 @@ public abstract class AbstractInstructionFuture implements
    }
 
    @Override 
-   public final ListenableFuture<JSON> call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+   public final ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context,final ListenableFuture<JSON> data)
          throws ExecutionException {
       boolean debug = context.debug();
       if(debug) {

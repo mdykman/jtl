@@ -255,7 +255,7 @@ public class JtlExecutor {
 			synchronized (this) {
 				if (initializedContext == null) {
 					initializedContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
-							null, builder, getExecutorService());
+							serverBase, builder, getExecutorService());
 					initializedContext.setInit(true);
 					if (init != null) {
 						InstructionFuture<JSON> initf = compiler.parse(init);
