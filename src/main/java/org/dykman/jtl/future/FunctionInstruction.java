@@ -53,7 +53,7 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 		// AsyncExecutionContext<JSON> declaring = dctx.declaringContext();
 		// boolean subst = (!variable); // && (dctx != declaring) &&
 		// dctx.isFunctionContext();
-		if (fc != null && !variable) {
+		if ((!variable) && dctx.declaringContext()!= dctx && fc != null) {
 			int ss = 1;
 			while (true) {
 				String skey = Integer.toString(ss++);
