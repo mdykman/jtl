@@ -122,8 +122,7 @@ public class JtlCompiler {
 		// configurable: import, extend
 		define(context, "_", InstructionFutureFactory.value(df, meta));
 
-		JSONObject modules = (JSONObject) config.get("modules");
-		define(context, "module", loadModule(meta, modules));
+		define(context, "module", loadModule(meta, config));
 		define(context, "import", importInstruction(meta, config));
 
 		// general

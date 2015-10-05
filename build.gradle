@@ -8,7 +8,7 @@
  */
 
 group='org.dykman'
-version='0.9.5'
+version='0.9.6'
 
 
 // In this section you declare where to find the dependencies of your project
@@ -89,10 +89,12 @@ dependencies {
     compile 'com.google.guava:guava:18.0'
     runtime 'com.google.guava:guava:18.0'
     
-    compile 'com.zaxxer:HikariCP:2.3.8'
-    runtime 'com.zaxxer:HikariCP:2.3.8'
+    compile 'com.zaxxer:HikariCP:2.4.1'
+    runtime 'com.zaxxer:HikariCP:2.4.1'
+
     compile 'mysql:mysql-connector-java:5.1.35'
     runtime 'mysql:mysql-connector-java:5.1.35'
+
     compile 'postgresql:postgresql:9.1-901-1.jdbc4'
     runtime 'postgresql:postgresql:9.1-901-1.jdbc4'
 

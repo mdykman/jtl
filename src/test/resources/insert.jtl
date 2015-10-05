@@ -1,9 +1,9 @@
 {
    !init: {
       db: module("jdbc",{
-         uri:"jdbc:sqlite:src/test/resources/recurse.db",
-         driver:"org.sqlite.JDBC",
-			insert_id: "select last_insert_rowid()"
+         url:"jdbc:sqlite:src/test/resources/recurse.db",
+         driverClass:"org.sqlite.JDBC"
+//			insert_id: "select last_insert_rowid()"
       })
    },
    

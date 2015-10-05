@@ -4,7 +4,6 @@
 	func: {
 		name: $0,
 		data: $_,
-		nparams: $#,
 		params: $@
 	},
 	indirect: call("func",$1,$2)

@@ -16,7 +16,7 @@ import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 
-public class LdapModule implements Module {
+public class LdapModule extends AbstractModule {
 	boolean debug = false;
 	JSONObject baseConfig;
 
@@ -26,8 +26,8 @@ public class LdapModule implements Module {
 		final String connectionKey;
 		LdapWrapper(JSONObject config) {
 			this.config = config;
-			this.contextKey = "@ldap-context-" + Long.toHexString(System.identityHashCode(this));
-			this.connectionKey = "@ldap-connection-" + Long.toHexString(System.identityHashCode(this));
+			this.contextKey = "@ldap-" + bindingKey + "-" + Long.toHexString(System.identityHashCode(this));
+			this.connectionKey = "@ldap-" + bindingKey + "-" + Long.toHexString(System.identityHashCode(this));
 		}
 		
 		LdapContext getLdapContext(AsyncExecutionContext<JSON> context) throws NamingException {
@@ -70,15 +70,13 @@ public class LdapModule implements Module {
 			}
 			return lc;
 		}
-		
-		
 	}
 
 	public LdapModule(JSONObject config) {
 		this.baseConfig = config;
 	}
 	@Override
-	public void define(SourceInfo meta, AsyncExecutionContext<JSON> parent) {
+	public void define(SourceInfo meta, AsyncExecutionContext<JSON> parent,boolean serverMode) {
 		// TODO Auto-generated method stub
 
 	}

@@ -29,8 +29,10 @@ import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
-
+import org.dykman.jtl.modules.JdbcModule;
 import org.dykman.jtl.server.JtlServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -40,6 +42,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
+	static final String JTL_VERSION = "0.9.6";
+
 	final JSONBuilder builder;
 	InstructionFutureFactory factory = new InstructionFutureFactory();
 	JtlCompiler compiler;
@@ -48,6 +52,8 @@ public class JtlMain {
 	JSONObject config;
 	File configFile = null;
 	static boolean verbose = false;
+	static Logger logger;
+
 
 	public JtlMain(File jtlBase,File conf, boolean canonical) throws IOException {
 		builder = new JSONBuilderImpl(canonical);
@@ -64,13 +70,13 @@ public class JtlMain {
 		
 
 		config = bc; // initial config value
+		config.put("server-mode", builder.value(false));
 		configFile = conf;
 	}
 
 	public static void setVerbose(boolean b) {
 		verbose = b;
 	}
-	static final String JTL_VERSION = "0.9.5";
 	public static void printHelp(Options cl) {
 		System.out.println(
 				// " $ java " + JtlMain.class.getName()
@@ -108,12 +114,14 @@ public class JtlMain {
 	public static void main(String[] args) {
 		JtlMain main = null;
 		try {
+			
 			Options options = new Options();
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
-			options.addOption(new Option("v", "version", false, "print jtl version"));
+			options.addOption(new Option("V", "version", false, "print jtl version"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));
 			options.addOption(new Option("i", "init", true, "specify an init script"));
-			options.addOption(new Option("V", "verbose", false, "generate verbose output to stderr"));
+			options.addOption(new Option("v", "verbose", false, "generate verbose output to stderr"));
+			options.addOption(new Option("l", "log", true, "set the log level, one of: trace, debug, info, warn, or error (default:warn)"));
 
 			
 			options.addOption(new Option("x", "jtl", true, "specify a jtl file"));
@@ -157,6 +165,7 @@ public class JtlMain {
 			File init = null;
 			File output = null;
 			Integer batch = null;
+			String logLevel = "warn";
 			int indent = 3;
 			boolean dirSet = false;
 			boolean verbose = false;
@@ -183,18 +192,30 @@ public class JtlMain {
 				System.exit(-1);
 				throw new RuntimeException("exit didn't");
 			}
+			
+			if(cli.hasOption('v')) {
+				verbose = true;
+			}
+			
+			if (cli.hasOption('l')) {
+				logLevel = cli.getOptionValue('l'); 
+			} else if(verbose) {
+				logLevel="info";
+
+			}
+			System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+			logger = LoggerFactory.getLogger(JdbcModule.class);
+			
 
 			String oo;
 			if (cli.hasOption('p') || cli.hasOption("port")) {
 				oo = cli.getOptionValue('p');
 				oo = oo != null ? oo : cli.getOptionValue("port");
 				port = Integer.parseInt(oo);
+				logger.info("listening on port " + port);
 				serverMode = true;
 			}
 			if(cli.hasOption('V')) {
-				verbose = true;
-			}			
-			if(cli.hasOption('v')) {
 				System.out.print("jtl version " + JTL_VERSION);
 				System.out.println(" - see https://github.com/mdykman/jtl");
 				System.exit(0);
@@ -202,21 +223,39 @@ public class JtlMain {
 			if (cli.hasOption('s') || cli.hasOption("server")) {
 				serverMode = true;
 			}
+			
 			if (cli.hasOption('B') || cli.hasOption("binding")) {
 				bindAddress = cli.getOptionValue('B');
+				logger.info("binding to interface " + bindAddress);
 				serverMode = true;
 			}
 			if (cli.hasOption('o') || cli.hasOption("output")) {
 				oo = cli.getOptionValue('o');
 				output = new File(oo);
+				logger.info("writing output to " + output.getPath());
 			}
 			if (cli.hasOption('z') || cli.hasOption("null")) {
+				logger.info("using null input data");
 				useNull = true;
 			}
 			if (cli.hasOption('i') || cli.hasOption("init")) {
 				init = new File(cli.getOptionValue('i'));
+				logger.info("using init script: " + init.getPath());
 			}
-			
+			if (cli.hasOption('k') || cli.hasOption("canon")) {
+				canonical = true;
+			}
+			if (cli.hasOption('c') || cli.hasOption("config")) {
+				oo = cli.getOptionValue('c');
+				if (oo == null)
+					oo = cli.getOptionValue("config");
+
+	//			if (dirSet)
+	//				fconfig = new File(cexddir, oo);
+	//			else
+					fconfig = new File(oo);
+					logger.info("using optional configuration " + fconfig.getPath());
+			}			
 			
 			main = new JtlMain(home,fconfig, canonical);
 			if (cli.hasOption('D') || cli.hasOption("dir")) {
@@ -230,7 +269,9 @@ public class JtlMain {
 				expr = cli.getOptionValue('e');
 			}
 			if (cli.hasOption('a') || cli.hasOption("array")) {
+
 				array = true;
+				logger.info("reading a sequence of JSON entities from stdin");
 			}
 			if (cli.hasOption('b') || cli.hasOption("batch")) {
 				oo = cli.getOptionValue('b');
@@ -243,20 +284,17 @@ public class JtlMain {
 					// RuntimeException("don't know how to process a batch of
 					// 0");
 				}
+				if(batch == 0) 
+					logger.info("reading a sequence of JSON entities from stdin");
+				else 
+					logger.info("reading a sequence of JSON entities in batched of " + oo + "from stdin");
+
 				array = true;
 			}
 
-			if (cli.hasOption('c') || cli.hasOption("config")) {
-				oo = cli.getOptionValue('c');
-				if (oo == null)
-					oo = cli.getOptionValue("config");
 
-	//			if (dirSet)
-	//				fconfig = new File(cexddir, oo);
-	//			else
-					fconfig = new File(oo);
-			}
 			if (cli.hasOption('q') || cli.hasOption("quote")) {
+				logger.info("force key enquoting ");
 				enquote = true;
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
@@ -284,15 +322,18 @@ public class JtlMain {
 					oo = cli.getOptionValue("indent");
 				indent = Integer.parseInt(oo);
 			}
-			if (cli.hasOption('k') || cli.hasOption("canon")) {
-				canonical = true;
-			}
+			
 
 
 			if(jtl!=null && cexddir == null) {
 				jtl = jtl.getAbsoluteFile();
 				cexddir = jtl.getParentFile();
 			}
+			
+			if(serverMode) logger.info("running in server mode");
+			else logger.info("running in cli mode");
+
+			
 			List<String> argList = cli.getArgList();
 			Iterator<String> argIt = argList.iterator();
 			if (serverMode) {
@@ -313,6 +354,8 @@ public class JtlMain {
 						cexddir = jtl.getParentFile();
 					}
 				}
+				logger.info("using base directory " + cexddir.getPath());
+
 				JtlServer server = main.launchServer(home, cexddir, init, jtl, fconfig, bindAddress, port, canonical);
 				server.start();
 				server.join();
@@ -334,15 +377,16 @@ public class JtlMain {
 						cexddir = jtl.getParentFile();
 					}
 				}
+				logger.info("using base directory " + cexddir.getPath());
 				
 				if (expr == null && jtl == null)
 					throw new RuntimeException("no program specified");
 				
 				if(verbose) {
 					if(expr!=null) {
-						System.err.println("evaluating expression: " + expr);
+						logger.info("evaluating expression: " + expr);
 					} else {
-						System.err.println("evaluating file: " + jtl.getAbsolutePath());
+						logger.info("evaluating file: " + jtl.getAbsolutePath());
 					}
 				}
 				InstructionFuture<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
@@ -425,7 +469,7 @@ public class JtlMain {
 				System.err.println("error on shutdown: " + e.getLocalizedMessage());
 			}
 		}
-	}
+	}/*
 
 	public void setConfig(File f) throws IOException {
 		try {
@@ -454,7 +498,7 @@ public class JtlMain {
 		}
 		return builder.object(null);
 	}
-
+*/
 	public JtlServer launchServer(File jtlBase, File serverBase, File init, File script, File config,
 			String bindAddress, int port, boolean canonical) throws IOException {
 		// public JtlServer(File jtlBase,File serverBase, File init, File

@@ -50,9 +50,7 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 				insts.add(inst);
 			}
 
-		// AsyncExecutionContext<JSON> declaring = dctx.declaringContext();
-		// boolean subst = (!variable); // && (dctx != declaring) &&
-		// dctx.isFunctionContext();
+ 		// dctx.isFunctionContext();
 		if ((!variable) && dctx.declaringContext()!= dctx && fc != null) {
 			int ss = 1;
 			while (true) {
