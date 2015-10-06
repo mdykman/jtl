@@ -15,7 +15,22 @@ version='0.9.7'
 repositories {
 	 maven {
 		url "http://nexus.ailis.de/content/groups/public"
-	 }
+	}
+	maven {
+		url "http://repository.mapr.com/nexus/content/repositories/drill/"
+	}
+	maven {
+		url "http://repository.mapr.com/nexus/content/repositories/drill-optiq/"
+	}
+	maven {
+		url "https://oss.sonatype.org/content/repositories/snapshots"
+	}
+	maven {
+		url "http://conjars.org/repo"
+	}
+//	maven {
+//	 	url "http://repo.pentaho.org/artifactory/repo"
+//	 } 
     jcenter()
 }
 
@@ -101,6 +116,9 @@ dependencies {
     compile 'org.xerial:sqlite-jdbc:3.8.10.1'
     runtime 'org.xerial:sqlite-jdbc:3.8.10.1'
 
+	compile 'org.apache.drill:drill-common:1.1.0'
+	runtime 'org.apache.drill:drill-common:1.1.0'
+	
 
     compile 'org.antlr:antlr4:4.5'
     compile 'org.antlr:antlr4-runtime:4.5'
