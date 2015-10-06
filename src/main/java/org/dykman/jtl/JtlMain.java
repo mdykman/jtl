@@ -42,7 +42,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	static final String JTL_VERSION = "0.9.6";
+	static final String JTL_VERSION = "0.9.7";
 
 	final JSONBuilder builder;
 	InstructionFutureFactory factory = new InstructionFutureFactory();
@@ -78,9 +78,7 @@ public class JtlMain {
 		verbose = b;
 	}
 	public static void printHelp(Options cl) {
-		System.out.println(
-				// " $ java " + JtlMain.class.getName()
-				" $ jtl " + " [options ...] [arg1 ... ]");
+		System.out.println(" $ jtl " + " [options ...] [arg1 ... ]");
 		System.out.println();
 		System.out.println("  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
 		System.out.println("    see: https://github.com/mdykman/jtl/README.md");

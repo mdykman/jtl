@@ -294,7 +294,7 @@ public class JdbcModule extends AbstractModule {
 											StringBuilder sb = new StringBuilder("query: ");
 											sb.append(qq);
 											if (pp != null)
-												sb.append(pp.toString());
+												sb.append(" :: ").append(pp.toString());
 											logger.info(sb.toString());
 										}
 										if (pp != null) {

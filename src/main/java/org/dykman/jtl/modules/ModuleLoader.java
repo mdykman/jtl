@@ -31,16 +31,17 @@ public class ModuleLoader {
 //   Set<Pair<String, String>> loaded = new HashSet<>();
 //   Map<String, String> _loaded = new HashMap<>();
 
-   public ModuleLoader(File base,JSONBuilder builder, JSONObject conf) {
+   public ModuleLoader(File base,JSONBuilder builder, JSONObject conf) 
+   throws ExecutionException {
       this.builder = builder;
       this.baseConf = conf;
       this.base = base;
       modules = (JSONObject) baseConf.get("modules");
       if(modules == null) {
           logger.error("no modules are defined");
-          throw new RuntimeException("no modules are defined");
+          throw new ExecutionException("no modules are defined",SourceInfo.internal("modules"));
        }
-      if(logger.isWarnEnabled()) {
+      if(logger.isInfoEnabled()) {
 		  StringBuilder sb = new StringBuilder("available modules: ");
     	  for(Pair<String, JSON> pp: modules) {
     		  sb.append(pp.f).append(" ");
@@ -51,7 +52,8 @@ public class ModuleLoader {
 
    private static ModuleLoader theInstance = null;
 
-   public static ModuleLoader getInstance(File base,JSONBuilder builder, JSONObject config) {
+   public static ModuleLoader getInstance(File base,JSONBuilder builder, JSONObject config) 
+   	throws ExecutionException {
       if(theInstance == null) {
          synchronized(ModuleLoader.class) {
             if(theInstance == null) {
