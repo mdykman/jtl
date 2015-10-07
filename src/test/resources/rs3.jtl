@@ -3,32 +3,31 @@
       db: module("jdbc",{
 					datasourceClass : 'com.mysql.jdbc.jdbc2.optional.MysqlDataSource',
 					database: 'pantheon',
-              uri:"jdbc:mysql://localhost:3306/",
-//              driver:"com.mysql.jdbc.Driver",
-              user:"root",
-              password:""
-		}),
-		cc: module("cache",{
+              url:"jdbc:mysql://localhost:3306/",
+              username:"root",
+              password:"password"
+      }),
+		cache: module("cache",{
 			pq: { max: 5000, on: "read", ttl: 30000 },
 			cr: { max: 5000, on: "read", ttl: 30000 },
 			cat: { max: 10000, on: "read", ttl: 30000 },
 			th: { max: 10000, on: "read", ttl: 30000 }
 		})
 	},
-	_:  recipes/cc.pq(primaryQuery(.))/amend("Recipe",thingId/ii() or null),
-	ii: cy(.)/amend("Recipe",thingId/ii() or null),
-	cy: cc.cr(cq($1)),
-	ty: cc.th(thingQ($1))/amend({
+	_:  recipes/primaryQuery(.)/amend("Recipe",thingId/ii() or null),
+	ii: cq(.),
+	ty: cache.th(thingQ($1))/*/amend({
 		Recipe:thingId/ii() or null,
 		amount: $2,
 		minQuality: $3
 		}),
-	caty: cc.cat(categoryQ($1))/amend({
+//	caty: cache.cat(categoryQ($1)),
+	caty: cache.cat(categoryQ($1))/amend({
 		amount:$2,
 		minQuality: $3
 	}),
 	primaryQuery: db.query("select * from things where thingId = ?"/copy(count($1))/join(" UNION "),$1),
-	cq: db.query("select * from coreRecipe where createId = ?",[$1])/*/(resourceId ? 
+	cq: db.query("select * from coreRecipe where createId = ?",$1)/*/amend("Recipe",resourceId ? 
 		ty(resourceId,amount,minQuality) : 
 		caty(category,amount,minQuality)),
 	thingQ: db.query("select * from things where thingId = ?",[$1]),

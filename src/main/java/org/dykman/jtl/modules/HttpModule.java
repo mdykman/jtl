@@ -36,7 +36,7 @@ import org.dykman.jtl.json.JSONValue;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class HttpModule implements Module {
+public class HttpModule extends AbstractModule {
 
 	final JSONObject baseConfig;
 
@@ -45,7 +45,7 @@ public class HttpModule implements Module {
 	}
 
 	@Override
-	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context) {
+	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context,boolean serverMode) {
 		context.define("get", _getInstruction(meta,context.builder()));
 		context.define("post", _postInstruction(meta,context.builder()));
 		context.define("put", _putInstruction(meta,context.builder()));

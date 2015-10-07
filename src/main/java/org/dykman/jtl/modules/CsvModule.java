@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class CsvModule implements Module {
+public class CsvModule extends AbstractModule {
 
    JSONObject config;
 
@@ -76,7 +76,7 @@ public class CsvModule implements Module {
    }
 
    @Override
-   public void define(SourceInfo meta, AsyncExecutionContext<JSON> context) {
+   public void define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
 
       context.define("read", new AbstractInstructionFuture(meta) {
 

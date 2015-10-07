@@ -108,7 +108,7 @@ public class JtlCompiler {
 		ctx.define(s, inst);
 	}
 
-	public static AsyncExecutionContext<JSON> createInitialContext(JSON data, JSON config, File f, JSONBuilder builder,
+	public static AsyncExecutionContext<JSON> createInitialContext(JSON data, JSONObject config, File f, JSONBuilder builder,
 			ListeningExecutorService les) {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
@@ -121,11 +121,8 @@ public class JtlCompiler {
 		meta.line = meta.position = 0;
 		// configurable: import, extend
 		define(context, "_", InstructionFutureFactory.value(df, meta));
-		if (config.getType() == JSONType.OBJECT) {
-			JSONObject conf = (JSONObject) config;
-			JSONObject modules = (JSONObject) conf.get("modules");
-			define(context, "module", loadModule(meta, modules));
-		}
+
+		define(context, "module", loadModule(meta, config));
 		define(context, "import", importInstruction(meta, config));
 
 		// general

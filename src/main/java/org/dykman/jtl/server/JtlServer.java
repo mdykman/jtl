@@ -17,17 +17,9 @@ public class JtlServer {
 
 	final Server server;
 	final File serverBase;
-//	final File script;
-//	JSONBuilder builder = new JSONBuilderImpl();
 
-//	File servletRoot = null;
 	File init = null;
 	InstructionFuture<JSON> defaultProgram = null;
-
-//	ListeningExecutorService les;
-//	JSON config;
-//	int port;
-
 
 	public JtlServer(File jtlBase,File serverBase, File init, File script, File config, String bindAddress, int port,boolean canonical) 
 			throws IOException {

@@ -4,8 +4,6 @@ import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.transform;
 
 import java.sql.Connection;
-import java.sql.Driver;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -16,9 +14,8 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
-import javax.sql.DataSource;
-
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
@@ -30,6 +27,8 @@ import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -37,11 +36,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-public class JdbcModule implements Module {
+public class JdbcModule extends AbstractModule {
 
 	final JSONObject baseConfig;
 	final String key;
 	boolean debug = false;
+	static Logger logger = LoggerFactory.getLogger(JdbcModule.class);
+
+	final Executor queryExecutor;
+	final Executor insertExecutor;
+
 
 	public JdbcModule(JSONObject config) {
 		this.baseConfig = config;
@@ -50,11 +54,11 @@ public class JdbcModule implements Module {
 			debug = j.isTrue();
 		j = baseConfig.get("insert_id");
 		final String insertIdExpr = j == null ? null : j.stringValue();
-		this.key = "@jdbc-connection-" + Long.toHexString(System.identityHashCode(this));
+		this.key = "@jdbc-" + bindingKey + "-" + Long.toHexString(System.identityHashCode(this));
 
 		queryExecutor = new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat, String query,JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
 				JList frame = builder.frame();
 				ResultSetMetaData rsm = rs.getMetaData();
@@ -69,32 +73,23 @@ public class JdbcModule implements Module {
 				return frame;
 			}
 		};
+
 		insertExecutor = new Executor() {
 
 			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
-				stat.executeUpdate();
+			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
+				int res = stat.executeUpdate();
+				final String idstat;
 				if (insertIdExpr != null) {
-					// stat.execute();
-					final String idstat;
-
-					if (insertIdExpr.contains("$TABLE")) {
-						// TODO:: for table-name dependent last insert
-						// expression.
-						// this is seriously broken. probably easy to fix
-						ResultSet rs = stat.getGeneratedKeys();
-						if (rs.next()) {
-							Object col = rs.getObject(1);
-							idstat = insertIdExpr.replace("$TABLE", col.toString());
-							return builder.value(col);
-						} else {
-							if (debug)
-								System.err.println("failed to determine the table name for insert: " + insertIdExpr);
-							throw new SQLException("failed to determine the table name for insert");
-						}
+					if(insertIdExpr.contains("$TABLE")) {
+						String tn="unknown";
+						String pp[] = query.split("\\s+", 4);
+						if(pp.length> 2) tn = pp[2];
+						idstat = insertIdExpr.replace("$TABLE", tn);
 					} else {
 						idstat = insertIdExpr;
 					}
+					logger.info(idstat);
 					PreparedStatement lid = stat.getConnection().prepareStatement(idstat);
 					ResultSet rs = lid.executeQuery();
 					JSON r = builder.value();
@@ -107,50 +102,125 @@ public class JdbcModule implements Module {
 					return r;
 				} else {
 					ResultSet rs = stat.getGeneratedKeys();
-					if (rs.next()) {
-						String col = rs.getString(1);
-						return builder.value(col);
+					int cc = 0;
+					JSONArray arr = builder.array(null);
+					JSON j = builder.value();
+					while(rs.next()) {
+						Object col = rs.getObject(1);
+						j = builder.value(col);
+						arr.add(j);
+						++cc;
 					}
-					if (debug)
-						System.err.println("no insert_id statement provided and the system could not determine a key");
-					return builder.value(true);
+					stat.close();
+					if(cc == 1) return j;
+					else return arr;
 				}
 			}
 		};
 	}
 
 	interface Executor {
-		JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException;
+		JSON process(PreparedStatement stat,String query, JSONBuilder builder) throws SQLException;
 	}
 
 	class JdbcConnectionWrapper {
 		final JSONObject conf;
-		final HikariConfig hkc;
-///		final DataSource dataSource;
-		final HikariDataSource hds;
+		/// final DataSource dataSource;
+		HikariDataSource hds;
 		String databaseName;
+		String username;
+		String password;
+		String host;
+		String port;
+		String jdbcUrl;
+		String driverClass;
+		String datasourceClass;
+		String maxSize = null;
 
-		JdbcConnectionWrapper(JSONObject conf) {
+		boolean serverMode;
+
+
+		JdbcConnectionWrapper(JSONObject conf, String key,boolean serverMode) throws ExecutionException {
 			this.conf = conf;
-			this.hkc = new HikariConfig();
-//			try {
-//				Class<Driver> drc = (Class<Driver>) Class.forName(conf.get("driver").stringValue());
-				this.hkc.setDataSourceClassName(conf.get("driver").stringValue());
-				this.hkc.setUsername(conf.get("user").stringValue());
-				this.hkc.setPassword(conf.get("password").stringValue());
-//				this.hkc.set(conf.get("password").stringValue());
-				this.hkc.setJdbcUrl(conf.get("uri").stringValue());
-				hkc.setMaximumPoolSize(20);
-				databaseName = conf.get("database").stringValue();
-				this.hkc.setCatalog(databaseName);
-				hds = new HikariDataSource(hkc);
-//				this.dataSource = hkc.getDataSource();
-//			} catch (ClassNotFoundException e) {
-//				throw new ExceptionInInitializerError(e);
-//			}
+			this.serverMode = serverMode;
+			Properties props = new Properties();
+			for (Pair<String, JSON> pp : conf) {
+				switch (pp.f) {
+				case "driverClass":
+					driverClass = pp.s.stringValue();
+					break;
+				case "datasourceClass":
+					datasourceClass = pp.s.stringValue();
+					break;
+				case "username":
+					username = pp.s.stringValue();
+					break;
+				case "password":
+					password = pp.s.stringValue();
+					break;
+				case "url":
+					jdbcUrl = pp.s.stringValue();
+					break;
+				case "database":
+					databaseName = pp.s.stringValue();
+					break;
+				case "host":
+					host = pp.s.stringValue();
+					break;
+				case "port":
+					port = pp.s.stringValue();
+					break;
+				case "maxSize":
+					maxSize = pp.s.stringValue();
+					break;
+				default:
+					logger.info("ignoring datasource setting " + pp.f + ": " + pp.s.stringValue());
+				}
+			}
+			props.setProperty("poolName", bindingKey + " connection pool");
+			hds = configHikari(props);
+		}
+		
+		HikariDataSource configHikari(Properties props) throws ExecutionException {
+			if (datasourceClass != null)
+				props.put("dataSourceClassName", datasourceClass);
+			else if (driverClass != null)
+				props.put("driverClassName", driverClass);
+			else
+				throw new ExecutionException("neither driver nor datasource found in config",
+						SourceInfo.internal("jdbc"));
+			if (username != null)
+				props.put("username", username);
+			if (password != null)
+				props.put("password", password);
+			if (jdbcUrl != null)
+				props.put("jdbcUrl", jdbcUrl);
+			else {
+				if (databaseName != null)
+					props.put("databaseName", databaseName);
+				if (host != null)
+					props.put("serverName", host);
+				if (port != null)
+					props.put("portNumber", port);
+			}
+			if (serverMode) {
+				if (maxSize != null) {
+					props.put("maximumPoolSize", maxSize);
+				} else {
+					props.put("maximumPoolSize", "10");
+				}
+			} else {
+				// cli, only ever needs 1 connection per datasource
+				props.put("maximumPoolSize", "1");
+			}
+
+			HikariConfig hkc = new HikariConfig(props);
+			return new HikariDataSource(hkc);
 		}
 
-		public Connection getConnection(SourceInfo src, AsyncExecutionContext<JSON> context) throws ExecutionException {
+		
+		protected Connection getConnection(SourceInfo src, AsyncExecutionContext<JSON> context)
+				throws ExecutionException {
 			final AsyncExecutionContext<JSON> rc = context.getRuntime();
 			Connection connection = (Connection) rc.get(key);
 			if (connection == null) {
@@ -160,7 +230,8 @@ public class JdbcModule implements Module {
 					if (connection == null) {
 						try {
 							connection = hds.getConnection();
-//							connection = this.dataSource.getConnection();
+							connection.setCatalog(databaseName);
+							// connection = this.dataSource.getConnection();
 							rc.set(key, connection);
 							final Connection theConnection = connection;
 							rc.onCleanUp(new ContextComplete() {
@@ -178,55 +249,11 @@ public class JdbcModule implements Module {
 
 								}
 							});
-							
+
 						} catch (Throwable e) {
 							e.printStackTrace();
-							throw new ExecutionException(e,src);
+							throw new ExecutionException(e, src);
 						}
-						/*
-						String driver = conf.get("driver").stringValue();
-						String uri = conf.get("uri").stringValue();
-						String user = conf.get("user").stringValue();
-						String password = conf.get("password").stringValue();
-						if (driver != null) {
-							try {
-	//							Class<Driver> drc = (Class<Driver>) Class.forName(driver);
-								// Driver drv = drc.newInstance();
-								Properties properties = new Properties();
-								if (user != null) {
-									properties.setProperty("user", user);
-									properties.setProperty("password", password);
-									// connection = drv.connect(uri,properties);
-									connection = DriverManager.getConnection(uri, properties);
-								} else {
-									connection = DriverManager.getConnection(uri);
-								}
-								
-								final Connection theConnection = connection;
-								rc.onCleanUp(new ContextComplete() {
-
-									@Override
-									public boolean complete() {
-										try {
-											theConnection.close();
-											return true;
-										} catch (SQLException e) {
-											System.err.println("there was an error while closing a jdbc connection: "
-													+ e.getLocalizedMessage());
-											return false;
-										}
-
-									}
-								});
-								
-//							} catch (ClassNotFoundException e) {
-//								throw new ExecutionException("JDBC: unable to load class " + driver, src);
-							} catch (SQLException e) {
-								throw new ExecutionException("JDBC: unable to connect to " + uri, src);
-							}
-							
-						}
-						*/
 					}
 				}
 			}
@@ -261,13 +288,14 @@ public class JdbcModule implements Module {
 								@Override
 								public JSON call() throws Exception {
 									Connection connection = getConnection(source, context);
-									synchronized(connection) {
+									synchronized (connection) {
 										PreparedStatement prep = connection.prepareStatement(stringValue(qq));
-										if (debug) {
-											System.err.print("query:" + stringValue(qq));
+										if (logger.isInfoEnabled()) {
+											StringBuilder sb = new StringBuilder("query: ");
+											sb.append(qq);
 											if (pp != null)
-												System.err.println(" " + pp.toString());
-											System.err.println();
+												sb.append(" :: ").append(pp.toString());
+											logger.info(sb.toString());
 										}
 										if (pp != null) {
 											switch (pp.getType()) {
@@ -299,7 +327,7 @@ public class JdbcModule implements Module {
 											}
 
 										}
-										return exec.process(prep, context.builder());
+										return exec.process(prep, qq.stringValue(),context.builder());
 									}
 								}
 							};
@@ -312,12 +340,9 @@ public class JdbcModule implements Module {
 		}
 	}
 
-	final Executor queryExecutor;
-	final Executor insertExecutor;
-
 	@Override
-	public void define(SourceInfo meta, AsyncExecutionContext<JSON> context) {
-		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig);
+	public void define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) throws ExecutionException {
+		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig, key,serverMode);
 		SourceInfo si = meta.clone();
 		si.name = "query";
 		si.code = "*internal*";
@@ -328,7 +353,7 @@ public class JdbcModule implements Module {
 		si.code = "*internal*";
 		context.define("cquery", wrapper.query(si, new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat,  String query,JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
 				ResultSetMetaData rsm = rs.getMetaData();
 				int n = rsm.getColumnCount();
@@ -349,33 +374,16 @@ public class JdbcModule implements Module {
 		}));
 
 		si = meta.clone();
-		si = meta.clone();
 		si.name = "execute";
 		si.code = "*internal*";
 		context.define("execute", wrapper.query(si, new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat, JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat,  String query,JSONBuilder builder) throws SQLException {
 				stat.execute();
 				return builder.value(true);
 			}
-
 		}));
-
 		context.define("insert", wrapper.query(si, insertExecutor));
 
 	}
-/*
-	protected static String stringValue(JSON j) {
-		if (j == null)
-			return null;
-		switch (j.getType()) {
-		case STRING:
-		case DOUBLE:
-		case LONG:
-			return ((JSONValue) j).stringValue();
-		default:
-			return null;
-		}
-	}
-*/
 }

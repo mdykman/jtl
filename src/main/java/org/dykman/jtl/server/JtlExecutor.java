@@ -116,12 +116,14 @@ public class JtlExecutor {
 		this.builder = new JSONBuilderImpl(canonical);
 		this.compiler = new JtlCompiler(builder, false, false, false);
 		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
+
 		if (config != null) {
 			if (!config.exists()) {
 				throw new ServletException("unable to locate specified config: " + config.getAbsolutePath());
 			}
 			bc = bc.overlay((JSONObject) builder.parse(config));
 		}
+		bc.put("server-mode", builder.value(true));
 		baseConfig = bc;
 		configFuture = Futures.immediateCheckedFuture(baseConfig);
 		if (boundScript != null)
@@ -255,7 +257,7 @@ public class JtlExecutor {
 			synchronized (this) {
 				if (initializedContext == null) {
 					initializedContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
-							null, builder, getExecutorService());
+							serverBase, builder, getExecutorService());
 					initializedContext.setInit(true);
 					if (init != null) {
 						InstructionFuture<JSON> initf = compiler.parse(init);
