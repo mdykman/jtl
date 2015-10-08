@@ -21,6 +21,9 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.InstructionFuture;
 import org.dykman.jtl.future.InstructionFutureFactory;
@@ -201,7 +204,19 @@ public class JtlMain {
 				logLevel="info";
 
 			}
+			  ConsoleAppender console = new ConsoleAppender(); //create appender
+			  //configure the appender
+			  String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+			  console.setLayout(new PatternLayout(PATTERN)); 
+			  console.setThreshold(Level.FATAL);
+			  console.activateOptions();
+			  //add appender to any Logger (here is root)
+			  org.apache.log4j.Logger.getRootLogger().addAppender(console);
+			
 			System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
+			
+			
+			
 			logger = LoggerFactory.getLogger(JdbcModule.class);
 			
 

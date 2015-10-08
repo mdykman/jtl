@@ -6,8 +6,6 @@
 		})
 	},
 	_: {
-		read: rand(10,csv.read($1))/sort(Date)/collate(),
-		pread: csv.pread($1)
-
+		read: rand(10,csv.read($1))/sort(Date)
 	}
 }

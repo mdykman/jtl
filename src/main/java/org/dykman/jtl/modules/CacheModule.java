@@ -6,9 +6,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.*;
+import org.dykman.jtl.future.AbstractInstructionFuture;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.DeferredCall;
 import org.dykman.jtl.future.InstructionFuture;
@@ -17,6 +18,8 @@ import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -24,27 +27,32 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+
 public class CacheModule extends AbstractModule {
 
 	JSONObject config;
-	boolean serverMode = false;
+	
+	ListenableFuture<JSON> NO_RESULT =null;
+//	boolean serverMode = false;
 
 	public CacheModule(JSONObject config) {
 		this.config = config;
 	}
+	static Logger logger = LoggerFactory.getLogger(CacheModule.class);
 
 	@Override
-	public void define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
-		// CacheHolder ch = new CacheHolder(context.builder());
+	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
+		NO_RESULT= Futures.immediateCheckedFuture(context.builder().value());
+		JSON res = context.builder().value();
 		for (Pair<String, JSON> pp : config) {
 			if ("server-mode".equals(pp.f)) {
-				serverMode = pp.s.isTrue();
+//				serverMode = pp.s.isTrue();
 			} else {
 				SourceInfo si = meta.clone();
 				si.name = "cache:" + pp.f;
 				context.define(pp.f, new AbstractInstructionFuture(si, true) {
 					final JSONObject c = (JSONObject) pp.s;
-					Cache<JSON, JSON> cache = null;
+					Cache<JSON, ListenableFuture<JSON>> cache = null;
 
 					Cache<JSON, Boolean> misses = null;
 
@@ -88,7 +96,7 @@ public class CacheModule extends AbstractModule {
 						return misses;
 					}
 
-					public Cache<JSON, JSON> getCache() {
+					public Cache<JSON, ListenableFuture<JSON>> getCache() {
 						if (cache == null)
 							synchronized (this) {
 								if (cache == null) {
@@ -102,6 +110,9 @@ public class CacheModule extends AbstractModule {
 									String on = j == null ? null : ((JSONValue) j).stringValue();
 									on = getDef(on, "access");
 
+									if(logger.isInfoEnabled()) {
+										logger.info("creating cache " + pp.f + " max="+max+",ttl="+ttl+",on="+on);
+									}
 									if ("access".equals(on)) {
 										cache = CacheBuilder.newBuilder().maximumSize(getDef(max, 10000))
 												.initialCapacity(256)
@@ -149,29 +160,37 @@ public class CacheModule extends AbstractModule {
 									if (mmc.getIfPresent(arr) != null) {
 										return Futures.immediateCheckedFuture(context.builder().value());
 									} else {
-										JSON val = getCache().get(arr, new Callable<JSON>() {
+										ListenableFuture<JSON> val = getCache().get(arr, new Callable<ListenableFuture<JSON>>() {
 											@Override
-											public JSON call() throws Exception {
-												JSON v = ffraw.call(context, data).get();
-												if (v == null || v.getType() == JSONType.NULL) {
-													mmc.put(arr, Boolean.TRUE);
-												}
-												return v;
+											public ListenableFuture<JSON> call() throws Exception {
+												ListenableFuture<JSON> v = ffraw.call(context, data);
+												return Futures.transform(v, new AsyncFunction<JSON, JSON>() {
+
+													@Override
+													public ListenableFuture<JSON> apply(JSON input) throws Exception {
+														if(input== null || input.getType() == JSONType.NULL) {
+															mmc.put(arr, Boolean.TRUE);
+															return NO_RESULT;
+														}
+														return Futures.immediateCheckedFuture(input);
+													}
+													
+												});
 											}
 										});
 
-										return Futures.immediateCheckedFuture(val);
+										return val;
 									}
 								}
 							});
 						}
-
-						// TODO Auto-generated method stub
-						return null;
+					
+						throw new ExecutionException("cache parameter is not a deferred call!!",source);
 					}
 				});
 			}
 		}
+		return context.builder().value(1);
 	}
 
 }

@@ -8,6 +8,6 @@ import org.dykman.jtl.json.JSON;
 public interface Module {
 //	void config(JSONObject config);
 	public void setKey(String key);
-	void define(SourceInfo meta,AsyncExecutionContext<JSON> parent, boolean serverMode)
+	JSON define(SourceInfo meta,AsyncExecutionContext<JSON> parent, boolean serverMode)
 		throws ExecutionException;
 }

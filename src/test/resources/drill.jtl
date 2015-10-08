@@ -1,0 +1,12 @@
+{
+	!init { 
+		bit1: module("jdbc", {
+			driverClass:'org.apache.drill.jdbc.Driver',
+			// zookeepr connection
+			url:'jdbc:drill:zk=localhost:2181/Drill/drillbits1;schema=hive'
+			// direct connection
+			url:'jdbc:drill:schema=hive;node.local:port/drillbits1'
+		})
+	},
+	_:1
+}

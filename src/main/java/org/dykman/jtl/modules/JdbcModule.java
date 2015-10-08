@@ -46,7 +46,6 @@ public class JdbcModule extends AbstractModule {
 	final Executor queryExecutor;
 	final Executor insertExecutor;
 
-
 	public JdbcModule(JSONObject config) {
 		this.baseConfig = config;
 		JSON j = config.get("debug");
@@ -58,7 +57,7 @@ public class JdbcModule extends AbstractModule {
 
 		queryExecutor = new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat, String query,JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
 				JList frame = builder.frame();
 				ResultSetMetaData rsm = rs.getMetaData();
@@ -81,10 +80,11 @@ public class JdbcModule extends AbstractModule {
 				int res = stat.executeUpdate();
 				final String idstat;
 				if (insertIdExpr != null) {
-					if(insertIdExpr.contains("$TABLE")) {
-						String tn="unknown";
+					if (insertIdExpr.contains("$TABLE")) {
+						String tn = "unknown";
 						String pp[] = query.split("\\s+", 4);
-						if(pp.length> 2) tn = pp[2];
+						if (pp.length > 2)
+							tn = pp[2];
 						idstat = insertIdExpr.replace("$TABLE", tn);
 					} else {
 						idstat = insertIdExpr;
@@ -105,22 +105,24 @@ public class JdbcModule extends AbstractModule {
 					int cc = 0;
 					JSONArray arr = builder.array(null);
 					JSON j = builder.value();
-					while(rs.next()) {
+					while (rs.next()) {
 						Object col = rs.getObject(1);
 						j = builder.value(col);
 						arr.add(j);
 						++cc;
 					}
 					stat.close();
-					if(cc == 1) return j;
-					else return arr;
+					if (cc == 1)
+						return j;
+					else
+						return arr;
 				}
 			}
 		};
 	}
 
 	interface Executor {
-		JSON process(PreparedStatement stat,String query, JSONBuilder builder) throws SQLException;
+		JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException;
 	}
 
 	class JdbcConnectionWrapper {
@@ -139,8 +141,7 @@ public class JdbcModule extends AbstractModule {
 
 		boolean serverMode;
 
-
-		JdbcConnectionWrapper(JSONObject conf, String key,boolean serverMode) throws ExecutionException {
+		JdbcConnectionWrapper(JSONObject conf, String key, boolean serverMode) throws ExecutionException {
 			this.conf = conf;
 			this.serverMode = serverMode;
 			Properties props = new Properties();
@@ -180,7 +181,7 @@ public class JdbcModule extends AbstractModule {
 			props.setProperty("poolName", bindingKey + " connection pool");
 			hds = configHikari(props);
 		}
-		
+
 		HikariDataSource configHikari(Properties props) throws ExecutionException {
 			if (datasourceClass != null)
 				props.put("dataSourceClassName", datasourceClass);
@@ -218,7 +219,6 @@ public class JdbcModule extends AbstractModule {
 			return new HikariDataSource(hkc);
 		}
 
-		
 		protected Connection getConnection(SourceInfo src, AsyncExecutionContext<JSON> context)
 				throws ExecutionException {
 			final AsyncExecutionContext<JSON> rc = context.getRuntime();
@@ -251,6 +251,7 @@ public class JdbcModule extends AbstractModule {
 							});
 
 						} catch (Throwable e) {
+							logger.error("there was an exception while acquiring the connection",e);
 							e.printStackTrace();
 							throw new ExecutionException(e, src);
 						}
@@ -258,6 +259,13 @@ public class JdbcModule extends AbstractModule {
 				}
 			}
 			rc.set(key, connection);
+			if (databaseName != null) {
+				try {
+					connection.setCatalog(databaseName);
+				} catch (SQLException e) {
+					logger.error("there was an error setting the catalog name", e);
+				}
+			}
 			return connection;
 		}
 
@@ -327,7 +335,7 @@ public class JdbcModule extends AbstractModule {
 											}
 
 										}
-										return exec.process(prep, qq.stringValue(),context.builder());
+										return exec.process(prep, qq.stringValue(), context.builder());
 									}
 								}
 							};
@@ -341,8 +349,9 @@ public class JdbcModule extends AbstractModule {
 	}
 
 	@Override
-	public void define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) throws ExecutionException {
-		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig, key,serverMode);
+	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context, boolean serverMode)
+			throws ExecutionException {
+		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig, key, serverMode);
 		SourceInfo si = meta.clone();
 		si.name = "query";
 		si.code = "*internal*";
@@ -353,7 +362,7 @@ public class JdbcModule extends AbstractModule {
 		si.code = "*internal*";
 		context.define("cquery", wrapper.query(si, new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat,  String query,JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
 				ResultSetMetaData rsm = rs.getMetaData();
 				int n = rsm.getColumnCount();
@@ -378,12 +387,13 @@ public class JdbcModule extends AbstractModule {
 		si.code = "*internal*";
 		context.define("execute", wrapper.query(si, new Executor() {
 			@Override
-			public JSON process(PreparedStatement stat,  String query,JSONBuilder builder) throws SQLException {
+			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
 				stat.execute();
 				return builder.value(true);
 			}
 		}));
 		context.define("insert", wrapper.query(si, insertExecutor));
+		return context.builder().value(1);
 
 	}
 }

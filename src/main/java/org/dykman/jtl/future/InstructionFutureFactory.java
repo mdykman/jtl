@@ -165,6 +165,9 @@ public class InstructionFutureFactory {
 						}
 						// 2 params
 						JSON js = jit.next();
+						if(js==null) {
+							return immediateCheckedFuture(builder.value());
+						}
 						int cc = nf.intValue();
 						switch (js.getType()) {
 						case LIST:
@@ -517,8 +520,8 @@ public class InstructionFutureFactory {
 						ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(),context.builder(), conf);
 						
 						AsyncExecutionContext<JSON> modctx = context.getInit().getNamedContext(key, true, false, meta);
-						int n = ml.create(meta, name,key, modctx, smode.isTrue(),config);
-						return immediateCheckedFuture(context.builder().value(n));
+						JSON n = ml.create(meta, name,key, modctx, smode.isTrue(),config);
+						return immediateCheckedFuture(n);
 					}
 				});
 

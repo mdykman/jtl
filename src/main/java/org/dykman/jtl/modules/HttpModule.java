@@ -45,13 +45,14 @@ public class HttpModule extends AbstractModule {
 	}
 
 	@Override
-	public void define(SourceInfo meta,AsyncExecutionContext<JSON> context,boolean serverMode) {
-		context.define("get", _getInstruction(meta,context.builder()));
-		context.define("post", _postInstruction(meta,context.builder()));
-		context.define("put", _putInstruction(meta,context.builder()));
-		context.define("delete", _deleteInstruction(meta,context.builder()));
-      context.define("patch", _patchInstruction(meta,context.builder()));
-		context.define("form", _formInstruction(meta,context.builder()));
+	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context, boolean serverMode) {
+		context.define("get", _getInstruction(meta, context.builder()));
+		context.define("post", _postInstruction(meta, context.builder()));
+		context.define("put", _putInstruction(meta, context.builder()));
+		context.define("delete", _deleteInstruction(meta, context.builder()));
+		context.define("patch", _patchInstruction(meta, context.builder()));
+		context.define("form", _formInstruction(meta, context.builder()));
+		return context.builder().value(1);
 
 	}
 
@@ -73,9 +74,8 @@ public class HttpModule extends AbstractModule {
 
 	}
 
-	public InstructionFuture<JSON> _formInstruction(
-	      SourceInfo meta,final JSONBuilder builder) {
-      meta.name="http:form";
+	public InstructionFuture<JSON> _formInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:form";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -83,7 +83,7 @@ public class HttpModule extends AbstractModule {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
 					for (Pair<String, JSON> pp : p) {
-					   // TODO:: I probably should be url-encoding these
+						// TODO:: I probably should be url-encoding these
 						post.addParameter(pp.f, pp.s.toString());
 					}
 				}
@@ -91,12 +91,11 @@ public class HttpModule extends AbstractModule {
 				return post;
 			}
 		};
-		return httpInstruction(meta,mf);
+		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _getInstruction(
-	      SourceInfo meta,final JSONBuilder builder) {
-	   meta.name="http:get";
+	public InstructionFuture<JSON> _getInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:get";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -107,18 +106,16 @@ public class HttpModule extends AbstractModule {
 					for (Pair<String, JSON> pp : p) {
 						nvps.add(new NameValuePair(pp.f, pp.s.toString()));
 					}
-					get.setQueryString(nvps.toArray(new NameValuePair[nvps
-							.size()]));
+					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
 				return get;
 			}
 		};
-		return httpInstruction(meta,mf);
+		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _deleteInstruction(
-	      SourceInfo meta,final JSONBuilder builder) {
-      meta.name="http:delete";
+	public InstructionFuture<JSON> _deleteInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:delete";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -129,18 +126,16 @@ public class HttpModule extends AbstractModule {
 					for (Pair<String, JSON> pp : p) {
 						nvps.add(new NameValuePair(pp.f, pp.s.toString()));
 					}
-					get.setQueryString(nvps.toArray(new NameValuePair[nvps
-							.size()]));
+					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
 				return get;
 			}
 		};
-		return httpInstruction(meta,mf);
+		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _postInstruction(
-	      SourceInfo meta,final JSONBuilder builder) {
-      meta.name="http:post";
+	public InstructionFuture<JSON> _postInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:post";
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
@@ -150,8 +145,7 @@ public class HttpModule extends AbstractModule {
 					try {
 						// IOUtils.cop
 						// post.setr
-						post.setRequestEntity(new StringRequestEntity(p
-								.toString(true), "application/json", "UTF-8"));
+						post.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}
@@ -159,25 +153,23 @@ public class HttpModule extends AbstractModule {
 				return post;
 			}
 		};
-		return httpInstruction(meta,mf);
+		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _putInstruction(
-	      SourceInfo meta,final JSONBuilder builder) {
-	     meta.name="http:put";
+	public InstructionFuture<JSON> _putInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:put";
 
 		MethodFactory mf = new MethodFactory() {
 
 			@Override
 			public HttpMethod method(String url, JSONObject p) {
 				PutMethod put = new PutMethod(url);
-//				PostMethod post = new PostMethod(url);
+				// PostMethod post = new PostMethod(url);
 				if (p != null) {
 					try {
 						// IOUtils.cop
 						// post.setr
-						put.setRequestEntity(new StringRequestEntity(p
-								.toString(true), "application/json", "UTF-8"));
+						put.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
 					}
@@ -185,59 +177,60 @@ public class HttpModule extends AbstractModule {
 				return put;
 			}
 		};
-		return httpInstruction(meta,mf);
+		return httpInstruction(meta, mf);
 	}
+
 	static class PatchMethod extends PostMethod {
-	   public PatchMethod(String url) {
-	      super(url);
-	   }
-	   /**
-    * Returns <tt>"PATCH"</tt>.
-     * @return <tt>"PATCH"</tt>
-	    * @see HttpMethod.getName()
-	    */
-      @Override
-	   public String getName() {
-	      return "PATCH";
-	   }
+		public PatchMethod(String url) {
+			super(url);
+		}
+
+		/**
+		 * Returns <tt>"PATCH"</tt>.
+		 * 
+		 * @return <tt>"PATCH"</tt>
+		 * @see HttpMethod.getName()
+		 */
+		@Override
+		public String getName() {
+			return "PATCH";
+		}
 	}
-   public InstructionFuture<JSON> _patchInstruction(
-         SourceInfo meta,final JSONBuilder builder) {
-      meta.name="http:patch";
 
-      MethodFactory mf = new MethodFactory() {
+	public InstructionFuture<JSON> _patchInstruction(SourceInfo meta, final JSONBuilder builder) {
+		meta.name = "http:patch";
 
-         @Override
-         public HttpMethod method(String url, JSONObject p) {
-            PatchMethod patch = new PatchMethod(url);
-            if (p != null) {
-               try {
-                  patch.setRequestEntity(new StringRequestEntity(p
-                        .toString(true), "application/json", "UTF-8"));
-               } catch (UnsupportedEncodingException e) {
-                  throw new RuntimeException(e);
-               }
-            }
-            return patch;
-         }
-      };
-      return httpInstruction(meta,mf);
-   }
-	protected InstructionFuture<JSON> httpInstruction(
-	      SourceInfo meta,final MethodFactory mf) {
+		MethodFactory mf = new MethodFactory() {
+
+			@Override
+			public HttpMethod method(String url, JSONObject p) {
+				PatchMethod patch = new PatchMethod(url);
+				if (p != null) {
+					try {
+						patch.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				return patch;
+			}
+		};
+		return httpInstruction(meta, mf);
+	}
+
+	protected InstructionFuture<JSON> httpInstruction(SourceInfo meta, final MethodFactory mf) {
 		return new AbstractInstructionFuture(meta) {
 
-			JSON read(HttpMethod m,JSONBuilder builder) 
-				throws IOException {
-				Reader reader= new InputStreamReader(m
-					.getResponseBodyAsStream());
-			// try anyways as no  error was signaled, but response type incorrect
-			return builder.parse(reader);				
+			JSON read(HttpMethod m, JSONBuilder builder) throws IOException {
+				Reader reader = new InputStreamReader(m.getResponseBodyAsStream());
+				// try anyways as no error was signaled, but response type
+				// incorrect
+				return builder.parse(reader);
 			}
+
 			@Override
-			public ListenableFuture<JSON> _call(
-					AsyncExecutionContext<JSON> context,
-					ListenableFuture<JSON> data) throws ExecutionException {
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
 				InstructionFuture<JSON> urli = context.getdef("1");
 				ll.add(urli.call(context, data));
@@ -245,77 +238,63 @@ public class HttpModule extends AbstractModule {
 				if (args != null) {
 					ll.add(args.call(context, data));
 				}
-				return transform(allAsList(ll),
-						new AsyncFunction<List<JSON>, JSON>() {
+				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
+					@Override
+					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+						Iterator<JSON> jit = input.iterator();
+						JSON a = jit.next();
+						JSON b = jit.hasNext() ? jit.next() : null;
+
+						final String url;
+						final JSONObject data;
+						if (a.getType() == JSONType.OBJECT) {
+							JSONObject obj = (JSONObject) a;
+							url = stringValue(obj.get("url"));
+							data = (JSONObject) obj.get("data");
+						} else {
+							url = stringValue(a);
+							data = (JSONObject) b;
+						}
+						return context.executor().submit(new Callable<JSON>() {
 							@Override
-							public ListenableFuture<JSON> apply(List<JSON> input)
-									throws Exception {
-								Iterator<JSON> jit = input.iterator();
-								JSON a = jit.next();
-								JSON b = jit.hasNext() ? jit.next() : null;
-
-								final String url;
-								final JSONObject data;
-								if (a.getType() == JSONType.OBJECT) {
-									JSONObject obj = (JSONObject) a;
-									url = stringValue(obj.get("url"));
-									data = (JSONObject) obj.get("data");
-								} else {
-									url = stringValue(a);
-									data = (JSONObject) b;
-								}
-								return context.executor().submit(new Callable<JSON>() {
-									@Override
-									public JSON call() throws Exception {
-									   JSONBuilder builder = context.builder();
-										HttpClient client = new HttpClient();
-										HttpMethod mm = mf.method(url, data);
-										try {
-											mm.addRequestHeader("Accept",
-													"application/json");
-											mm.addRequestHeader("Accept-Charset",
-												"utf-8");
-											int n = client.executeMethod(mm);
-											Header ct = mm
-													.getResponseHeader("Content-Type");
-											String rtype = ct.getValue();
-											boolean json = rtype
-													.contains("/json");
-											if (json) {
-												JSON jj = read(mm,context.builder());
-												if (!(n >= 200 && n < 300)) {
-													if (jj instanceof JSONObject) {
-														((JSONObject) jj)
-																.put("__status",
-																		builder.value(n));
-													}
-												}
-												return jj;
+							public JSON call() throws Exception {
+								JSONBuilder builder = context.builder();
+								HttpClient client = new HttpClient();
+								HttpMethod mm = mf.method(url, data);
+								try {
+									mm.addRequestHeader("Accept", "application/json");
+									mm.addRequestHeader("Accept-Charset", "utf-8");
+									int n = client.executeMethod(mm);
+									Header ct = mm.getResponseHeader("Content-Type");
+									String rtype = ct.getValue();
+									boolean json = rtype.contains("/json");
+									if (json) {
+										JSON jj = read(mm, context.builder());
+										if (!(n >= 200 && n < 300)) {
+											if (jj instanceof JSONObject) {
+												((JSONObject) jj).put("__status", builder.value(n));
 											}
-											if (!(n >= 200 && n < 300)) {
-												JSONObject oo = builder
-														.object(null);
-												oo.put("status",
-														builder.value(n));
-												oo.put("content",
-														builder.value(mm
-																.getResponseBodyAsString()));
-												return oo;
-											}
-											return read(mm,builder);
-										} catch (Exception e) {
-											JSONObject oo = builder
-													.object(null);
-											oo.put("status", builder.value(503));
-											oo.put("content", builder.value(e
-													.getLocalizedMessage()));
-											return oo;
 										}
+										return jj;
 									}
-								});
+									if (!(n >= 200 && n < 300)) {
+										JSONObject oo = builder.object(null);
+										oo.put("status", builder.value(n));
+										oo.put("content", builder.value(mm.getResponseBodyAsString()));
+										return oo;
+									}
+									return read(mm, builder);
+								} catch (Exception e) {
+									JSONObject oo = builder.object(null);
+									oo.put("status", builder.value(503));
+									oo.put("content", builder.value(e.getLocalizedMessage()));
+									return oo;
+								}
 							}
 						});
+					}
+				});
 			}
 		};
 

@@ -168,6 +168,12 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	@Override
+	public JSONObject object(JSON parent, Map<String,JSON> map) {
+		JSONObject r = new JSONObject(parent, map);
+		return (JSONObject) sign(r);
+	}
+
+	@Override
 	public JSONObject object(JSON parent, int cap) {
 		JSONObject r = new JSONObject(parent, mf.createMap(cap));
 		return (JSONObject) sign(r);
