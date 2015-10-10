@@ -57,11 +57,10 @@ public class JtlMain {
 	static boolean verbose = false;
 	static Logger logger;
 
-
-	public JtlMain(File jtlBase,File conf, boolean canonical) throws IOException {
+	public JtlMain(File jtlBase, File conf, boolean canonical) throws IOException {
 		builder = new JSONBuilderImpl(canonical);
 		compiler = new JtlCompiler(builder, false, false, false);
-		
+
 		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
 		if (conf != null) {
 			if (!conf.exists()) {
@@ -69,8 +68,6 @@ public class JtlMain {
 			}
 			bc = bc.overlay((JSONObject) builder.parse(conf));
 		}
-		
-		
 
 		config = bc; // initial config value
 		config.put("server-mode", builder.value(false));
@@ -80,10 +77,12 @@ public class JtlMain {
 	public static void setVerbose(boolean b) {
 		verbose = b;
 	}
+
 	public static void printHelp(Options cl) {
 		System.out.println(" $ jtl " + " [options ...] [arg1 ... ]");
 		System.out.println();
-		System.out.println("  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
+		System.out.println(
+				"  JTL is a language, library, tool and service for parsing, creating and transforming JSON data");
 		System.out.println("    see: https://github.com/mdykman/jtl/README.md");
 		System.out.println();
 		System.out.println("  options:");
@@ -101,9 +100,10 @@ public class JtlMain {
 
 		System.out.println("  examples:");
 		System.out.println();
-		
+
 		System.out.println("    $ jtl src/test/resources/group.jtl src/test/resources/generated.json");
-		System.out.println("    $ jtl -x src/test/resources/group.jtl -o output.json src/test/resources/generated.json");
+		System.out
+				.println("    $ jtl -x src/test/resources/group.jtl -o output.json src/test/resources/generated.json");
 		System.out.println("    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json");
 		System.out.println("    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl");
 		System.out.println("    $ jtl sample.jtl one.json two.json three.json");
@@ -115,30 +115,27 @@ public class JtlMain {
 	public static void main(String[] args) {
 		JtlMain main = null;
 		try {
-			
+
 			Options options = new Options();
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
 			options.addOption(new Option("V", "version", false, "print jtl version"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));
 			options.addOption(new Option("i", "init", true, "specify an init script"));
 			options.addOption(new Option("v", "verbose", false, "generate verbose output to stderr"));
-			options.addOption(new Option("l", "log", true, "set the log level, one of: trace, debug, info, warn, or error (default:warn)"));
+			options.addOption(new Option("l", "log", true,
+					"set the log level, one of: trace, debug, info, warn, or error (default:warn)"));
 
-			
 			options.addOption(new Option("x", "jtl", true, "specify a jtl file"));
 			options.addOption(new Option("d", "data", true, "specify an input json file"));
 			options.addOption(new Option("D", "dir", true, "specify base directory (default:.)"));
 			options.addOption(new Option("e", "expr", true, "evaluate an expression against input data"));
 			options.addOption(new Option("o", "output", true, "specify an output file (cli-only)"));
 
-			options.addOption(
-					new Option("s", "server", false, "run in server mode (default port:7718)"));
-			options.addOption(new Option("p", "port", true,
-					"specify a port number (default:7718) * implies --server"));
+			options.addOption(new Option("s", "server", false, "run in server mode (default port:7718)"));
+			options.addOption(new Option("p", "port", true, "specify a port number (default:7718) * implies --server"));
 
 			options.addOption(
 					new Option("B", "binding", true, "bind network address * implies --server (default:127.0.0.1)"));
-
 
 			options.addOption(new Option("k", "canon", false, "output canonical JSON (ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (default:3)"));
@@ -193,32 +190,27 @@ public class JtlMain {
 				System.exit(-1);
 				throw new RuntimeException("exit didn't");
 			}
-			
-			if(cli.hasOption('v')) {
+
+			if (cli.hasOption('v')) {
 				verbose = true;
 			}
-			
+
 			if (cli.hasOption('l')) {
-				logLevel = cli.getOptionValue('l'); 
-			} else if(verbose) {
-				logLevel="info";
+				logLevel = cli.getOptionValue('l');
+			} else if (verbose) {
+				logLevel = "info";
 
 			}
-			  ConsoleAppender console = new ConsoleAppender(); //create appender
-			  //configure the appender
-			  String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-			  console.setLayout(new PatternLayout(PATTERN)); 
-			  console.setThreshold(Level.FATAL);
-			  console.activateOptions();
-			  //add appender to any Logger (here is root)
-			  org.apache.log4j.Logger.getRootLogger().addAppender(console);
-			
+			ConsoleAppender console = new ConsoleAppender(); 
+			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+			console.setLayout(new PatternLayout(PATTERN));
+			console.setThreshold(Level.toLevel(logLevel, Level.ERROR));
+			console.activateOptions();
+			org.apache.log4j.Logger.getRootLogger().addAppender(console);
+
 			System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
-			
-			
-			
+
 			logger = LoggerFactory.getLogger(JdbcModule.class);
-			
 
 			String oo;
 			if (cli.hasOption('p') || cli.hasOption("port")) {
@@ -228,7 +220,7 @@ public class JtlMain {
 				logger.info("listening on port " + port);
 				serverMode = true;
 			}
-			if(cli.hasOption('V')) {
+			if (cli.hasOption('V')) {
 				System.out.print("jtl version " + JTL_VERSION);
 				System.out.println(" - see https://github.com/mdykman/jtl");
 				System.exit(0);
@@ -236,7 +228,7 @@ public class JtlMain {
 			if (cli.hasOption('s') || cli.hasOption("server")) {
 				serverMode = true;
 			}
-			
+
 			if (cli.hasOption('B') || cli.hasOption("binding")) {
 				bindAddress = cli.getOptionValue('B');
 				logger.info("binding to interface " + bindAddress);
@@ -263,14 +255,14 @@ public class JtlMain {
 				if (oo == null)
 					oo = cli.getOptionValue("config");
 
-	//			if (dirSet)
-	//				fconfig = new File(cexddir, oo);
-	//			else
-					fconfig = new File(oo);
-					logger.info("using optional configuration " + fconfig.getPath());
-			}			
-			
-			main = new JtlMain(home,fconfig, canonical);
+				// if (dirSet)
+				// fconfig = new File(cexddir, oo);
+				// else
+				fconfig = new File(oo);
+				logger.info("using optional configuration " + fconfig.getPath());
+			}
+
+			main = new JtlMain(home, fconfig, canonical);
 			if (cli.hasOption('D') || cli.hasOption("dir")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)
@@ -297,14 +289,13 @@ public class JtlMain {
 					// RuntimeException("don't know how to process a batch of
 					// 0");
 				}
-				if(batch == 0) 
+				if (batch == 0)
 					logger.info("reading a sequence of JSON entities from stdin");
-				else 
+				else
 					logger.info("reading a sequence of JSON entities in batched of " + oo + "from stdin");
 
 				array = true;
 			}
-
 
 			if (cli.hasOption('q') || cli.hasOption("quote")) {
 				logger.info("force key enquoting ");
@@ -324,10 +315,10 @@ public class JtlMain {
 				oo = cli.getOptionValue('d');
 				if (oo == null)
 					oo = cli.getOptionValue("data");
-//				if (dirSet)
-//					fdata = new File(cexddir, oo);
-//				else
-					fdata = new File(oo);
+				// if (dirSet)
+				// fdata = new File(cexddir, oo);
+				// else
+				fdata = new File(oo);
 			}
 			if (cli.hasOption('i') || cli.hasOption("indent")) {
 				oo = cli.getOptionValue('i');
@@ -335,18 +326,17 @@ public class JtlMain {
 					oo = cli.getOptionValue("indent");
 				indent = Integer.parseInt(oo);
 			}
-			
 
-
-			if(jtl!=null && cexddir == null) {
+			if (jtl != null && cexddir == null) {
 				jtl = jtl.getAbsoluteFile();
 				cexddir = jtl.getParentFile();
 			}
-			
-			if(serverMode) logger.info("running in server mode");
-			else logger.info("running in cli mode");
 
-			
+			if (serverMode)
+				logger.info("running in server mode");
+			else
+				logger.info("running in cli mode");
+
 			List<String> argList = cli.getArgList();
 			Iterator<String> argIt = argList.iterator();
 			if (serverMode) {
@@ -360,7 +350,8 @@ public class JtlMain {
 						}
 						jtl = new File(argIt.next());
 						jtl = jtl.getAbsoluteFile();
-						if(cexddir ==null) cexddir = jtl.getParentFile();
+						if (cexddir == null)
+							cexddir = jtl.getParentFile();
 					}
 				} else {
 					if (cexddir == null) {
@@ -391,12 +382,12 @@ public class JtlMain {
 					}
 				}
 				logger.info("using base directory " + cexddir.getPath());
-				
+
 				if (expr == null && jtl == null)
 					throw new RuntimeException("no program specified");
-				
-				if(verbose) {
-					if(expr!=null) {
+
+				if (verbose) {
+					if (expr != null) {
 						logger.info("evaluating expression: " + expr);
 					} else {
 						logger.info("evaluating file: " + jtl.getAbsolutePath());
@@ -405,7 +396,7 @@ public class JtlMain {
 				InstructionFuture<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
 				String source = expr != null ? "--expr" : jtl.getPath();
 				PrintWriter pw;
-				if(output == null) {
+				if (output == null) {
 					pw = new PrintWriter(System.out);
 				} else {
 					pw = new PrintWriter(output, "UTF-8");
@@ -444,7 +435,7 @@ public class JtlMain {
 				} else {
 					if (useNull) {
 						JSON data = main.empty();
-						JSON result = main.execute(inst, source, data, cexddir,  argIt);
+						JSON result = main.execute(inst, source, data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 					} else if (!argIt.hasNext()) {
 						// empty arguments
@@ -462,11 +453,13 @@ public class JtlMain {
 					}
 				}
 				pw.flush();
-				if(output != null) pw.close();
+				if (output != null)
+					pw.close();
 			}
 		} catch (ExecutionException e) {
 			System.err.println(e.report());
-			if(verbose) e.printStackTrace();
+			if (verbose)
+				e.printStackTrace();
 		} catch (Throwable e) {
 			if (e.getCause() instanceof ExecutionException) {
 				System.err.println(((ExecutionException) e.getCause()).report());
@@ -474,7 +467,8 @@ public class JtlMain {
 				Throwable ee = e.getCause() == null ? e : e.getCause();
 				System.err.println("an error occured: " + ee.getLocalizedMessage());
 			}
-			if(verbose) e.printStackTrace();
+			if (verbose)
+				e.printStackTrace();
 		} finally {
 			try {
 				main.shutdown();
@@ -483,35 +477,21 @@ public class JtlMain {
 			}
 		}
 	}/*
+		 * 
+		 * public void setConfig(File f) throws IOException { try { config = f
+		 * == null ? null : (JSONObject) builder.parse(f); }
+		 * catch(ClassCastException e) { throw new IOException("config at "
+		 * +f.getAbsolutePath() + "is not a json object",e); } }
+		 * 
+		 * public File searchConfig(String name, File... f) throws IOException {
+		 * for (File ff : f) { File cc = new File(ff, name); if (cc.exists()) {
+		 * return cc; } } return null; }
+		 * 
+		 * public JSONObject getConfig(File f) throws IOException { JSON c; if
+		 * (f != null && f.exists()) { c = builder.parse(f); } else { c =
+		 * builder.value(); } return builder.object(null); }
+		 */
 
-	public void setConfig(File f) throws IOException {
-		try {
-		config = f == null ? null : (JSONObject) builder.parse(f);
-		} catch(ClassCastException e) {
-			throw new IOException("config at " +f.getAbsolutePath() + "is not a json object",e);
-		}
-	}
-
-	public File searchConfig(String name, File... f) throws IOException {
-		for (File ff : f) {
-			File cc = new File(ff, name);
-			if (cc.exists()) {
-				return cc;
-			}
-		}
-		return null;
-	}
-
-	public JSONObject getConfig(File f) throws IOException {
-		JSON c;
-		if (f != null && f.exists()) {
-			c = builder.parse(f);
-		} else {
-			c = builder.value();
-		}
-		return builder.object(null);
-	}
-*/
 	public JtlServer launchServer(File jtlBase, File serverBase, File init, File script, File config,
 			String bindAddress, int port, boolean canonical) throws IOException {
 		// public JtlServer(File jtlBase,File serverBase, File init, File
@@ -527,7 +507,7 @@ public class JtlMain {
 		les.awaitTermination(2, TimeUnit.SECONDS);
 	}
 
-	public InstructionFuture<JSON> compile(File f) throws IOException {	
+	public InstructionFuture<JSON> compile(File f) throws IOException {
 		return compiler.parse(f);
 	}
 
@@ -559,31 +539,34 @@ public class JtlMain {
 		return builder.value();
 	}
 
-	public JSON execute(InstructionFuture<JSON> inst, String source, JSON data, File cwd,
-			Iterator<String> args) throws Exception {
+	public JSON execute(InstructionFuture<JSON> inst, String source, JSON data, File cwd, Iterator<String> args)
+			throws Exception {
 		;
-//		if (config != null && config.exists()) {
-//			c = builder.parse(config);
-//		} else {
-//			c = builder.value();
-//		}
+		// if (config != null && config.exists()) {
+		// c = builder.parse(config);
+		// } else {
+		// c = builder.value();
+		// }
 		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, cwd, builder, les);
 		context.setInit(true);
 		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
-		if(args!=null) while (args.hasNext()) {
-			JSON v = builder.value(args.next());
-			context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("cli")));
-			arr.add(v);
-		}
-		ListenableFuture<JSON> dd= Futures.immediateCheckedFuture(data);
-		
-//		context.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("cli")));
+		if (args != null)
+			while (args.hasNext()) {
+				JSON v = builder.value(args.next());
+				context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("cli")));
+				arr.add(v);
+			}
+		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
+
+		// context.define("#",
+		// InstructionFutureFactory.value(builder.value(arr.size()),
+		// SourceInfo.internal("cli")));
 		context.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("cli")));
 		context.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("cli")));
 
-		context = context.createChild(false, false, dd,  SourceInfo.internal("cli"));
+		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
 		context.setRuntime(true);
 
 		ListenableFuture<JSON> j = inst.call(context, dd);
