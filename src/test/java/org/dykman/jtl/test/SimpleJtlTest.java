@@ -30,7 +30,7 @@ public class SimpleJtlTest {
       ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 		try {
 			JSONBuilder builder = new JSONBuilderImpl();
-			JtlCompiler compiler = new JtlCompiler(builder,false,false,false);
+			JtlCompiler compiler = new JtlCompiler(builder);
 			
 			File inputFile = new File(args[0]);
 			FileInputStream fin = new FileInputStream(inputFile);

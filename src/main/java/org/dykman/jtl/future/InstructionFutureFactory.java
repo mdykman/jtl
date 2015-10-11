@@ -406,7 +406,7 @@ public class InstructionFutureFactory {
 
 						AsyncExecutionContext<JSON> mc = context.getInit().getNamedContext(key, true, false, source);
 						// TODO:: associate a compiler to the context
-						final JtlCompiler compiler = new JtlCompiler(context.builder(), false, false, false);
+						final JtlCompiler compiler = new JtlCompiler(context.builder());
 						// List<ListenableFuture<JSON>> ll = new ArrayList<>();
 						InstructionFuture<JSON> initInst = null;
 						while (jit.hasNext()) {

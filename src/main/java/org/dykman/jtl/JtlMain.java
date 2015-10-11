@@ -59,7 +59,7 @@ public class JtlMain {
 
 	public JtlMain(File jtlBase, File conf, boolean canonical) throws IOException {
 		builder = new JSONBuilderImpl(canonical);
-		compiler = new JtlCompiler(builder, false, false, false);
+		compiler = new JtlCompiler(builder);
 
 		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
 		if (conf != null) {
@@ -72,6 +72,18 @@ public class JtlMain {
 		config = bc; // initial config value
 		config.put("server-mode", builder.value(false));
 		configFile = conf;
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override 
+			public void run() {
+				try {
+					les.shutdown();
+					les.awaitTermination(2000L, TimeUnit.MILLISECONDS);
+				} catch (InterruptedException e) {
+					logger.error("failed to shutdown ExecutorService within 2000 ms. Shutting down hard.");;
+					les.shutdownNow();
+				}
+			}
+		});
 	}
 
 	public static void setVerbose(boolean b) {

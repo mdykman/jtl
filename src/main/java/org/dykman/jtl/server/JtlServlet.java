@@ -37,7 +37,7 @@ public class JtlServlet extends HttpServlet {
 
 	public JtlServlet() {
 		this.builder = new JSONBuilderImpl();
-		this.compiler = new JtlCompiler(builder, false, false, false);
+		this.compiler = new JtlCompiler(builder);
 	}
 
 	@Override

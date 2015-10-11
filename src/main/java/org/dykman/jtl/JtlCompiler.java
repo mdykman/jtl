@@ -38,7 +38,7 @@ public class JtlCompiler {
 		this(jsonBuilder, false, false, false);
 	}
 
-	public JtlCompiler(JSONBuilder jsonBuilder, boolean trace, boolean profile, boolean imported) {
+	private JtlCompiler(JSONBuilder jsonBuilder, boolean trace, boolean profile, boolean imported) {
 		this.jsonBuilder = jsonBuilder;
 		this.trace = trace;
 		this.profile = profile;
