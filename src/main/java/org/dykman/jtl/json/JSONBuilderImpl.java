@@ -6,11 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigInteger;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -29,22 +31,29 @@ public class JSONBuilderImpl implements JSONBuilder {
 	final MapFactory<String, JSON> mf;
 	final CollectionFactory<JSON> cf;
 
+	static ThreadLocal<Collator> collatort = new ThreadLocal<>();
+	java.text.Collator collator = Collator.getInstance(Locale.getDefault());
+
 	public JSONBuilderImpl(MapFactory<String, JSON> mf, CollectionFactory<JSON> cf) {
 		this.mf = mf;
 		this.cf = cf;
+		
 	}
 
+	private static Map<String, JSON> mapBuilder(Locale locale) {
+		return new TreeMap<>(localeComparator(locale));
+	}
 	private static Map<String, JSON> mapBuilder(boolean canonical) {
-		return canonical ? new TreeMap<>(mapComparator) : new LinkedHashMap<>();
+		return canonical ? new TreeMap<>(localeComparator(Locale.getDefault())) : new LinkedHashMap<>();
 	}
 
 	private static Map<String, JSON> mapBuilder(boolean canonical, int cap) {
-		return canonical ? new TreeMap<>(mapComparator) : new LinkedHashMap<>(cap);
+		return canonical ? new TreeMap<>(localeComparator(Locale.getDefault())) : new LinkedHashMap<>(cap);
 	}
 
 	private static Map<String, JSON> mapBuilder(boolean canonical, Map<String, JSON> rhs) {
 		if (canonical) {
-			TreeMap<String, JSON> m = new TreeMap<>(mapComparator);
+			TreeMap<String, JSON> m = new TreeMap<>(localeComparator(Locale.getDefault()));
 			m.putAll(rhs);
 			return m;
 		} else {
@@ -53,13 +62,19 @@ public class JSONBuilderImpl implements JSONBuilder {
 
 	}
 
-	// TreeMap.<String, JSON>
-	static Comparator<String> mapComparator = new Comparator<String>() {
-	@Override
-	public int compare(String o1, String o2) {
-		return o1.compareToIgnoreCase(o2);
-	}
-   };
+	static Comparator<String> localeComparator(Locale locale) {
+		 return new Comparator<String>() {
+				@Override
+				public int compare(String o1, String o2) {
+					Collator cc = collatort.get();
+					if(cc == null) {
+						cc = Collator.getInstance(locale
+								);
+						collatort.set(cc);
+					}
+					return cc.compare(o1, o2);
+				}
+			   };	}
 
 	public JSONBuilderImpl() {
 		this(false);
@@ -80,6 +95,11 @@ public class JSONBuilderImpl implements JSONBuilder {
 			@Override
 			public Map<String, JSON> copyMap(Map<String, JSON> rhs) {
 				return mapBuilder(c, rhs);
+			}
+
+			@Override
+			public Map<String, JSON> createMap(Locale locale) {
+				return mapBuilder(locale);
 			}
 		}, new CollectionFactory<JSON>() {
 			@Override
@@ -179,6 +199,14 @@ public class JSONBuilderImpl implements JSONBuilder {
 		return (JSONObject) sign(r);
 	}
 
+
+	@Override
+	public JSONObject object(JSON parent,Locale locale) {
+		JSONObject r = new JSONObject(null,mf.createMap(locale));
+		return (JSONObject) sign(r);
+	}
+
+	
 	@Override
 	public JList frame() {
 		JList f = new JList(cf.createCollection());

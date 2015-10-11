@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.dykman.jtl.Pair;
@@ -17,11 +18,7 @@ public class JSONObject extends AbstractJSON implements
 		super(parent);
 		obj = map;
 	}
-/*
-	public void setMap(Map<String, JSON> obj) {
-		this.obj = obj;
-	}
-*/
+
 	public Map<String, JSON> map() {
 		return obj;
 	}

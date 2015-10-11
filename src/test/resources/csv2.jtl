@@ -9,7 +9,8 @@
 	toN: $1(.)/($1() ? . : $_),
 	tonum: number(.)/(number() ? . : $_),
 	$cleaned : csv.read($1)/*/map(tonn()),
-	_: {
-		data: $cleaned
-	}
+	_: csv.read($1)
+//	_: {
+//		data: $cleaned
+//	}
 }

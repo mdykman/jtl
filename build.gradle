@@ -155,7 +155,7 @@ dependencies {
 	runtime 'org.eclipse.jetty:jetty-servlet:9.3.1.v20150714'
 
 
-    testCompile "junit:junit:4.11"
+    testCompile "junit:junit:4.12"
 }
 
 compileJava.dependsOn antlr4

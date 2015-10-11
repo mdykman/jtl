@@ -1,0 +1,7 @@
+{
+	first: "first element",
+	second : {
+		third: "third element",
+		fourth: "fourth element"
+	}
+}

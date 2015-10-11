@@ -1,9 +1,10 @@
 package org.dykman.jtl.json;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.Writer;
 
-public interface JSON extends Comparable<JSON> {
+public interface JSON extends Comparable<JSON>, Serializable {
 	public String getName();
 	public void setName(String s);
 	public Integer getIndex() ;

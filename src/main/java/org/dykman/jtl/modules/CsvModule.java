@@ -29,6 +29,8 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import parquet.it.unimi.dsi.fastutil.doubles.Double2IntFunction;
+
 public class CsvModule extends AbstractModule {
 
 	interface CSVProcessor {
@@ -37,12 +39,27 @@ public class CsvModule extends AbstractModule {
 
 	JSONObject config;
 	static Logger logger = LoggerFactory.getLogger(CsvModule.class);
-
 	public CsvModule(JSONObject config) {
 		this.config = config;
 	}
 
-	AsyncFunction<List<JSON>, JSON> createReader(AsyncExecutionContext<JSON> context, CSVProcessor proc) {
+	JSON parseNumberConditionally(JSONBuilder builder, String s) {
+		Number num = null;
+		try {
+			num = Long.parseLong(s);
+		} catch (NumberFormatException e) {
+			try {
+				num = Double.parseDouble(s);
+			} catch (NumberFormatException e2) {
+			}
+		}
+		if (num != null)
+			return builder.value(num);
+		return builder.value(s);
+	}
+
+	AsyncFunction<List<JSON>, JSON> createReader(AsyncExecutionContext<JSON> context, CSVProcessor proc, SourceInfo src,
+			boolean serverMode) {
 		return new AsyncFunction<List<JSON>, JSON>() {
 
 			@Override
@@ -57,17 +74,17 @@ public class CsvModule extends AbstractModule {
 				if (conf != null) {
 					fconf = fconf.overlay(conf);
 				}
-				JSON j = config.get("charset");
+				JSON j = fconf.get("charset");
 				if (j != null) {
 					cs = Charset.forName(j.stringValue());
 				}
-				j = config.get("format");
+				j = fconf.get("format");
 				if (j != null) {
 					format = CSVFormat.valueOf(j.stringValue());
 
 					// CSVFormat.Predefined.Default;
 				}
-				j = config.get("seperator");
+				j = fconf.get("seperator");
 				if (j != null) {
 					String s = j.stringValue();
 					if (s != null && s.length() > 0) {
@@ -77,12 +94,19 @@ public class CsvModule extends AbstractModule {
 							format = format.newFormat(s.charAt(0));
 					}
 				}
-				j = config.get("header");
+				j = fconf.get("header");
 				boolean headers = j == null ? true : j.isTrue();
+				j = fconf.get("numeric");
+				boolean numeric = j == null ? true : j.isTrue();
 				format.withSkipHeaderRecord(!headers);
-				File f = new File(context.currentDirectory(), file);
+				File f = serverMode ? new File(context.currentDirectory(), file) : new File(file);
+				if (!f.exists()) {
+					throw new ExecutionException("input file not found: " + f.getCanonicalPath(), src);
+				}
 
 				logger.info("parsing file " + f.getAbsolutePath() + " with " + format.toString());
+				logger.info("config " + fconf.toString());
+
 				CSVParser parser = CSVParser.parse(f, cs, format);
 
 				JSONArray arr = builder.array(null);
@@ -97,7 +121,15 @@ public class CsvModule extends AbstractModule {
 					if (!headers) {
 						JSONArray a2 = builder.array(arr);
 						for (String s : hm) {
-							a2.add(builder.value(s));
+							if (numeric) {
+								try {
+									a2.add(parseNumberConditionally(builder, s));
+								} catch (NumberFormatException e) {
+									a2.add(builder.value(s));
+								}
+							} else {
+								a2.add(builder.value(s));
+							}
 						}
 						arr.add(a2);
 					}
@@ -110,12 +142,9 @@ public class CsvModule extends AbstractModule {
 							hm[dx++] = s;
 						}
 					}
-
-					// headers = false;
 				}
 				JSON res = proc.process(csvIt, headers ? hm : null);
 				return Futures.immediateCheckedFuture(res);
-
 			}
 		};
 	}
@@ -214,7 +243,7 @@ public class CsvModule extends AbstractModule {
 						}
 						return arr;
 					}
-				}));
+				}, source, serverMode));
 			}
 		});
 		context.define("pread", new AbstractInstructionFuture(meta) {
@@ -257,7 +286,7 @@ public class CsvModule extends AbstractModule {
 							if (hm != null) {
 								for (String s : rec) {
 									String kk = hm[fctr];
-									JSONArray cc = (JSONArray)cols.get(kk);
+									JSONArray cc = (JSONArray) cols.get(kk);
 									cc.add(builder.value(s));
 									++fctr;
 								}
@@ -286,7 +315,7 @@ public class CsvModule extends AbstractModule {
 							return ares;
 						}
 					}
-				}));
+				}, source, serverMode));
 			}
 		});
 		return context.builder().value(1);
