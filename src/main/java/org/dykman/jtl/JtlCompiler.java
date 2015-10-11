@@ -16,7 +16,7 @@ import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.future.InstructionFutureVisitor;
@@ -45,37 +45,37 @@ public class JtlCompiler {
 		this.imported = imported;
 	}
 
-	public InstructionFuture<JSON> parse(String src, InputStream in) throws IOException {
+	public FutureInstruction<JSON> parse(String src, InputStream in) throws IOException {
 		return parse(src, in, trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(String src, InputStream in, boolean trace, boolean profile)
+	public FutureInstruction<JSON> parse(String src, InputStream in, boolean trace, boolean profile)
 			throws IOException {
 		return parse(src, new jtlLexer(new ANTLRInputStream(in)), trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(String src, File in, boolean trace, boolean profile) throws IOException {
+	public FutureInstruction<JSON> parse(String src, File in, boolean trace, boolean profile) throws IOException {
 		return parse(src, new FileInputStream(in), trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(File in) throws IOException {
+	public FutureInstruction<JSON> parse(File in) throws IOException {
 		// System.err.println("parsing file: " + in.getAbsolutePath());
 		return parse(in.getName(), in, trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(String src, String in) throws IOException {
+	public FutureInstruction<JSON> parse(String src, String in) throws IOException {
 		return parse(src, in, trace, profile);
 	}
 
-	public InstructionFuture<JSON> parse(String src, String in, boolean trace, boolean profile) throws IOException {
+	public FutureInstruction<JSON> parse(String src, String in, boolean trace, boolean profile) throws IOException {
 		return parse(src, new jtlLexer(new ANTLRInputStream(in)), trace, profile);
 	}
 
-	protected InstructionFuture<JSON> parse(String src, jtlLexer lexer) throws IOException {
+	protected FutureInstruction<JSON> parse(String src, jtlLexer lexer) throws IOException {
 		return parse(src, lexer, trace, profile);
 	}
 
-	protected InstructionFuture<JSON> parse(String file, jtlLexer lexer, boolean trace, boolean profile)
+	protected FutureInstruction<JSON> parse(String file, jtlLexer lexer, boolean trace, boolean profile)
 			throws IOException {
 		// lexer.
 		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
@@ -104,7 +104,7 @@ public class JtlCompiler {
 		return jsonBuilder;
 	}
 
-	public static void define(AsyncExecutionContext<JSON> ctx, String s, InstructionFuture<JSON> inst) {
+	public static void define(AsyncExecutionContext<JSON> ctx, String s, FutureInstruction<JSON> inst) {
 		ctx.define(s, inst);
 	}
 

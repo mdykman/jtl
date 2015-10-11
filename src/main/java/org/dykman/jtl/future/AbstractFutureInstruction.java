@@ -14,16 +14,16 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public abstract class AbstractInstructionFuture implements
-		InstructionFuture<JSON> {
+public abstract class AbstractFutureInstruction implements
+		FutureInstruction<JSON> {
    final protected SourceInfo source;
    final protected boolean items;
    
-   public AbstractInstructionFuture(SourceInfo meta) {
+   public AbstractFutureInstruction(SourceInfo meta) {
       this(meta == null ? SourceInfo.internal("default") : meta,false);
    }
    
-   public AbstractInstructionFuture(SourceInfo meta,boolean i) {
+   public AbstractFutureInstruction(SourceInfo meta,boolean i) {
       source=meta;
       items=i;
       
@@ -34,7 +34,7 @@ public abstract class AbstractInstructionFuture implements
       return source;
    }
 
-   public InstructionFuture<JSON> getBareInstruction() {
+   public FutureInstruction<JSON> getBareInstruction() {
       return this;
    }
    
@@ -98,7 +98,7 @@ public abstract class AbstractInstructionFuture implements
    protected String code;
    
 	@Override
-	public InstructionFuture<JSON> unwrap() {
+	public FutureInstruction<JSON> unwrap() {
 		return this;
 	}
 

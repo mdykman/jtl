@@ -13,6 +13,7 @@ import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
@@ -47,6 +48,19 @@ public class ModuleLoader {
 			}
 			logger.info(sb.toString());
 		}
+		for (Pair<String, JSON> pp : modules) {
+			if(pp.s.getType() != JSONType.OBJECT) {
+				throw new ExecutionException(
+						"modles configuration for " + pp.f + " must be an object",
+						SourceInfo.internal("module-loader"));
+			}
+			JSONObject obj = (JSONObject) pp.s;
+			JSON j= obj.get("autoload");
+			if(j!=null && j.isTrue()) {
+				String key = j.stringValue();
+//				create(SourceInfo.internal("module-loader"),pp.f,pp.f);
+			}
+		}
 	}
 
 	private static ModuleLoader theInstance = null;
@@ -63,6 +77,23 @@ public class ModuleLoader {
 		return theInstance;
 	}
 
+	
+	public void launchAuto(AsyncExecutionContext<JSON> context,boolean serverMode) 
+			throws ExecutionException {
+		for (Pair<String, JSON> pp : modules) {
+			JSONObject cc = (JSONObject)pp.s;
+			JSON j = cc.get("autoload");
+			
+			if(j!=null && j.isTrue()) {
+				String key = j.stringValue();
+				logger.info("autoloading " + pp.f + " as " + key);
+				JSONObject mc = (JSONObject) cc.get("config");
+				create(SourceInfo.internal("moduleloader"), 
+						pp.f, key, context, serverMode, mc == null? context.builder().object(null):mc);
+			};
+		}
+	}
+	
 	public JSON create(SourceInfo info, String name, String key, AsyncExecutionContext<JSON> context, boolean serverMode,
 			JSONObject config) throws ExecutionException {
 		String klass = null;

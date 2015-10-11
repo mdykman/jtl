@@ -15,9 +15,9 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractInstructionFuture;
+import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
@@ -29,10 +29,11 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import parquet.it.unimi.dsi.fastutil.doubles.Double2IntFunction;
 
 public class CsvModule extends AbstractModule {
 
+	
+	
 	interface CSVProcessor {
 		JSON process(Iterator<CSVRecord> alg, String[] headers);
 	}
@@ -149,7 +150,7 @@ public class CsvModule extends AbstractModule {
 		};
 	}
 
-	abstract class CsvInstructionFuture extends AbstractInstructionFuture {
+	abstract class CsvInstructionFuture extends AbstractFutureInstruction {
 		CsvInstructionFuture(SourceInfo cs) {
 			super(cs);
 		}
@@ -198,14 +199,14 @@ public class CsvModule extends AbstractModule {
 	@Override
 	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context, boolean serverMode) {
 
-		context.define("read", new AbstractInstructionFuture(meta) {
+		context.define("read", new AbstractFutureInstruction(meta) {
 
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 
-				InstructionFuture<JSON> fn = context.getdef("1");
-				InstructionFuture<JSON> options = context.getdef("2");
+				FutureInstruction<JSON> fn = context.getdef("1");
+				FutureInstruction<JSON> options = context.getdef("2");
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
 				ll.add(fn.call(context, data));
 				if (options != null) {
@@ -246,14 +247,14 @@ public class CsvModule extends AbstractModule {
 				}, source, serverMode));
 			}
 		});
-		context.define("pread", new AbstractInstructionFuture(meta) {
+		context.define("pread", new AbstractFutureInstruction(meta) {
 
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 
-				InstructionFuture<JSON> fn = context.getdef("1");
-				InstructionFuture<JSON> options = context.getdef("2");
+				FutureInstruction<JSON> fn = context.getdef("1");
+				FutureInstruction<JSON> options = context.getdef("2");
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
 				ll.add(fn.call(context, data));
 				if (options != null) {

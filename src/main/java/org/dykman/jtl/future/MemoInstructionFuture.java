@@ -6,23 +6,23 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class MemoInstructionFuture extends AbstractInstructionFuture {
-   final InstructionFuture<JSON> inst;
+public class MemoInstructionFuture extends AbstractFutureInstruction {
+   final FutureInstruction<JSON> inst;
    final String key;
    
-   MemoInstructionFuture(SourceInfo info,InstructionFuture<JSON> inst) {
+   MemoInstructionFuture(SourceInfo info,FutureInstruction<JSON> inst) {
       super(info);
       this.inst = inst;
       // TODO a stronger key would be advisable
       this.key = "@memo-"+Long.toHexString(System.identityHashCode(this));
    }
    @Override
-   public InstructionFuture<JSON> unwrap() {
+   public FutureInstruction<JSON> unwrap() {
       return inst.unwrap();
    }
 
    @Override
-   public InstructionFuture<JSON> getBareInstruction() {
+   public FutureInstruction<JSON> getBareInstruction() {
       return inst.getBareInstruction();
    }
 
@@ -32,7 +32,7 @@ public class MemoInstructionFuture extends AbstractInstructionFuture {
       AsyncExecutionContext<JSON> pp = context.getRuntime();
       if(pp == null) pp = context.getInit();
     		  //context.getMasterContext();
-      InstructionFuture<JSON> ic = pp.getdef(key);
+      FutureInstruction<JSON> ic = pp.getdef(key);
       if(ic==null) {
          synchronized(this) {
             ic = pp.getdef(key);

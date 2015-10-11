@@ -1,6 +1,6 @@
 {
   modules: {
-   	http:{  class:"org.dykman.jtl.modules.HttpModule", autoload: true },
+   	http:{  class:"org.dykman.jtl.modules.HttpModule", autoload: "curl" },
    	cache:{  class:"org.dykman.jtl.modules.CacheModule" },
       jdbc: { class:"org.dykman.jtl.modules.JdbcModule" },
       csv: { class:"org.dykman.jtl.modules.CsvModule" }

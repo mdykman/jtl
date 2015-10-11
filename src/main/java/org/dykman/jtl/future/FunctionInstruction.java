@@ -13,12 +13,12 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class FunctionInstruction extends AbstractInstructionFuture {
+public class FunctionInstruction extends AbstractFutureInstruction {
 	final String name;
-	final List<InstructionFuture<JSON>> iargs;
+	final List<FutureInstruction<JSON>> iargs;
 	boolean variable = false;
 
-	public FunctionInstruction(SourceInfo info, String name, List<InstructionFuture<JSON>> iargs) {
+	public FunctionInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs) {
 		super(info);
 		this.name = name;
 		this.iargs = iargs;
@@ -29,10 +29,10 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 	}
 
 	protected AsyncExecutionContext<JSON> setupArguments(final AsyncExecutionContext<JSON> dctx,
-			final AsyncExecutionContext<JSON> fc, final String name, final List<InstructionFuture<JSON>> iargs,
+			final AsyncExecutionContext<JSON> fc, final String name, final List<FutureInstruction<JSON>> iargs,
 			final ListenableFuture<JSON> data) {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
-		List<InstructionFuture<JSON>> insts = new ArrayList<>();
+		List<FutureInstruction<JSON>> insts = new ArrayList<>();
 		if(name.contains(".")) {
 			String pp[] = name.split("[.]");
 			context.define("0", InstructionFutureFactory.value(context.builder().value(pp[1]), source));
@@ -43,7 +43,7 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 		int cc = 1;
 		// Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
 		if (iargs != null)
-			for (InstructionFuture<JSON> inst : iargs) {
+			for (FutureInstruction<JSON> inst : iargs) {
 				String key = Integer.toString(cc++);
 				context.define(key, InstructionFutureFactory.memo(source,
 						InstructionFutureFactory.deferred(source, inst, dctx.declaringContext(), data)));
@@ -55,7 +55,7 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 			int ss = 1;
 			while (true) {
 				String skey = Integer.toString(ss++);
-				InstructionFuture<JSON> si = dctx.getdef(skey);
+				FutureInstruction<JSON> si = dctx.getdef(skey);
 				if (si == null)
 					break;
 				String key = Integer.toString(cc++);
@@ -105,8 +105,8 @@ public class FunctionInstruction extends AbstractInstructionFuture {
 			ns = fc.getNamespace();
 		}
 		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data);
-		InstructionFuture<JSON> func = null;
-		Pair<String, InstructionFuture<JSON>> rr = context.getDefInternal(ns, name);
+		FutureInstruction<JSON> func = null;
+		Pair<String, FutureInstruction<JSON>> rr = context.getDefInternal(ns, name);
 		if (rr != null) {
 			func = rr.s;
 			ns = rr.f;

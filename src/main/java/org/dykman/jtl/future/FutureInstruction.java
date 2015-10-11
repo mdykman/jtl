@@ -6,12 +6,12 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-public interface InstructionFuture<T> {
+public interface FutureInstruction<T> {
 
 
    public SourceInfo getSourceInfo();
-	public InstructionFuture<T> unwrap();
-	   public InstructionFuture<JSON> getBareInstruction();
+	public FutureInstruction<T> unwrap();
+	   public FutureInstruction<JSON> getBareInstruction();
 	   
 	public ListenableFuture<T> call(AsyncExecutionContext<T> context, ListenableFuture<T> data)
 			throws ExecutionException;

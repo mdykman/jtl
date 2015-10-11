@@ -25,7 +25,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
@@ -33,6 +33,7 @@ import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.modules.JdbcModule;
+import org.dykman.jtl.modules.ModuleLoader;
 import org.dykman.jtl.server.JtlServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -393,6 +394,9 @@ public class JtlMain {
 						cexddir = jtl.getParentFile();
 					}
 				}
+				if(cexddir == null) {
+					cexddir = new File(".").getCanonicalFile();
+				}
 				logger.info("using base directory " + cexddir.getPath());
 
 				if (expr == null && jtl == null)
@@ -405,7 +409,7 @@ public class JtlMain {
 						logger.info("evaluating file: " + jtl.getAbsolutePath());
 					}
 				}
-				InstructionFuture<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
+				FutureInstruction<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
 				String source = expr != null ? "--expr" : jtl.getPath();
 				PrintWriter pw;
 				if (output == null) {
@@ -519,11 +523,11 @@ public class JtlMain {
 		les.awaitTermination(2, TimeUnit.SECONDS);
 	}
 
-	public InstructionFuture<JSON> compile(File f) throws IOException {
+	public FutureInstruction<JSON> compile(File f) throws IOException {
 		return compiler.parse(f);
 	}
 
-	public InstructionFuture<JSON> compile(String f) throws IOException {
+	public FutureInstruction<JSON> compile(String f) throws IOException {
 		return compiler.parse("eval", f);
 	}
 
@@ -551,16 +555,16 @@ public class JtlMain {
 		return builder.value();
 	}
 
-	public JSON execute(InstructionFuture<JSON> inst, String source, JSON data, File cwd, Iterator<String> args)
+	public JSON execute(FutureInstruction<JSON> inst, String source, JSON data, File cwd, Iterator<String> args)
 			throws Exception {
-		;
-		// if (config != null && config.exists()) {
-		// c = builder.parse(config);
-		// } else {
-		// c = builder.value();
-		// }
+
 		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, cwd, builder, les);
 		context.setInit(true);
+		
+		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(),context.builder(),
+				config);
+		ml.launchAuto(context, true);
+
 		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
@@ -572,9 +576,6 @@ public class JtlMain {
 			}
 		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
 
-		// context.define("#",
-		// InstructionFutureFactory.value(builder.value(arr.size()),
-		// SourceInfo.internal("cli")));
 		context.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("cli")));
 		context.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("cli")));
 

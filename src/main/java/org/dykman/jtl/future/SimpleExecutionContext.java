@@ -39,7 +39,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
 	protected String method = null;
-	protected final Map<String, InstructionFuture<JSON>> functions = new ConcurrentHashMap<>();
+	protected final Map<String, FutureInstruction<JSON>> functions = new ConcurrentHashMap<>();
 	protected ListeningExecutorService executorService = null;
 	protected JSON conf;
 	protected ListenableFuture<JSON> data;
@@ -219,7 +219,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	@Override
-	public void define(String n, InstructionFuture<JSON> i) {
+	public void define(String n, FutureInstruction<JSON> i) {
 		functions.put(n, i);
 	}
 
@@ -239,9 +239,9 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected String namespace = null;
 
 	// @Override
-	public Pair<String, InstructionFuture<JSON>> getdef(String ns, String name) {
-		InstructionFuture<JSON> r = null;
-		Pair<String, InstructionFuture<JSON>> rr = null;
+	public Pair<String, FutureInstruction<JSON>> getdef(String ns, String name) {
+		FutureInstruction<JSON> r = null;
+		Pair<String, FutureInstruction<JSON>> rr = null;
 		if (ns != null) {
 			AsyncExecutionContext<JSON> named = getNamedContext(ns);
 			if (named != null) {
@@ -252,7 +252,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			}
 		}
 		if (rr == null) {
-			InstructionFuture<JSON> def = getdef(name);
+			FutureInstruction<JSON> def = getdef(name);
 			if (def != null) {
 				rr = new Pair<>(null, def);
 			}
@@ -261,25 +261,25 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	@Override
-	public InstructionFuture<JSON> getdef(String name) {
-		Pair<String, InstructionFuture<JSON>> rr = getDefInternal(null, name);
+	public FutureInstruction<JSON> getdef(String name) {
+		Pair<String, FutureInstruction<JSON>> rr = getDefInternal(null, name);
 		if (rr != null)
 			return rr.s;
 		return null;
 	}
 
 	// @Override
-	public Pair<String, InstructionFuture<JSON>> getDefInternal(String ns, String name) {
+	public Pair<String, FutureInstruction<JSON>> getDefInternal(String ns, String name) {
 		// System.out.println("context seeking " + name + " in " +
 		// System.identityHashCode(this));
 
-		InstructionFuture<JSON> r = functions.get(name);
+		FutureInstruction<JSON> r = functions.get(name);
 		// r = functions.get(name);
 		if (r != null)
 			return new Pair<>(null, r);
 
 		String[] parts = name.split("[.]", 2);
-		Pair<String, InstructionFuture<JSON>> rr = null;
+		Pair<String, FutureInstruction<JSON>> rr = null;
 		if (parts.length > 1) {
 			rr = ns != null ? getdef(ns, name) : null;
 			if (rr != null) {

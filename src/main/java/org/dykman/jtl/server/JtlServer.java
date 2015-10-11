@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
@@ -19,7 +19,7 @@ public class JtlServer {
 	final File serverBase;
 
 	File init = null;
-	InstructionFuture<JSON> defaultProgram = null;
+	FutureInstruction<JSON> defaultProgram = null;
 
 	public JtlServer(File jtlBase,File serverBase, File init, File script, File config, String bindAddress, int port,boolean canonical) 
 			throws IOException {

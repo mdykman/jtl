@@ -1,9 +1,13 @@
 package org.dykman.jtl.test;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.*;
+import org.dykman.jtl.modules.ModuleLoader;
 
 import static org.junit.Assert.*;
 
@@ -28,6 +32,14 @@ public class JTLTest {
 	JtlCompiler compiler = new JtlCompiler(builder);
 	JSONObject conf;
 	ListeningExecutorService les;
+	{
+	ConsoleAppender console = new ConsoleAppender(); 
+	String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+	console.setLayout(new PatternLayout(PATTERN));
+	console.setThreshold(Level.toLevel(Level.ERROR_INT, Level.ERROR));
+	console.activateOptions();
+	org.apache.log4j.Logger.getRootLogger().addAppender(console);
+	}
 
 	@Rule
 	public ExternalResource executor = new ExternalResource() {
@@ -56,8 +68,14 @@ public class JTLTest {
 	}
 
 	protected JSON runExpression(String expr, JSON data) throws Exception {
-		InstructionFuture<JSON> inst = compiler.parse("test", expr);
+		FutureInstruction<JSON> inst = compiler.parse("test", expr);
 		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, getConfig(), new File(".").getCanonicalFile(), builder, les);
+		context.setInit(true);
+		
+		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(),context.builder(),
+				getConfig());
+		ml.launchAuto(context, true);
+
 		ListenableFuture<JSON> result = inst.call(context, Futures.immediateCheckedFuture(data));
 		JSON j = result.get();
 		return j;

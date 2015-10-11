@@ -24,11 +24,13 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractInstructionFuture;
+import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
@@ -39,6 +41,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class HttpModule extends AbstractModule {
 
 	final JSONObject baseConfig;
+	static Logger logger = LoggerFactory.getLogger(HttpModule.class);
 
 	public HttpModule(JSONObject config) {
 		baseConfig = config;
@@ -74,7 +77,7 @@ public class HttpModule extends AbstractModule {
 
 	}
 
-	public InstructionFuture<JSON> _formInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _formInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:form";
 		MethodFactory mf = new MethodFactory() {
 
@@ -94,7 +97,7 @@ public class HttpModule extends AbstractModule {
 		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _getInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _getInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:get";
 		MethodFactory mf = new MethodFactory() {
 
@@ -114,7 +117,7 @@ public class HttpModule extends AbstractModule {
 		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _deleteInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _deleteInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:delete";
 		MethodFactory mf = new MethodFactory() {
 
@@ -134,7 +137,7 @@ public class HttpModule extends AbstractModule {
 		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _postInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _postInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:post";
 		MethodFactory mf = new MethodFactory() {
 
@@ -143,8 +146,6 @@ public class HttpModule extends AbstractModule {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
 					try {
-						// IOUtils.cop
-						// post.setr
 						post.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
@@ -156,7 +157,7 @@ public class HttpModule extends AbstractModule {
 		return httpInstruction(meta, mf);
 	}
 
-	public InstructionFuture<JSON> _putInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _putInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:put";
 
 		MethodFactory mf = new MethodFactory() {
@@ -164,11 +165,8 @@ public class HttpModule extends AbstractModule {
 			@Override
 			public HttpMethod method(String url, JSONObject p) {
 				PutMethod put = new PutMethod(url);
-				// PostMethod post = new PostMethod(url);
 				if (p != null) {
 					try {
-						// IOUtils.cop
-						// post.setr
 						put.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
 					} catch (UnsupportedEncodingException e) {
 						throw new RuntimeException(e);
@@ -184,20 +182,13 @@ public class HttpModule extends AbstractModule {
 		public PatchMethod(String url) {
 			super(url);
 		}
-
-		/**
-		 * Returns <tt>"PATCH"</tt>.
-		 * 
-		 * @return <tt>"PATCH"</tt>
-		 * @see HttpMethod.getName()
-		 */
 		@Override
 		public String getName() {
 			return "PATCH";
 		}
 	}
 
-	public InstructionFuture<JSON> _patchInstruction(SourceInfo meta, final JSONBuilder builder) {
+	public FutureInstruction<JSON> _patchInstruction(SourceInfo meta, final JSONBuilder builder) {
 		meta.name = "http:patch";
 
 		MethodFactory mf = new MethodFactory() {
@@ -218,13 +209,11 @@ public class HttpModule extends AbstractModule {
 		return httpInstruction(meta, mf);
 	}
 
-	protected InstructionFuture<JSON> httpInstruction(SourceInfo meta, final MethodFactory mf) {
-		return new AbstractInstructionFuture(meta) {
+	protected FutureInstruction<JSON> httpInstruction(SourceInfo meta, final MethodFactory mf) {
+		return new AbstractFutureInstruction(meta) {
 
 			JSON read(HttpMethod m, JSONBuilder builder) throws IOException {
 				Reader reader = new InputStreamReader(m.getResponseBodyAsStream());
-				// try anyways as no error was signaled, but response type
-				// incorrect
 				return builder.parse(reader);
 			}
 
@@ -232,9 +221,9 @@ public class HttpModule extends AbstractModule {
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
-				InstructionFuture<JSON> urli = context.getdef("1");
+				FutureInstruction<JSON> urli = context.getdef("1");
 				ll.add(urli.call(context, data));
-				InstructionFuture<JSON> args = context.getdef("2");
+				FutureInstruction<JSON> args = context.getdef("2");
 				if (args != null) {
 					ll.add(args.call(context, data));
 				}
@@ -262,6 +251,8 @@ public class HttpModule extends AbstractModule {
 								JSONBuilder builder = context.builder();
 								HttpClient client = new HttpClient();
 								HttpMethod mm = mf.method(url, data);
+								logger.info(mm.getName() + " " + url);
+								if(data !=null) logger.info(data.stringValue());
 								try {
 									mm.addRequestHeader("Accept", "application/json");
 									mm.addRequestHeader("Accept-Charset", "utf-8");

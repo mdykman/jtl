@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractInstructionFuture;
+import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.DeferredCall;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
@@ -50,7 +50,7 @@ public class CacheModule extends AbstractModule {
 			} else {
 				SourceInfo si = meta.clone();
 				si.name = "cache:" + pp.f;
-				context.define(pp.f, new AbstractInstructionFuture(si, true) {
+				context.define(pp.f, new AbstractFutureInstruction(si, true) {
 					final JSONObject c = (JSONObject) pp.s;
 					Cache<JSON, ListenableFuture<JSON>> cache = null;
 
@@ -130,9 +130,9 @@ public class CacheModule extends AbstractModule {
 					@Override
 					public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context,
 							ListenableFuture<JSON> data) throws org.dykman.jtl.ExecutionException {
-						InstructionFuture<JSON> ff = context.getdef("1");
+						FutureInstruction<JSON> ff = context.getdef("1");
 
-						InstructionFuture<JSON> ffraw = ff.unwrap();
+						FutureInstruction<JSON> ffraw = ff.unwrap();
 						if (ffraw instanceof DeferredCall) {
 							String s = meta.code;
 							DeferredCall dc = (DeferredCall) ffraw;
@@ -140,7 +140,7 @@ public class CacheModule extends AbstractModule {
 							List<ListenableFuture<JSON>> ll = new ArrayList<>();
 							// ll.add(context.config());
 							for (int i = 1;; ++i) {
-								InstructionFuture<JSON> inst = cc.getdef(Long.toString(i));
+								FutureInstruction<JSON> inst = cc.getdef(Long.toString(i));
 								if (inst == null)
 									break;
 								ll.add(inst.call(context, data));

@@ -17,10 +17,10 @@ import java.util.concurrent.Callable;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractInstructionFuture;
+import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.ContextComplete;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
@@ -269,14 +269,14 @@ public class JdbcModule extends AbstractModule {
 			return connection;
 		}
 
-		public InstructionFuture<JSON> query(SourceInfo meta, Executor exec) {
+		public FutureInstruction<JSON> query(SourceInfo meta, Executor exec) {
 			// Connection c = getConnection();
-			return new AbstractInstructionFuture(meta) {
+			return new AbstractFutureInstruction(meta) {
 				@Override
 				public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 						final ListenableFuture<JSON> data) throws ExecutionException {
-					InstructionFuture<JSON> q = context.getdef("1");
-					InstructionFuture<JSON> p = context.getdef("2");
+					FutureInstruction<JSON> q = context.getdef("1");
+					FutureInstruction<JSON> p = context.getdef("2");
 					List<ListenableFuture<JSON>> ll = new ArrayList<>();
 					ll.add(q.call(context, data));
 					if (p != null) {

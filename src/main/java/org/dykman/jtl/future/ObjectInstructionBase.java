@@ -11,10 +11,10 @@ import org.dykman.jtl.json.JSON;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import static org.dykman.jtl.future.InstructionFutureFactory.*;
-public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
-      final List<Pair<String, InstructionFuture<JSON>>> ll;
+public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
+      final List<Pair<String, FutureInstruction<JSON>>> ll;
 
-      public ObjectInstructionBase(SourceInfo info, List<Pair<String, InstructionFuture<JSON>>> pp, boolean itemize) {
+      public ObjectInstructionBase(SourceInfo info, List<Pair<String, FutureInstruction<JSON>>> pp, boolean itemize) {
          super(info, true);
          ll = pp;
       }
@@ -33,14 +33,14 @@ public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
       }
 
       public ListenableFuture<JSON> _import(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data) {
-         List<InstructionFuture<JSON>> imperitives = new ArrayList<>(ll.size());
+         List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
          List<ListenableFuture<JSON>> rr = new ArrayList<>();
 
          // ListenableFuture<JSON> initInst = null;
-         InstructionFuture<JSON> init = null;
-         for(Pair<String, InstructionFuture<JSON>> pp : ll) {
+         FutureInstruction<JSON> init = null;
+         for(Pair<String, FutureInstruction<JSON>> pp : ll) {
             String k = pp.f;
-            InstructionFuture<JSON> inst = pp.s;
+            FutureInstruction<JSON> inst = pp.s;
             if(k.equals("!init")) {
                init = fixContextData(singleton(inst.getSourceInfo(), inst));
                /*
@@ -51,7 +51,7 @@ public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
                // ignore in import
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
-               InstructionFuture<JSON> imp = fixContextData(inst);
+               FutureInstruction<JSON> imp = fixContextData(inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
@@ -66,7 +66,7 @@ public abstract class ObjectInstructionBase extends AbstractInstructionFuture {
          return null;
       }
 
-      public List<Pair<String, InstructionFuture<JSON>>> pairs() {
+      public List<Pair<String, FutureInstruction<JSON>>> pairs() {
          return ll;
       };
    }

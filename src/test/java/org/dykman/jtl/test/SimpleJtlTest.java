@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
@@ -36,7 +36,7 @@ public class SimpleJtlTest {
 			FileInputStream fin = new FileInputStream(inputFile);
          System.err.println("compiling " + args[0]);
 	      long compile = System.nanoTime();
-			InstructionFuture<JSON> inst = compiler.parse(args[0],fin);
+			FutureInstruction<JSON> inst = compiler.parse(args[0],fin);
 			if(inst == null) {
 				System.err.println("no program");
 				System.exit(1);

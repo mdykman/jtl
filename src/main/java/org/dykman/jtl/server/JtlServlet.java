@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
@@ -29,8 +29,8 @@ public class JtlServlet extends HttpServlet {
 	File serverRoot = null;
 	File jtlRoot = null;
 	JSONObject config = null;
-	InstructionFuture<JSON> defInst = null;
-	InstructionFuture<JSON> initInst = null;
+	FutureInstruction<JSON> defInst = null;
+	FutureInstruction<JSON> initInst = null;
 	AsyncExecutionContext<JSON> initContext;
 
 	JtlExecutor jtlExecutor = null;
