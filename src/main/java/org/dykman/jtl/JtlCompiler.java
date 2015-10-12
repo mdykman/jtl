@@ -17,7 +17,7 @@ import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.InstructionFutureFactory;
+import org.dykman.jtl.future.FutureInstructionFactory;
 import org.dykman.jtl.future.InstructionFutureValue;
 import org.dykman.jtl.future.InstructionFutureVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
-import static org.dykman.jtl.future.InstructionFutureFactory.*;
+import static org.dykman.jtl.future.FutureInstructionFactory.*;
 
 public class JtlCompiler {
 	final JSONBuilder jsonBuilder;
@@ -85,7 +85,7 @@ public class JtlCompiler {
 		JtlContext tree = parser.jtl();
 		InstructionFutureVisitor visitor = new InstructionFutureVisitor(file, jsonBuilder, imported);
 		InstructionFutureValue<JSON> v = visitor.visit(tree);
-		return InstructionFutureFactory.fixContextData(v.inst);
+		return FutureInstructionFactory.fixContextData(v.inst);
 	}
 
 	public static SourceInfo getSource(String source, ParserRuleContext ctx, String name) {
@@ -120,7 +120,7 @@ public class JtlCompiler {
 		meta.source = meta.code;
 		meta.line = meta.position = 0;
 		// configurable: import, extend
-		define(context, "_", InstructionFutureFactory.value(df, meta));
+		define(context, "_", FutureInstructionFactory.value(df, meta));
 
 		define(context, "module", loadModule(meta, config));
 		define(context, "import", importInstruction(meta, config));

@@ -26,7 +26,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.InstructionFutureFactory;
+import org.dykman.jtl.future.FutureInstructionFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
@@ -49,7 +49,7 @@ public class JtlMain {
 	static final String JTL_VERSION = "0.9.7";
 
 	final JSONBuilder builder;
-	InstructionFutureFactory factory = new InstructionFutureFactory();
+	FutureInstructionFactory factory = new FutureInstructionFactory();
 	JtlCompiler compiler;
 	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
@@ -565,19 +565,19 @@ public class JtlMain {
 				config);
 		ml.launchAuto(context, true);
 
-		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
+		context.define("0", FutureInstructionFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
 		if (args != null)
 			while (args.hasNext()) {
 				JSON v = builder.value(args.next());
-				context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("cli")));
+				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("cli")));
 				arr.add(v);
 			}
 		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
 
-		context.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("cli")));
-		context.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("cli")));
+		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("cli")));
+		context.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("cli")));
 
 		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
 		context.setRuntime(true);

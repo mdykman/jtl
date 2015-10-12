@@ -12,7 +12,7 @@ import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
-import static org.dykman.jtl.future.InstructionFutureFactory.*;
+import static org.dykman.jtl.future.FutureInstructionFactory.*;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 
@@ -90,7 +90,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
                // variable, deferred evaluation
-               context.define(k.substring(1), fixContextData(InstructionFutureFactory.deferred(inst.getSourceInfo(), inst, context, data)));
+               context.define(k.substring(1), fixContextData(FutureInstructionFactory.deferred(inst.getSourceInfo(), inst, context, data)));
             } else {
                // define a function
                context.define(k,fixContextData(inst));
@@ -146,9 +146,9 @@ import com.google.common.util.concurrent.ListenableFuture;
                throw new RuntimeException("WTF!!!!???? no error handler is defined!");
             }
             AsyncExecutionContext<JSON> ec = context.createChild(true, false, data, source);
-            ec.define("0", InstructionFutureFactory.value("error", context.builder(), source));
-            ec.define("1", InstructionFutureFactory.value(500L, context.builder(), source));
-            ec.define("2", InstructionFutureFactory.value(e.getLocalizedMessage(), context.builder(), source));
+            ec.define("0", FutureInstructionFactory.value("error", context.builder(), source));
+            ec.define("1", FutureInstructionFactory.value(500L, context.builder(), source));
+            ec.define("2", FutureInstructionFactory.value(e.getLocalizedMessage(), context.builder(), source));
             return error.call(ec, data);
          }
       }

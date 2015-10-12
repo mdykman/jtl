@@ -1,6 +1,6 @@
 package org.dykman.jtl.future;
 
-import static org.dykman.jtl.future.InstructionFutureFactory.*;
+import static org.dykman.jtl.future.FutureInstructionFactory.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;

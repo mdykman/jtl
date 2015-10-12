@@ -31,6 +31,7 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.jsonVisitor;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -44,7 +45,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class InstructionFutureFactory {
+public class FutureInstructionFactory {
 
 	protected static final String JTL_INTERNAL = "_jtl_internal_";
 	// protected static final String JTL_INTERNAL_KEY = JTL_INTERNAL + "key_";
@@ -423,17 +424,17 @@ public class InstructionFutureFactory {
 									String k = ip.f;
 									FutureInstruction<JSON> fii = fixContextData(ip.s);
 									if ("!init".equals(k)) {
-										initInst = InstructionFutureFactory.memo(fii.getSourceInfo(), fii);
+										initInst = FutureInstructionFactory.memo(fii.getSourceInfo(), fii);
 										mc.define(k.substring(1), initInst);
 									} else if ("_".equals(k)) {
 										context.getInit().define(key, fii);
 									} else {
 										char ic = k.charAt(0);
 										if (ic == '$') {
-											mc.define(k.substring(1), InstructionFutureFactory
+											mc.define(k.substring(1), FutureInstructionFactory
 													.deferred(fii.getSourceInfo(), fii, context, data));
 										} else if (ic == '!') {
-											FutureInstruction<JSON> imp = InstructionFutureFactory
+											FutureInstruction<JSON> imp = FutureInstructionFactory
 													.memo(fii.getSourceInfo(), fii);
 											mc.define(k.substring(1), imp);
 											imperitives.add(imp);
@@ -2415,7 +2416,7 @@ public class InstructionFutureFactory {
 										break;
 									case ARRAY: {
 										JSONArray jarr = (JSONArray) j;
-										if (jarr.size() == 2) {
+										if (jarr.isRanged()) {
 											JSON ja = jarr.get(0);
 											JSON jb = jarr.get(1);
 											if (ja != null && ja.isValue() && jb != null && jb.isValue()) {
@@ -2430,8 +2431,18 @@ public class InstructionFutureFactory {
 														lb = ((lb + larr.size()) % larr.size());
 													int inc = la < lb ? 1 : -1;
 													for (; (la - inc) != lb; la += inc) {
-														unbound.add(larr.get(la.intValue()));
+														JSON je = larr.get(la.intValue());
+														unbound.add(je!=null?je:context.builder().value());
 													}
+												}
+											}
+										} else { // a regular array
+											for(JSON jj: jarr) {
+												if(jj.isNumber()) {
+													JSON je = larr.get(((JSONValue)jj).longValue().intValue());
+													unbound.add(je!=null?je:context.builder().value());
+												} else {
+													unbound.add(context.builder().value());
 												}
 											}
 										}
@@ -2447,19 +2458,18 @@ public class InstructionFutureFactory {
 							JSONObject obj = (JSONObject) ra;
 							if (rb instanceof JSONArray) {
 								for (JSON j : (JSONArray) rb) {
-									JSONType jtype = j.getType();
-									switch (jtype) {
-									case STRING:
-										// case LONG:
-										// case DOUBLE:
-										String s = ((JSONValue) j).stringValue();
-										JSON jj = obj.get(s);
-										if (jj != null)
-											unbound.add(jj);
-										break;
-									default:
-									}
+									String s = j.stringValue();
+									JSON jj = obj.get(s);
+									if (jj != null)
+										unbound.add(jj);
+									else unbound.add(context.builder().value());
 								}
+							} else if(rb instanceof JSONValue) {
+								String s = rb.stringValue();
+								JSON jj = obj.get(s);
+								if (jj != null)
+									unbound.add(jj);
+								else unbound.add(context.builder().value());
 							}
 						}
 							break;
@@ -2483,7 +2493,7 @@ public class InstructionFutureFactory {
 										break;
 									case ARRAY: {
 										JSONArray jarr = (JSONArray) j;
-										if (jarr.size() == 2) {
+										if (jarr.isRanged()) {
 											JSON ja = jarr.get(0);
 											JSON jb = jarr.get(1);
 											if (ja != null && ja.isValue() && jb != null && jb.isValue()) {
@@ -2500,6 +2510,14 @@ public class InstructionFutureFactory {
 													for (; (la - inc) != lb; la += inc) {
 														sb.append(larr.charAt(la.intValue()));
 													}
+												}
+											}
+										} else {
+											for(JSON jj: jarr) {
+												if(jj.isNumber()) {
+													Long la = ((JSONValue) jj).longValue();
+													la = ((la + larr.length()) % larr.length());
+													sb.append(larr.charAt(la.intValue()));
 												}
 											}
 										}

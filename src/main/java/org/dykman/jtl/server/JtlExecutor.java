@@ -18,7 +18,7 @@ import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.InstructionFutureFactory;
+import org.dykman.jtl.future.FutureInstructionFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
@@ -143,7 +143,7 @@ public class JtlExecutor {
 			File execFile, FutureInstruction<JSON> prog, String selector, String[] path, JSON data)
 					throws IOException, ExecutionException {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
-		ctx.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("http")));
+		ctx.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("http")));
 		try {
 			// TODO:: remove assert
 			JSON j = prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
@@ -289,7 +289,7 @@ public class JtlExecutor {
 			}
 			jrq.put(kk.getKey().replaceAll("[-]", "_"), arr);
 		}
-		ctx.define("req", InstructionFutureFactory.value(jrq, SourceInfo.internal("http")));
+		ctx.define("req", FutureInstructionFactory.value(jrq, SourceInfo.internal("http")));
 
 		// map the request headers
 		Enumeration<String> en = req.getHeaderNames();
@@ -299,31 +299,31 @@ public class JtlExecutor {
 			String k = en.nextElement();
 			jrq.put(k.replaceAll("[-]", "_"), builder.value(req.getHeader(k)));
 		}
-		ctx.define("headers", InstructionFutureFactory.value(jrq, SourceInfo.internal("http")));
+		ctx.define("headers", FutureInstructionFactory.value(jrq, SourceInfo.internal("http")));
 
 		// path arguments
-		ctx.define("0", InstructionFutureFactory.value(builder.value(execFile.getCanonicalPath()),
+		ctx.define("0", FutureInstructionFactory.value(builder.value(execFile.getCanonicalPath()),
 				SourceInfo.internal("http")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
 		for (String s : path) {
 			JSON v = builder.value(s);
-			ctx.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("http")));
+			ctx.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("http")));
 			arr.add(v);
 		}
-		ctx.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("http")));
+		ctx.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("http")));
 //		ctx.define("#", InstructionFutureFactory.value(builder.value(arr.size()), SourceInfo.internal("http")));
 		/// ctx.define("_",
 		/// InstructionFutureFactory.value(builder.value(arr.size()), null));
 		// req.getp
 		// misc. metadata
-		ctx.define("selector", InstructionFutureFactory.value(builder.value(selector), SourceInfo.internal("http")));
+		ctx.define("selector", FutureInstructionFactory.value(builder.value(selector), SourceInfo.internal("http")));
 		ctx.define("uri",
-				InstructionFutureFactory.value(builder.value(req.getRequestURI()), SourceInfo.internal("http")));
-		ctx.define("url", InstructionFutureFactory.value(builder.value(req.getRequestURL().toString()),
+				FutureInstructionFactory.value(builder.value(req.getRequestURI()), SourceInfo.internal("http")));
+		ctx.define("url", FutureInstructionFactory.value(builder.value(req.getRequestURL().toString()),
 				SourceInfo.internal("http")));
 		ctx.define("method",
-				InstructionFutureFactory.value(builder.value(req.getMethod()), SourceInfo.internal("http")));
+				FutureInstructionFactory.value(builder.value(req.getMethod()), SourceInfo.internal("http")));
 		return ctx;
 	}
 

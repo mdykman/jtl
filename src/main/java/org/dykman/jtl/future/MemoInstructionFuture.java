@@ -38,7 +38,7 @@ public class MemoInstructionFuture extends AbstractFutureInstruction {
             ic = pp.getdef(key);
             if(ic==null) {
                ListenableFuture<JSON>  r = inst.call(context, data);
-               pp.define(key, InstructionFutureFactory.value(r, source));
+               pp.define(key, FutureInstructionFactory.value(r, source));
                return r;
             }
          }
