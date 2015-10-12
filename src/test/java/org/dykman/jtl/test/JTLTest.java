@@ -103,15 +103,26 @@ public class JTLTest {
 	}
 
 	@Test
+	public void testKeys() throws Exception {
+		JSON data = getBaseData();
+		JSON j = runExpression("people/keys()", data);
+		assertTrue(j instanceof JSONArray);
+		if (j instanceof JSONArray) {
+			JSONArray arr = (JSONArray) j;
+			assertTrue(arr.size() == 23);
+		}
+	}
+
+	@Test
 	public void testGroup() throws Exception {
 		JSON data = getBaseData();
 		JSON j = runExpression("people/group(element)/fire/count()", data);
 		assertTrue(j.isNumber());
 		if (j.isNumber()) {
 			assertTrue(((JSONValue) j).longValue() == 2);
-//			System.err.println(((JSONValue) j).longValue());
 		}
 	}
+
 
 
 
