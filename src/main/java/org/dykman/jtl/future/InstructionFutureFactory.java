@@ -3244,13 +3244,28 @@ public class InstructionFutureFactory {
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						if (input.getType() == JSONType.OBJECT) {
 							Map<String, JSON> mm = ((JSONObject) input).map();
-							JSONArray res = context.builder().array(input.getParent());
+							Set<JSON> set = new LinkedHashSet<>();
 							for (String s : mm.keySet()) {
-								res.add(context.builder().value(s));
+								set.add(context.builder().value(s));
+//								res.add(context.builder().value(s));
 							}
+							JSONArray res = context.builder().array(input.getParent(),set);
 							return immediateCheckedFuture(res);
 						}
-						return immediateCheckedFuture(context.builder().value());
+						if (input instanceof JSONArray) {
+							Set<JSON> set = new LinkedHashSet<>();
+							for(JSON j: (JSONArray) input) {
+								if (j.getType() == JSONType.OBJECT) {
+									Map<String, JSON> mm = ((JSONObject) j).map();
+									for (String s : mm.keySet()) {
+										set.add(context.builder().value(s));
+									}
+								}
+							}
+							JSONArray res = context.builder().array(input.getParent(),set);
+							return immediateCheckedFuture(res);
+						}
+						return immediateCheckedFuture(context.builder().array(null));
 					}
 				};
 				FutureInstruction<JSON> arg = context.getdef("1");
