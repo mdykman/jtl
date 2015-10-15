@@ -45,8 +45,8 @@ public class SimpleJtlTest {
 			JSON data = builder.parse(new File(args[1]));
 			JSONObject config = (JSONObject)builder.parse(new File(args[2]));
 	
-			AsyncExecutionContext<JSON>  context = JtlCompiler.createInitialContext(data,config, 
-				inputFile.getParentFile(),builder, les);
+			AsyncExecutionContext<JSON>  context = compiler.createInitialContext(data,config, 
+				inputFile.getParentFile(),null,builder, les);
 //			context.debug(true);
          long execute = System.nanoTime();
 			ListenableFuture<JSON> j = inst.call(context, Futures.immediateFuture(data));

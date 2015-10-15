@@ -40,6 +40,10 @@ public interface JSONBuilder {
 	public JSON parse(String in) throws IOException;
 	
 	
+	public Map<String,JSON> map();
+	public Map<String,JSON> map(Map<String,JSON> m);
+	public Collection<JSON> collection();
+	public Collection<JSON> collection(Collection<JSON> c);
 	
 	public jsonParser createParser(String in) ;
 	public jsonParser createParser(InputStream in) throws IOException;

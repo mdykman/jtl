@@ -4,6 +4,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.JtlCompiler;
+import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.*;
@@ -28,29 +29,34 @@ public class JTLTest {
 
 	File base = new File("src/test/resources");
 
-	JSONBuilder builder = new JSONBuilderImpl();
-	JtlCompiler compiler = new JtlCompiler(builder);
+	JSONBuilder builder;
+	JtlCompiler compiler;
 	JSONObject conf;
 	ListeningExecutorService les;
+
 	{
-	ConsoleAppender console = new ConsoleAppender(); 
-	String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-	console.setLayout(new PatternLayout(PATTERN));
-	console.setThreshold(Level.toLevel(Level.ERROR_INT, Level.ERROR));
-	console.activateOptions();
-	org.apache.log4j.Logger.getRootLogger().addAppender(console);
+		ConsoleAppender console = new ConsoleAppender();
+		String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+		console.setLayout(new PatternLayout(PATTERN));
+		console.setThreshold(Level.toLevel(Level.ERROR_INT, Level.ERROR));
+		console.activateOptions();
+		org.apache.log4j.Logger.getRootLogger().addAppender(console);
 	}
 
 	@Rule
 	public ExternalResource executor = new ExternalResource() {
 		@Override
 		protected void before() {
+			builder = new JSONBuilderImpl();
+			compiler = new JtlCompiler(builder);
 			les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 		}
 
 		@Override
 		protected void after() {
 			try {
+				builder = null;
+				compiler = null;
 				les.shutdown();
 				les.awaitTermination(2000, TimeUnit.MILLISECONDS);
 			} catch (InterruptedException e) {
@@ -69,16 +75,58 @@ public class JTLTest {
 
 	protected JSON runExpression(String expr, JSON data) throws Exception {
 		FutureInstruction<JSON> inst = compiler.parse("test", expr);
-		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, getConfig(), new File(".").getCanonicalFile(), builder, les);
+		AsyncExecutionContext<JSON> context = compiler.createInitialContext(data, getConfig(),
+				new File(".").getCanonicalFile(), null,builder, les);
 		context.setInit(true);
-		
-		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(),context.builder(),
-				getConfig());
+
+		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), getConfig());
 		ml.launchAuto(context, true);
 
 		ListenableFuture<JSON> result = inst.call(context, Futures.immediateCheckedFuture(data));
 		JSON j = result.get();
 		return j;
+	}
+
+	protected AsyncExecutionContext<JSON> setupContext(File code, JSON input, File init,JSONObject config) throws Exception {
+		AsyncExecutionContext<JSON> context = compiler.createInitialContext(input, config,
+				code.getCanonicalFile(), init,builder, les);
+		config.put("server-mode", builder.value(false));
+
+		context = context.createChild(false, false, 
+				Futures.immediateCheckedFuture(input), SourceInfo.internal("test"));
+		context.setRuntime(true);
+		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), config);
+		ml.launchAuto(context, true);
+		return context;
+	}
+	
+	protected JSON runFile(File code, JSON input) throws Exception {
+		return runFile(code, input, null, getConfig());
+	}
+	protected JSON runFile(File code, JSON input,File init,JSONObject config) throws Exception {
+		FutureInstruction<JSON> inst = compiler.parse(code);
+		ListenableFuture<JSON> inf = Futures.immediateCheckedFuture(input);
+		AsyncExecutionContext<JSON> context = setupContext(code, input,init,config);
+
+		ListenableFuture<JSON> result = inst.call(context, inf);
+		JSON j = result.get();
+		return j;
+	}
+
+	@Test
+	public void testJdbc() throws Exception {
+		JSON d = builder.parse(new File(base, "data2.json"));
+		File code = new File(base, "test-jdbc.jtl");
+		JSON res = runFile(code, d);
+		JSON jj = runExpression(".[1]/children[1]/children[1]/name", res);
+		assertEquals("g", jj.stringValue());
+		JSON expected = builder.parse("[\"c\",\"d\",\"e\",\"f\",\"g\"]");
+		jj=runExpression("*/children/*/*/children/*/*/name", res);
+		assertEquals(expected, jj);
+		jj=runExpression("*/children/*/*/children", res);
+//		 System.out.println(jj);
+//		 jj = runExpression("**/filter(id = 3)", res);
+//		 System.out.println(jj);
 	}
 
 	@Test
@@ -96,9 +144,9 @@ public class JTLTest {
 		JSON data = getBaseData();
 		JSON j = runExpression("people/element/unique()", data);
 		assertTrue(j instanceof JSONArray);
-		if(j instanceof JSONArray) {
-			JSON expected = builder.parse("[\"fire\",\"ice\",\"candy\"]"); 
-			assertEquals(j,expected);
+		if (j instanceof JSONArray) {
+			JSON expected = builder.parse("[\"fire\",\"ice\",\"candy\"]");
+			assertEquals(j, expected);
 		}
 	}
 
@@ -122,9 +170,6 @@ public class JTLTest {
 			assertTrue(((JSONValue) j).longValue() == 2);
 		}
 	}
-
-
-
 
 	@Test
 	public void testOverlay() throws Exception {

@@ -1,0 +1,21 @@
+{
+
+	_:  recipes/cc.pq(primaryQuery(.))/amend("Recipe",thingId/ii() or null),
+	ii:  . ? cy(.)/amend("Recipe",thingId/ii() or null) : null,
+	cy: cc.cr(cq($1)),
+	ty: cc.th(thingQ($1))/amend({
+		Recipe:thingId/ii() or null,
+		amount: $2,
+		minQuality: $3
+		}),
+	caty: cc.cat(categoryQ($1))/amend({
+		amount:$2,
+		minQuality: $3
+	}),
+	primaryQuery: pantheon.query("select * from things where thingId = ?"/copy(count($1))/join(" UNION "),$1),
+	cq: pantheon.query("select * from coreRecipe where createId = ?",[$1])/*/(resourceId ? 
+		ty(resourceId,amount,minQuality) : 
+		caty(category,amount,minQuality)),
+	thingQ: pantheon.query("select * from things where thingId = ?",[$1]),
+	categoryQ: pantheon.query("select * from thingsCategory where catId = ? ",[$1])
+}

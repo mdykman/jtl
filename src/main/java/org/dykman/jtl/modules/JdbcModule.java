@@ -190,6 +190,7 @@ public class JdbcModule extends AbstractModule {
 			else
 				throw new ExecutionException("neither driver nor datasource found in config",
 						SourceInfo.internal("jdbc"));
+
 			if (username != null)
 				props.put("username", username);
 			if (password != null)
@@ -230,7 +231,8 @@ public class JdbcModule extends AbstractModule {
 					if (connection == null) {
 						try {
 							connection = hds.getConnection();
-							connection.setCatalog(databaseName);
+							if (databaseName != null)
+								connection.setCatalog(databaseName);
 							// connection = this.dataSource.getConnection();
 							rc.set(key, connection);
 							final Connection theConnection = connection;
@@ -239,10 +241,12 @@ public class JdbcModule extends AbstractModule {
 								@Override
 								public boolean complete() {
 									try {
+										if (databaseName != null)
+											theConnection.setCatalog(databaseName);
 										theConnection.close();
 										return true;
 									} catch (SQLException e) {
-										System.err.println("there was an error while closing a jdbc connection: "
+										logger.debug("there was an error while closing a jdbc connection: "
 												+ e.getLocalizedMessage());
 										return false;
 									}
@@ -251,7 +255,7 @@ public class JdbcModule extends AbstractModule {
 							});
 
 						} catch (Throwable e) {
-							logger.error("there was an exception while acquiring the connection",e);
+							logger.error("there was an exception while acquiring the connection", e);
 							e.printStackTrace();
 							throw new ExecutionException(e, src);
 						}

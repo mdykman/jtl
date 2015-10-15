@@ -145,7 +145,6 @@ public class JtlExecutor {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
 		ctx.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("http")));
 		try {
-			// TODO:: remove assert
 			JSON j = prog.call(ctx, Futures.immediateCheckedFuture(data)).get();
 			return j;
 		} catch (java.util.concurrent.ExecutionException | InterruptedException e) {
@@ -259,13 +258,8 @@ public class JtlExecutor {
 		if (initializedContext == null) {
 			synchronized (this) {
 				if (initializedContext == null) {
-					initializedContext = JtlCompiler.createInitialContext(baseConfig, baseConfig,
-							serverBase, builder, getExecutorService());
-					initializedContext.setInit(true);
-					if (init != null) {
-						FutureInstruction<JSON> initf = compiler.parse(init);
-						initResult = initf.call(initializedContext, configFuture);
-					}
+					initializedContext = compiler.createInitialContext(baseConfig, baseConfig,
+							serverBase, init, builder, getExecutorService());
 					return preExec(req, res, initializedContext, data);
 				}
 				ModuleLoader ml = ModuleLoader.getInstance(initializedContext.currentDirectory(),initializedContext.builder(),

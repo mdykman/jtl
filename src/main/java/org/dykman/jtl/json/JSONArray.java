@@ -55,12 +55,15 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		return 0;
 	}
 	public JSON cloneJSON() {
+		return builder.array(null, builder.collection(this.arr));
+		/*
 		JSONArray res = builder.array(parent);
 		int i = 0;
 		for(JSON j:arr) {
 			res.add(j);
 		}
 		return res;
+		*/
 	}
 
 	@Override
