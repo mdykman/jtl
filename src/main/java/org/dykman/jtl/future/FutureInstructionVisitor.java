@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
@@ -237,19 +238,26 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
    @Override
 	public FutureInstructionValue<JSON> visitVariable(VariableContext ctx) {
-	   List<IdentContext> iit = ctx.ident();
-	   int n = iit.size();
+	   int n = ctx.getChildCount();
 	   String name = null;
-	   if(n == 0) {
-	      name = ctx.getChild(1).getText();
+	   Iterator<IdentContext> ids = ctx.ident().iterator();
+	   if(n == 4 ) {
+		   name = ids.next().getText();
+		   name = name + "." + ids.next().getText();
+	   }
+	   // n == 2
+	   else if(ids.hasNext()) {
+		   name = ids.next().getText();
 	   } else {
-	      name = visitIdent(iit.get(0)).string;
+		   TerminalNode ii = ctx.INTEGER();
+		   if(ii != null) {
+			   name = ii.getText();
+		   } else {
+			   ParseTree pt = ctx.getChild(1);
+			   name = pt.getText();
+		   }
 	   }
-	   if(n ==4 ) {
-	     name = visitIdent(iit.get(0)).string + '.' + name;
-	   }
-	   List<FutureInstruction<JSON>> ins = new ArrayList<>();
-      return new FutureInstructionValue<JSON>(variable(getSource(ctx),name));
+	   return new FutureInstructionValue<JSON>(variable(getSource(ctx),name));
 	}
 
 	@Override

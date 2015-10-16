@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -38,6 +39,11 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public class JdbcModule extends AbstractModule {
 
+	interface Executor {
+		JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException;
+	}
+
+	
 	final JSONObject baseConfig;
 	final String key;
 	boolean debug = false;
@@ -77,6 +83,7 @@ public class JdbcModule extends AbstractModule {
 
 			@Override
 			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
+				
 				int res = stat.executeUpdate();
 				final String idstat;
 				if (insertIdExpr != null) {
@@ -121,9 +128,6 @@ public class JdbcModule extends AbstractModule {
 		};
 	}
 
-	interface Executor {
-		JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException;
-	}
 
 	class JdbcConnectionWrapper {
 		final JSONObject conf;
@@ -273,7 +277,7 @@ public class JdbcModule extends AbstractModule {
 			return connection;
 		}
 
-		public FutureInstruction<JSON> query(SourceInfo meta, Executor exec) {
+		public FutureInstruction<JSON> query(SourceInfo meta, Executor exec,boolean isInsert) {
 			// Connection c = getConnection();
 			return new AbstractFutureInstruction(meta) {
 				@Override
@@ -301,7 +305,12 @@ public class JdbcModule extends AbstractModule {
 								public JSON call() throws Exception {
 									Connection connection = getConnection(source, context);
 									synchronized (connection) {
-										PreparedStatement prep = connection.prepareStatement(stringValue(qq));
+										PreparedStatement prep;
+										if(isInsert) {
+											prep = connection.prepareStatement(stringValue(qq),Statement.RETURN_GENERATED_KEYS);
+										} else {
+											prep = connection.prepareStatement(stringValue(qq));
+										}
 										if (logger.isInfoEnabled()) {
 											StringBuilder sb = new StringBuilder("query: ");
 											sb.append(qq);
@@ -359,7 +368,7 @@ public class JdbcModule extends AbstractModule {
 		SourceInfo si = meta.clone();
 		si.name = "query";
 		si.code = "*internal*";
-		context.define("query", wrapper.query(si, queryExecutor));
+		context.define("query", wrapper.query(si, queryExecutor,false));
 
 		si = meta.clone();
 		si.name = "cquery";
@@ -384,7 +393,7 @@ public class JdbcModule extends AbstractModule {
 				}
 				return obj;
 			}
-		}));
+		},false));
 
 		si = meta.clone();
 		si.name = "execute";
@@ -395,8 +404,8 @@ public class JdbcModule extends AbstractModule {
 				stat.execute();
 				return builder.value(true);
 			}
-		}));
-		context.define("insert", wrapper.query(si, insertExecutor));
+		},false));
+		context.define("insert", wrapper.query(si, insertExecutor,true));
 		return context.builder().value(1);
 
 	}
