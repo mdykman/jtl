@@ -91,7 +91,7 @@ public class FutureInstructionFactory {
 								public JSON call() throws Exception {
 									if (ff.exists())
 										return context.builder().parse(ff);
-									System.err.println("failed to find file " + ff.getPath());
+									logger.error("in file(): failed to find file " + ff.getPath());
 									return context.builder().value();
 								}
 							};

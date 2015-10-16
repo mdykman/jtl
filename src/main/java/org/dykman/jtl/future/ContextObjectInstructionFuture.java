@@ -142,7 +142,7 @@ import com.google.common.util.concurrent.ListenableFuture;
          } catch (ExecutionException e) {
             FutureInstruction<JSON> error = context.getdef("error");
             if(error == null) {
-               System.err.println("WTF!!!!???? no error handler is defined!");
+               logger.error("WTF!!!!???? no error handler is defined!");
                throw new RuntimeException("WTF!!!!???? no error handler is defined!");
             }
             AsyncExecutionContext<JSON> ec = context.createChild(true, false, data, source);

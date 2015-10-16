@@ -8,6 +8,9 @@ import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
+import org.dykman.jtl.modules.JdbcModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.dykman.jtl.json.JSONValue;
 
 import com.google.common.util.concurrent.AsyncFunction;
@@ -18,7 +21,8 @@ public abstract class AbstractFutureInstruction implements
 		FutureInstruction<JSON> {
    final protected SourceInfo source;
    final protected boolean items;
-   
+	static Logger logger = LoggerFactory.getLogger(AbstractFutureInstruction.class);
+
    public AbstractFutureInstruction(SourceInfo meta) {
       this(meta == null ? SourceInfo.internal("default") : meta,false);
    }
@@ -53,9 +57,8 @@ public abstract class AbstractFutureInstruction implements
    public final ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context,final ListenableFuture<JSON> data)
          throws ExecutionException {
       boolean debug = context.debug();
-      if(debug) {
-         System.err.print(source.toString(context));
-         System.err.println();
+      if(debug && logger.isDebugEnabled()) {
+         logger.debug(source.toString(context));
       }
       
       ListenableFuture<JSON> r;

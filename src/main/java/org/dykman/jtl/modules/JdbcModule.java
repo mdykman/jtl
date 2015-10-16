@@ -285,10 +285,13 @@ public class JdbcModule extends AbstractModule {
 						final ListenableFuture<JSON> data) throws ExecutionException {
 					FutureInstruction<JSON> q = context.getdef("1");
 					FutureInstruction<JSON> p = context.getdef("2");
+					FutureInstruction<JSON> inp = context.getdef("3");
 					List<ListenableFuture<JSON>> ll = new ArrayList<>();
 					ll.add(q.call(context, data));
 					if (p != null) {
 						ll.add(p.call(context, data));
+						if(inp!=null)
+							ll.add(inp.call(context, data));
 					}
 					return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 						@Override
@@ -307,7 +310,24 @@ public class JdbcModule extends AbstractModule {
 									synchronized (connection) {
 										PreparedStatement prep;
 										if(isInsert) {
-											prep = connection.prepareStatement(stringValue(qq),Statement.RETURN_GENERATED_KEYS);
+											if(pp!=null && jit.hasNext()) {
+												JSON kf = jit.next();
+												ArrayList<String> kkf = new ArrayList<>();
+												if(kf instanceof JSONArray) {
+													JSONArray ja = (JSONArray) kf;
+													for(JSON jj : ja) {
+														kkf.add(jj.stringValue());
+													}
+													prep = connection.prepareStatement(stringValue(qq),
+															kkf.toArray(new String[kkf.size()]));
+
+												} else {
+													prep = connection.prepareStatement(stringValue(qq),
+															kkf.toArray(new String[] {kf.stringValue()}));
+												}
+											} else {
+												prep = connection.prepareStatement(stringValue(qq),Statement.RETURN_GENERATED_KEYS);
+											}
 										} else {
 											prep = connection.prepareStatement(stringValue(qq));
 										}
