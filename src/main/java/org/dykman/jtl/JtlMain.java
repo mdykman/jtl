@@ -6,14 +6,13 @@ package org.dykman.jtl;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import javax.servlet.ServletException;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -26,14 +25,13 @@ import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.InstructionFutureFactory;
+import org.dykman.jtl.future.FutureInstructionFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.modules.JdbcModule;
-import org.dykman.jtl.modules.ModuleLoader;
 import org.dykman.jtl.server.JtlServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,10 +44,10 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	static final String JTL_VERSION = "0.9.7";
+	static final String JTL_VERSION = "0.9.8";
 
 	final JSONBuilder builder;
-	InstructionFutureFactory factory = new InstructionFutureFactory();
+	FutureInstructionFactory factory = new FutureInstructionFactory();
 	JtlCompiler compiler;
 	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
 
@@ -212,18 +210,18 @@ public class JtlMain {
 				logLevel = cli.getOptionValue('l');
 			} else if (verbose) {
 				logLevel = "info";
-
 			}
 			ConsoleAppender console = new ConsoleAppender(); 
 			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
 			console.setLayout(new PatternLayout(PATTERN));
 			console.setThreshold(Level.toLevel(logLevel, Level.ERROR));
 			console.activateOptions();
+			console.setWriter(new OutputStreamWriter(System.err, "UTF-8"));
 			org.apache.log4j.Logger.getRootLogger().addAppender(console);
 
-			System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
-
-			logger = LoggerFactory.getLogger(JdbcModule.class);
+			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel(logLevel));
+			
+			logger = LoggerFactory.getLogger(JtlMain.class);
 
 			String oo;
 			if (cli.hasOption('p') || cli.hasOption("port")) {
@@ -333,8 +331,8 @@ public class JtlMain {
 				// else
 				fdata = new File(oo);
 			}
-			if (cli.hasOption('i') || cli.hasOption("indent")) {
-				oo = cli.getOptionValue('i');
+			if (cli.hasOption('n') || cli.hasOption("indent")) {
+				oo = cli.getOptionValue('n');
 				if (oo == null)
 					oo = cli.getOptionValue("indent");
 				indent = Integer.parseInt(oo);
@@ -371,7 +369,8 @@ public class JtlMain {
 						cexddir = jtl.getParentFile();
 					}
 				}
-				logger.info("using base directory " + cexddir.getPath());
+				cexddir = cexddir.getCanonicalFile();	
+	//			logger.info("using base directory " + cexddir.getPath());
 
 				JtlServer server = main.launchServer(home, cexddir, init, jtl, fconfig, bindAddress, port, canonical);
 				server.start();
@@ -391,7 +390,7 @@ public class JtlMain {
 					if (expr == null) {
 						jtl = new File(argIt.next());
 						jtl = jtl.getAbsoluteFile();
-						cexddir = jtl.getParentFile();
+						if(cexddir != null)	cexddir = jtl.getParentFile();
 					}
 				}
 				if(cexddir == null) {
@@ -430,7 +429,7 @@ public class JtlMain {
 							}
 							arr.add(j);
 							if ((batch != null) && (++cc >= batch)) {
-								JSON result = main.execute(inst, source, arr, cexddir, argIt);
+								JSON result = main.execute(inst, source,init, arr, cexddir, argIt);
 								result.write(pw, indent, enquote);
 								pw.flush();
 								cc = 0;
@@ -440,23 +439,23 @@ public class JtlMain {
 							throw new RuntimeException("while reading sequence: " + e.getLocalizedMessage());
 						}
 					}
-					JSON result = main.execute(inst, source, arr, cexddir, argIt);
+					JSON result = main.execute(inst, source,init, arr, cexddir, argIt);
 					result.write(pw, indent, enquote);
 					pw.flush();
 				} else if (fdata != null) {
 					// declare all of argIt as arguments
 					JSON data = main.parse(fdata);
-					JSON result = main.execute(inst, source, data, cexddir, argIt);
+					JSON result = main.execute(inst, source,init, data, cexddir, argIt);
 					result.write(pw, indent, enquote);
 				} else {
 					if (useNull) {
 						JSON data = main.empty();
-						JSON result = main.execute(inst, source, data, cexddir, argIt);
+						JSON result = main.execute(inst, source,init, data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 					} else if (!argIt.hasNext()) {
 						// empty arguments
 						JSON data = main.parse(System.in);
-						JSON result = main.execute(inst, source, data, cexddir, argIt);
+						JSON result = main.execute(inst, source, init,data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 
 					} else {
@@ -464,7 +463,7 @@ public class JtlMain {
 						// declare all of argIt as arguments
 
 						JSON data = main.parse(f);
-						JSON result = main.execute(inst, source, data, cexddir, argIt);
+						JSON result = main.execute(inst, source, init,data, cexddir, argIt);
 						result.write(pw, indent, enquote);
 					}
 				}
@@ -481,7 +480,7 @@ public class JtlMain {
 				System.err.println(((ExecutionException) e.getCause()).report());
 			} else {
 				Throwable ee = e.getCause() == null ? e : e.getCause();
-				System.err.println("an error occured: " + ee.getLocalizedMessage());
+				logger.error(ee.getClass().getName() + " - an error occured: " + ee.getLocalizedMessage());
 			}
 			if (verbose)
 				e.printStackTrace();
@@ -555,32 +554,34 @@ public class JtlMain {
 		return builder.value();
 	}
 
-	public JSON execute(FutureInstruction<JSON> inst, String source, JSON data, File cwd, Iterator<String> args)
+	public JSON execute(FutureInstruction<JSON> inst, String source, File init, JSON data, File cwd, Iterator<String> args)
 			throws Exception {
 
-		AsyncExecutionContext<JSON> context = JtlCompiler.createInitialContext(data, config, cwd, builder, les);
-		context.setInit(true);
-		
+		AsyncExecutionContext<JSON> context = compiler.createInitialContext(data, config, cwd,init, builder, les);
+//		context.setInit(true);
+		/*
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(),context.builder(),
 				config);
 		ml.launchAuto(context, true);
-
-		context.define("0", InstructionFutureFactory.value(builder.value(source), SourceInfo.internal("cli")));
+	*/
+		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
+		context=context.createChild(false, false, dd, SourceInfo.internal("cli"));
+		context.setRuntime(true);
+		context.define("0", FutureInstructionFactory.value(builder.value(source), SourceInfo.internal("cli")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
 		if (args != null)
 			while (args.hasNext()) {
 				JSON v = builder.value(args.next());
-				context.define(Integer.toString(cc++), InstructionFutureFactory.value(v, SourceInfo.internal("cli")));
+				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("cli")));
 				arr.add(v);
 			}
-		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
 
-		context.define("@", InstructionFutureFactory.value(arr, SourceInfo.internal("cli")));
-		context.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("cli")));
+		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("cli")));
+		context.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("cli")));
 
-		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
-		context.setRuntime(true);
+///		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
+//		context.setRuntime(true);
 
 		ListenableFuture<JSON> j = inst.call(context, dd);
 		return j.get();

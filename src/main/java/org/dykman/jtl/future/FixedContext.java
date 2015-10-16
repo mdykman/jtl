@@ -18,7 +18,7 @@ public class FixedContext extends AbstractFutureInstruction {
 	@Override
 	public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 			throws ExecutionException {
-		context.define("_", InstructionFutureFactory.value(data, inst.getSourceInfo()));
+		context.define("_", FutureInstructionFactory.value(data, inst.getSourceInfo()));
 		context.declaringContext(context);
 		return inst.call(context, data);
 	}

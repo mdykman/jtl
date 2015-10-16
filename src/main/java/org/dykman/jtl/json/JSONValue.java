@@ -146,7 +146,11 @@ public class JSONValue extends AbstractJSON implements JSON {
 		}
 		}
 
+
 	public boolean equals(JSON r) {
+		return 0 == compareTo(r);
+	}
+	public boolean __equals(JSON r) {
 		if (r == null)
 			return false;
 		if (type != r.getType())

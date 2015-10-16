@@ -31,7 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture;
          for(Pair<String, FutureInstruction<JSON>> ii : ll) {
             final String kk = ii.f;
             final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
-            FutureInstruction<JSON> ki = InstructionFutureFactory.value(kk, context.builder(), getSourceInfo());
+            FutureInstruction<JSON> ki = FutureInstructionFactory.value(kk, context.builder(), getSourceInfo());
   //          newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
 //            newc.define("key", ki);
             newc.define(":", ki);

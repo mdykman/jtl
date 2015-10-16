@@ -61,6 +61,19 @@ public class JSONBuilderImpl implements JSONBuilder {
 		}
 
 	}
+	public Map<String,JSON> map() {
+		return mf.createMap();
+	}
+	public Map<String,JSON> map(Map<String,JSON> m) {
+		return mf.copyMap(m);
+	}
+	
+	public Collection<JSON> collection() {
+		return cf.createCollection();
+	}
+	public Collection<JSON> collection(Collection<JSON> c) {
+		return cf.copyCollection(c);
+	}
 
 	static Comparator<String> localeComparator(Locale locale) {
 		 return new Comparator<String>() {
@@ -134,8 +147,10 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public JSON value(Object o) {
 		if (o == null)
 			return value();
-		if (o instanceof JSON)
+		if (o instanceof JSON) {
+			System.err.println("value cloning path...  WTF???");
 			return sign(((JSON) o).cloneJSON());
+		}
 		if (o instanceof Boolean)
 			return value((Boolean) o);
 		if (o instanceof BigInteger) {

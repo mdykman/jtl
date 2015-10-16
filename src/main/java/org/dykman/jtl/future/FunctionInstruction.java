@@ -35,9 +35,9 @@ public class FunctionInstruction extends AbstractFutureInstruction {
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
 		if(name.contains(".")) {
 			String pp[] = name.split("[.]");
-			context.define("0", InstructionFutureFactory.value(context.builder().value(pp[1]), source));
+			context.define("0", FutureInstructionFactory.value(context.builder().value(pp[1]), source));
 		} else {
-			context.define("0", InstructionFutureFactory.value(context.builder().value(name), source));
+			context.define("0", FutureInstructionFactory.value(context.builder().value(name), source));
 		}
 //		context.define("0", InstructionFutureFactory.value(context.builder().value(name), source));
 		int cc = 1;
@@ -45,8 +45,8 @@ public class FunctionInstruction extends AbstractFutureInstruction {
 		if (iargs != null)
 			for (FutureInstruction<JSON> inst : iargs) {
 				String key = Integer.toString(cc++);
-				context.define(key, InstructionFutureFactory.memo(source,
-						InstructionFutureFactory.deferred(source, inst, dctx.declaringContext(), data)));
+				context.define(key, FutureInstructionFactory.memo(source,
+						FutureInstructionFactory.deferred(source, inst, dctx.declaringContext(), data)));
 				insts.add(inst);
 			}
 
@@ -66,7 +66,7 @@ public class FunctionInstruction extends AbstractFutureInstruction {
 			}
 
 		}
-		context.define("@", InstructionFutureFactory.paramArray(source, insts));
+		context.define("@", FutureInstructionFactory.paramArray(source, insts));
 
 		return context;
 	}
@@ -110,7 +110,7 @@ public class FunctionInstruction extends AbstractFutureInstruction {
 		if (rr != null) {
 			func = rr.s;
 			ns = rr.f;
-			childContext.define("$", InstructionFutureFactory.value(context.builder().value(ns == null ? "" : ns), source));
+			childContext.define("$", FutureInstructionFactory.value(context.builder().value(ns == null ? "" : ns), source));
 		}
 
 		if (func == null) {

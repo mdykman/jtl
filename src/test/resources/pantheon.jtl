@@ -1,0 +1,7 @@
+{
+	primaryQuery: pandb.query("select * from things where thingId = ?"/copy(count($1))/join(" UNION "),$1),
+	recipeQ: pandb.query("select * from coreRecipe where createId = ?",[$1]),
+	thingQ: pandb.query("select * from things where thingId = ?",[$1]),
+	categoryQ: pandb.query("select * from thingsCategory where catId = ? ",[$1]),
+	$thisstring: "hello world"
+}

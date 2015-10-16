@@ -17,16 +17,16 @@ import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.InstructionFutureFactory;
-import org.dykman.jtl.future.InstructionFutureValue;
-import org.dykman.jtl.future.InstructionFutureVisitor;
+import org.dykman.jtl.future.FutureInstructionFactory;
+import org.dykman.jtl.future.FutureInstructionValue;
+import org.dykman.jtl.future.FutureInstructionVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
-import static org.dykman.jtl.future.InstructionFutureFactory.*;
+import static org.dykman.jtl.future.FutureInstructionFactory.*;
 
 public class JtlCompiler {
 	final JSONBuilder jsonBuilder;
@@ -83,9 +83,9 @@ public class JtlCompiler {
 		parser.setProfile(profile);
 		// parser.getCurrentToken();
 		JtlContext tree = parser.jtl();
-		InstructionFutureVisitor visitor = new InstructionFutureVisitor(file, jsonBuilder, imported);
-		InstructionFutureValue<JSON> v = visitor.visit(tree);
-		return InstructionFutureFactory.fixContextData(v.inst);
+		FutureInstructionVisitor visitor = new FutureInstructionVisitor(file, jsonBuilder, imported);
+		FutureInstructionValue<JSON> v = visitor.visit(tree);
+		return FutureInstructionFactory.fixContextData(v.inst);
 	}
 
 	public static SourceInfo getSource(String source, ParserRuleContext ctx, String name) {
@@ -108,11 +108,11 @@ public class JtlCompiler {
 		ctx.define(s, inst);
 	}
 
-	public static AsyncExecutionContext<JSON> createInitialContext(JSON data, JSONObject config, File f, JSONBuilder builder,
-			ListeningExecutorService les) {
+	public AsyncExecutionContext<JSON> createInitialContext(JSON data, JSONObject config, File scriptBase, File init,
+			JSONBuilder builder, ListeningExecutorService les) throws IOException, ExecutionException {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
-		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, f);
+		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, scriptBase);
 		context.setExecutionService(les);
 
 		SourceInfo meta = new SourceInfo();
@@ -120,7 +120,7 @@ public class JtlCompiler {
 		meta.source = meta.code;
 		meta.line = meta.position = 0;
 		// configurable: import, extend
-		define(context, "_", InstructionFutureFactory.value(df, meta));
+		define(context, "_", FutureInstructionFactory.value(df, meta));
 
 		define(context, "module", loadModule(meta, config));
 		define(context, "import", importInstruction(meta, config));
@@ -134,6 +134,8 @@ public class JtlCompiler {
 		define(context, "defined", defined(meta));
 		define(context, "call", call(meta));
 		define(context, "thread", thread(meta));
+		define(context, "type", type(meta));
+		define(context, "trace", trace(meta));
 
 		// external data
 		define(context, "file", file(meta));
@@ -184,7 +186,16 @@ public class JtlCompiler {
 		define(context, "value", isValue(meta));
 		define(context, "object", isObject(meta));
 
-		return context;
+		AsyncExecutionContext<JSON> ctx = context;
+		if (init != null) {
+			ctx = ctx.createChild(false, false, df, SourceInfo.internal("compiler"));
+			ctx.setInit(true);
+			FutureInstruction<JSON> initf = parse(init);
+			ListenableFuture<JSON> initResult = initf.call(ctx, Futures.immediateCheckedFuture(config));
+			ctx.define("init", FutureInstructionFactory.value(initResult, meta));
+		}
+		ctx.setInit(true);
+		return ctx;
 	}
 
 }

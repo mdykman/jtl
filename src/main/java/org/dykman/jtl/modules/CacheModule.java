@@ -30,10 +30,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class CacheModule extends AbstractModule {
 
-	JSONObject config;
-	
+	JSONObject config;	
 	ListenableFuture<JSON> NO_RESULT =null;
-//	boolean serverMode = false;
 
 	public CacheModule(JSONObject config) {
 		this.config = config;
@@ -43,7 +41,6 @@ public class CacheModule extends AbstractModule {
 	@Override
 	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
 		NO_RESULT= Futures.immediateCheckedFuture(context.builder().value());
-		JSON res = context.builder().value();
 		for (Pair<String, JSON> pp : config) {
 			if ("server-mode".equals(pp.f)) {
 //				serverMode = pp.s.isTrue();
@@ -134,7 +131,6 @@ public class CacheModule extends AbstractModule {
 
 						FutureInstruction<JSON> ffraw = ff.unwrap();
 						if (ffraw instanceof DeferredCall) {
-							String s = meta.code;
 							DeferredCall dc = (DeferredCall) ffraw;
 							AsyncExecutionContext<JSON> cc = dc.getContext();
 							List<ListenableFuture<JSON>> ll = new ArrayList<>();
@@ -150,8 +146,6 @@ public class CacheModule extends AbstractModule {
 								@Override
 								public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 									Iterator<JSON> jit = input.iterator();
-									String ss = s;
-									// JSON conf = jit.next();
 									JSONArray arr = context.builder().array(null);
 									while (jit.hasNext()) {
 										arr.add(jit.next());

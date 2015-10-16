@@ -12,6 +12,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle;
 import org.eclipse.jetty.util.component.LifeCycle.Listener;
+import org.eclipse.jetty.util.log.Log;
 
 public class JtlServer {
 
@@ -42,7 +43,7 @@ public class JtlServer {
 
 		ServletHandler handler = new ServletHandler();
 		ServletHolder holder = new ServletHolder(new JtlServlet());
-		
+	
 		holder.setInitParameter("jtlbase", jtlBase.getCanonicalPath());
 		holder.setInitParameter("root", serverBase.getCanonicalPath());
 		if(config!=null) holder.setInitParameter("config", config.getCanonicalPath());
