@@ -1,0 +1,42 @@
+// create new city
+{
+	!init: {
+      cityApi: import("city.api.jtl")
+	},
+	_:createCity/find(xLoc,yLoc), 
+	
+	find:  cityApi.findCity($1,$2) ? switch(direction,{
+		 sw: find($1 - rand(3), $2 - rand(3))
+		,se: find($1 - rand(3), $2 + rand(3))
+		,s: find($1 - rand(3), $2)
+		,nw: find($1 + rand(3), $2 - rand(3))
+		,ne: find($1 + rand(3), $2 + rand(3))
+		,n: find($1 + rand(3), $2)
+	}) : cityApi.addCity(playerId, $1, $2, username, level)/initializeBuildings(), 
+
+	initializeBuildings: [ 
+		buildinginit(.,1,5,5,"S",40)
+		//,buildinginit(.,13,1,1,"SE",169)
+		//,buildinginit(.,14,5,8,SW,194)
+		//,buildinginit(.,12,8,1,"NE",41)
+		//,buildinginit(.,2,8,8,"NW",1)
+		//,warehouseInit(.,2,8,8,"NW")
+		//,cityApi.addBuilding(., 33,6,8,"S")
+	],
+	
+	buildinginit: cityApi.addBuilding($1,$2,$3,$4,$5)/cityApi.initializeBuilding()/cityApi.initializeWorkers()/cityApi.addBuildingProduction($6),
+	warehouseInit: cityApi.addBuilding($1,$2,$3,$4,$5)/InitializeWarehouse(),
+	updateBuilding: [
+				makeMaterialList()
+				,removeConstructionFlag()
+				,AddPoints(playerId, pcId, 1)
+				,updateCityPoints(pcId),
+				.
+	][4],
+
+	InitializeWarehouse: [
+		cityApi.addToWarehouse(343,1000,1,'core'),
+		cityApi.addToWarehouse(42,1000,1,'core'),
+		cityApi.addToWarehouse(195,1000,1,'core')
+	]	
+}

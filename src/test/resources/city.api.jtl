@@ -1,0 +1,52 @@
+{
+	!init: {
+
+	},
+
+	findCity: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1,$2]),
+
+	addCity: db.insert("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [$1,$2,$3,$4,$5]), 
+
+	addBuilding: db.insert("INSERT into cityBuildings set pcid=?, btId=?, xLoc=?, yLoc=?, direction=?",[$1,$2,$3,$4,$5])/getBuildingInfo(),
+
+	getBuildingInfo: db.query("SELECT a.buildingId, a.pcId, a.xLoc, a.yLoc, 
+			b.btype as buildingType, a.direction, a.quality,  b.buildingFolder,
+			a.resourceLevel, a.terrain, e.name as resource, d.quality as productionQuality, e.type as resourceType, 
+			b.name, a.level, a.btId, a.numWorkers, a.topQuality, a.rate, a.capacityPerLevel, sum(w.amount) as currentHold, 
+			a.allTimeTotal, a.recipeId, a.slope, a.materialBaseAmount, b.materialBit, e.thingId as resourceId, 
+			a.construction,b.pointValue,f.playerId
+			from cityBuildings a 
+			inner join buildingTypes b on (a.btId = b.btId) 
+			left join currentProduction d on (a.buildingId = d.buildingId)
+			left join things e on (e.thingId = d.resourceId)
+			left join warehouse w on (w.buildingId = a.buildingId)
+			inner join playerCities f on (a.pcId = f.pcId)
+			where a.buildingId = ?
+			group by a.buildingId", [.])[0],
+
+	initializeBuilding: [
+				makeMaterialList(buildingId)
+				,removeConstructionFlag(buildingId)
+				,AddPoints(pointValue, name, level, playerId, buildingId)
+				,updateCityPoints((level * pointValue), pcId, buildingId)
+				,.
+	][4],
+
+	makeMaterialList: [ makeMat(42,$1,570), makeMat(374,$1,570), makeMat(195,$1, 570) ],
+
+	makeMat: db.insert("INSERT into buildingMaterials set resourceId=?, buildingId=?, amount=?", [$1,$2,$3]),
+
+	makeMaterial: db.insert("INSERT into buildingMaterials set resourceId=?, buildingId=?, amount=?", [$1,$2,$3]),
+
+	AddPoints: db.insert("INSERT into points set pointValue=?, comment=?, playerId=?, buildingId=?",[($3 * $1), ("Add " + $3 + "x" + $1 + " for level " +$3+" "+$2), $4, $5]),
+
+	initializeWorkers: db.execute("update cityBuildings set numWorkers = 1 where buildingId=?",[buildingId]) ? . : false,
+
+	removeConstructionFlag: db.execute("UPDATE cityBuildings set construction=0 where buildingId=?", [$1]),
+	
+	updateCityPoints: db.execute("UPDATE cityBuildings set points = points+? where pcId=? AND buildingId=?", [$1, $2, $3]),
+
+	addBuildingProduction: db.insert("INSERT into currentProduction set buildingId=?, resourceId=?, quality=?, rate=?",[buildingId, $1, topQuality, rate]),
+
+	addToWarehouse: db.insert("INSERT into warehouse set pcid=?, buildingId=?, resourceId=?, amount=?, quality=?, type=?, dateAdded=now(), dateUpdated=now()",[pcId,buildingId,$1,$2,$3,$4])
+}

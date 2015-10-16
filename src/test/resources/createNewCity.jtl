@@ -6,7 +6,8 @@
               driver:"com.mysql.jdbc.Driver",
               user:"root",
               password:""
-      })
+      }),
+      city: import("city.jtl")
 
 	},
 	_:createCity/find(xLoc,yLoc),//[0][0], 

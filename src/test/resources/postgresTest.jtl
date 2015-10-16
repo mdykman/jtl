@@ -1,0 +1,25 @@
+{
+	!init: {
+      db: module("jdbc",{
+					datasourceClass : 'org.postgresql.ds.PGSimpleDataSource',
+					database: 'mpower_db',
+              url:"jdbc:postgresql://10.99.56.73:5432/mpower_db",
+              host:"10.99.56.73",
+              port:5432,
+//              driver:"com.mysql.jdbc.Driver",
+              username:"tracy.lauren",
+              password:"Lauren2015"
+		}),
+		cc: module("cache",{
+			pq: { max: 5000, on: "read", ttl: 30000 },
+			cr: { max: 5000, on: "read", ttl: 30000 },
+			cat: { max: 10000, on: "read", ttl: 30000 },
+			th: { max: 10000, on: "read", ttl: 30000 }
+		})
+	},
+	_:  {
+		data: getData(5)
+	},
+	getData: db.query("select * from model_change_audit_items limit ?", $1)
+
+}

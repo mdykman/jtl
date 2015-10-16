@@ -1,0 +1,16 @@
+{
+	db: module("jdbc", {
+		datasourceClass : 'com.mysql.jdbc.jdbc2.optional.MysqlDataSource',
+		url:"jdbc:mysql://localhost:3306/",
+		username:"root",
+		password:"",
+		database: 'pantheon',
+		host: "localhost"
+	}),
+	cc: module("cache",{
+		pq: { max: 5000, on: "read", ttl: 30000 },
+		cr: { max: 5000, on: "read", ttl: 30000 },
+		cat: { max: 10000, on: "read", ttl: 30000 },
+		th: { max: 10000, on: "read", ttl: 30000 }
+	})
+}

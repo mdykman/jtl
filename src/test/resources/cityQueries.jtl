@@ -1,0 +1,3 @@
+{
+	$findCity: "SELECT pcId from playerCities where xLoc=? and yLoc=?"
+}
