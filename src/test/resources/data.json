@@ -14,7 +14,7 @@
 		password: "eda7168756255063bFAIL"
 	},
 	createCity:{
-		playerid:1, 
+		playerId:1, 
 		username:"TracyTest", 
 		direction: "sw", 
 		level:1,
