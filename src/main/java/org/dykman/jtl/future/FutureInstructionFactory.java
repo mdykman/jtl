@@ -48,8 +48,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class FutureInstructionFactory {
 
 	protected static final String JTL_INTERNAL = "_jtl_internal_";
-	// protected static final String JTL_INTERNAL_KEY = JTL_INTERNAL + "key_";
-
 	protected static final Method stringFormatter;
 
 	static {
@@ -529,20 +527,15 @@ public class FutureInstructionFactory {
 						JSONObject config = (JSONObject) (jit.hasNext() ? jit.next() : context.builder().object(null));
 
 						JSON smode = conf.get("server-mode");
-						// JSONObject modules = (JSONObject)conf.get("modules");
-						// String klassName = modules.get(name).stringValue();
 
 						ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), conf);
-
 						AsyncExecutionContext<JSON> modctx = context.getInit().getNamedContext(key, true, false, meta);
 						JSON n = ml.create(meta, name, key, modctx, smode == null ? false : smode.isTrue(), config);
 						return immediateCheckedFuture(n);
 					}
 				});
-
 			}
 		};
-
 	}
 
 	public static FutureInstruction<JSON> reMatch(SourceInfo meta, final String p, final FutureInstruction<JSON> d) {
@@ -1751,7 +1744,7 @@ public class FutureInstructionFactory {
 	}
 
 	// rank all
-	public static FutureInstruction<JSON> object(SourceInfo meta, final List<Pair<String, FutureInstruction<JSON>>> ll,
+	public static FutureInstruction<JSON>  object (SourceInfo meta, final List<Pair<String, FutureInstruction<JSON>>> ll,
 			boolean forceContext) throws ExecutionException {
 		boolean isContext = forceContext;
 		List<Pair<String, FutureInstruction<JSON>>> fields = new ArrayList<>();
@@ -1763,13 +1756,14 @@ public class FutureInstructionFactory {
 				String k = ii.f;
 				if (k.charAt(0) == '$') {
 				} else if (k.charAt(0) == '!') {
-				}
-				if ("_".equals(ii.f)) {
+				//	imperitives.add();
+				} else if ("_".equals(ii.f)) {
 					isContext = true;
 					break;
 				}
 			}
-		return isContext ? new ContextObjectInstructionFuture(meta, ll) : new ObjectInstructionFuture(meta, ll);
+		FutureInstruction<JSON>  res = isContext ? new ContextObjectInstructionFuture(meta, ll) : new ObjectInstructionFuture(meta, ll);
+		return res;
 	}
 
 	// rank: all

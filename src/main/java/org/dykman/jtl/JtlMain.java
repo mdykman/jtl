@@ -44,7 +44,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	static final String JTL_VERSION = "0.9.7";
+	static final String JTL_VERSION = "0.9.8";
 
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();
@@ -210,7 +210,6 @@ public class JtlMain {
 				logLevel = cli.getOptionValue('l');
 			} else if (verbose) {
 				logLevel = "info";
-
 			}
 			ConsoleAppender console = new ConsoleAppender(); 
 			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
@@ -220,9 +219,9 @@ public class JtlMain {
 			console.setWriter(new OutputStreamWriter(System.err, "UTF-8"));
 			org.apache.log4j.Logger.getRootLogger().addAppender(console);
 
-			System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", logLevel);
-
-			logger = LoggerFactory.getLogger(JdbcModule.class);
+			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel(logLevel));
+			
+			logger = LoggerFactory.getLogger(JtlMain.class);
 
 			String oo;
 			if (cli.hasOption('p') || cli.hasOption("port")) {

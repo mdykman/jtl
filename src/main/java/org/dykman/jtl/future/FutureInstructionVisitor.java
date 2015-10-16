@@ -128,7 +128,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 				imported = false;
 				_import = true;
 			}
-			return new FutureInstructionValue<JSON>(object(getSource(ctx),ins,_import));
+			return new FutureInstructionValue<JSON>(object(getSource(ctx),ins,false));
 		} catch (ExecutionException e) {
 			return new FutureInstructionValue<JSON>(value("ExecutionException during visitObject: "
 				+ e.getLocalizedMessage(),builder,getSource(ctx)));
