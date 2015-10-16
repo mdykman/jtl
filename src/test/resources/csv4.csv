@@ -1,0 +1,14 @@
+{
+	!init: {
+		csv: module("csv", {
+			format: "Default", // DEFAULT EXCEL MYSQL RFC4180 TDF
+			charset: "UTF-8", // any names java charset
+			numeric: true
+		})
+	},
+	$cleaned : csv.read($1)/*/map(tonn()),
+	tonn: toN(number()),
+	toN: $1(.)/($1() ? . : $_),
+	tonum: number(.)/(number() ? . : $_),
+	_: $cleaned
+}

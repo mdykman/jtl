@@ -13,7 +13,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 public interface AsyncExecutionContext<T> {
-	public void define(String n, InstructionFuture<T> i);
+	public void define(String n, FutureInstruction<T> i);
 
 	public ListeningExecutorService executor();
 
@@ -70,10 +70,10 @@ public interface AsyncExecutionContext<T> {
 
 	public int counter(String label, int increment);
 
-	public InstructionFuture<T> getdef(String name);
+	public FutureInstruction<T> getdef(String name);
 
 	// public Pair<String,InstructionFuture<T>> getdef(String ns,String name);
-	public Pair<String, InstructionFuture<JSON>> getDefInternal(String ns, String name);
+	public Pair<String, FutureInstruction<JSON>> getDefInternal(String ns, String name);
 
 	public void inject(AsyncExecutionContext<T> cc);
 

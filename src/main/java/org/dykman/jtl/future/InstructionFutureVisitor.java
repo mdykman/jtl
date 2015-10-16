@@ -115,11 +115,11 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitObject(ObjectContext ctx) {
-		List<Pair<String, InstructionFuture<JSON>>> ins = new ArrayList<>(ctx.getChildCount());
+		List<Pair<String, FutureInstruction<JSON>>> ins = new ArrayList<>(ctx.getChildCount());
 		InstructionFutureValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
-			ins.add(new Pair<String, InstructionFuture<JSON>>(pp.ninst.f, pp.ninst.s));
+			ins.add(new Pair<String, FutureInstruction<JSON>>(pp.ninst.f, pp.ninst.s));
 		}
 
 		try {
@@ -163,7 +163,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitArray(ArrayContext ctx) {
-		List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
+		List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
 		for (ValueContext vc : ctx.value()) {
 			ins.add(visitValue(vc).inst);
 		}
@@ -200,7 +200,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
    @Override
    public InstructionFutureValue<JSON> visitFuncderef(FuncderefContext ctx) {
       String name = ctx.getChild(1).getText();
-      List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
+      List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
       for (ValueContext jc : ctx.value()) {
          InstructionFutureValue<JSON> vv = visitValue(jc);
          ins.add(vv.inst);
@@ -216,7 +216,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	   if(ic!=null) {
 	      name = visitIdent(ic).string + '.' + name;
 	   }
-      List<InstructionFuture<JSON>> ins = new ArrayList<>(ctx.getChildCount());
+      List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
       for (ValueContext jc : fc.value()) {
          InstructionFutureValue<JSON> vv = visitValue(jc);
          ins.add(vv.inst);
@@ -248,7 +248,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	   if(n ==4 ) {
 	     name = visitIdent(iit.get(0)).string + '.' + name;
 	   }
-	   List<InstructionFuture<JSON>> ins = new ArrayList<>();
+	   List<FutureInstruction<JSON>> ins = new ArrayList<>();
       return new InstructionFutureValue<JSON>(variable(getSource(ctx),name));
 	}
 
@@ -488,7 +488,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 		if (fps.size() == 1) {
 			return visitFilter_path(fps.get(0));
 		} else {
-			final List<InstructionFuture<JSON>> seq = new ArrayList<>();
+			final List<FutureInstruction<JSON>> seq = new ArrayList<>();
 			for (Filter_pathContext fp : fps) {
 				seq.add(visitFilter_path(fp).inst);
 			}
@@ -669,7 +669,7 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 
 	@Override
 	public InstructionFutureValue<JSON> visitIndexlist(IndexlistContext ctx) {
-		List<InstructionFuture<JSON>> elements = new ArrayList<>();
+		List<FutureInstruction<JSON>> elements = new ArrayList<>();
 	//	List<IndexlContext> l= ctx.indexl();
 		for(IndexlContext dxlc: ctx.indexl()) {
 			elements.add(visitIndexl(dxlc).inst);
@@ -681,9 +681,9 @@ public class InstructionFutureVisitor extends jtlBaseVisitor<InstructionFutureVa
 	@Override
 	public InstructionFutureValue<JSON> visitIndexl(IndexlContext ctx) {
 		List<ValueContext> cl = ctx.value();
-		InstructionFuture<JSON> inst = visitValue(cl.get(0)).inst;
+		FutureInstruction<JSON> inst = visitValue(cl.get(0)).inst;
 		if (cl.size() > 1) {
-			List<InstructionFuture<JSON>> elements = new ArrayList<>();
+			List<FutureInstruction<JSON>> elements = new ArrayList<>();
 			elements.add(inst);
 			elements.add(visitValue(cl.get(1)).inst);
 			return new InstructionFutureValue<>(

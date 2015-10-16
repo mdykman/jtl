@@ -17,13 +17,14 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.InstructionFuture;
+import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.future.InstructionFutureFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.modules.ModuleLoader;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -39,7 +40,7 @@ public class JtlExecutor {
 	final File init;
 	final File boundScript;
 
-	InstructionFuture<JSON> boundInst = null;
+	FutureInstruction<JSON> boundInst = null;
 	AsyncExecutionContext<JSON> boundContext = null;
 	ListenableFuture<JSON> configFuture;
 
@@ -48,7 +49,7 @@ public class JtlExecutor {
 	AsyncExecutionContext<JSON> initializedContext = null;
 	ListenableFuture<JSON> initResult;
 
-	final Map<String, InstructionFuture<JSON>> programs = new ConcurrentHashMap<>();
+	final Map<String, FutureInstruction<JSON>> programs = new ConcurrentHashMap<>();
 	final Map<String, AsyncExecutionContext<JSON>> contexts = new ConcurrentHashMap<>();
 	final Map<String, Long> lastModified = new ConcurrentHashMap<>();
 	// ListeningExecutorService les =
@@ -114,7 +115,9 @@ public class JtlExecutor {
 		this.boundScript = boundScript;
 		this.dirDefault = dirDefault;
 		this.builder = new JSONBuilderImpl(canonical);
-		this.compiler = new JtlCompiler(builder, false, false, false);
+		this.compiler = new JtlCompiler(builder
+				
+				);
 		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
 
 		if (config != null) {
@@ -137,7 +140,7 @@ public class JtlExecutor {
 	}
 
 	public JSON executeScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
-			File execFile, InstructionFuture<JSON> prog, String selector, String[] path, JSON data)
+			File execFile, FutureInstruction<JSON> prog, String selector, String[] path, JSON data)
 					throws IOException, ExecutionException {
 		AsyncExecutionContext<JSON> ctx = httpContext(req, res, baseContext, execFile, selector, path);
 		ctx.define("_", InstructionFutureFactory.value(data, SourceInfo.internal("http")));
@@ -153,7 +156,7 @@ public class JtlExecutor {
 	}
 
 	public JSON initScript(HttpServletRequest req, HttpServletResponse res, AsyncExecutionContext<JSON> baseContext,
-			File execFile, InstructionFuture<JSON> prog,String selector, String[] path, JSON data, int cc)
+			File execFile, FutureInstruction<JSON> prog,String selector, String[] path, JSON data, int cc)
 					throws IOException, ExecutionException {
 		execFile = lockingFile(execFile);
 //		InstructionFuture<JSON> prog = programs.get(p);
@@ -180,7 +183,7 @@ public class JtlExecutor {
 		JSON j = null;
 		if (execFile.exists()) {
 			String p = execFile.getPath();
-			InstructionFuture<JSON> prog = null;
+			FutureInstruction<JSON> prog = null;
 			if(lastModified.containsKey(p) && (execFile.lastModified() == lastModified.get(p))) {
 				prog = programs.get(execFile.getPath());
 			} else {
@@ -260,11 +263,14 @@ public class JtlExecutor {
 							serverBase, builder, getExecutorService());
 					initializedContext.setInit(true);
 					if (init != null) {
-						InstructionFuture<JSON> initf = compiler.parse(init);
+						FutureInstruction<JSON> initf = compiler.parse(init);
 						initResult = initf.call(initializedContext, configFuture);
 					}
 					return preExec(req, res, initializedContext, data);
 				}
+				ModuleLoader ml = ModuleLoader.getInstance(initializedContext.currentDirectory(),initializedContext.builder(),
+						baseConfig);
+				ml.launchAuto(initializedContext, true);
 			}
 		}
 		return preExec(req, res, initializedContext, data);

@@ -13,11 +13,11 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class RangeInstruction extends AbstractInstructionFuture {
+public class RangeInstruction extends AbstractFutureInstruction {
 
-	InstructionFuture<JSON> f;
-	InstructionFuture<JSON> s;
-	public RangeInstruction(InstructionFuture<JSON> f,InstructionFuture<JSON> s, SourceInfo info) {
+	FutureInstruction<JSON> f;
+	FutureInstruction<JSON> s;
+	public RangeInstruction(FutureInstruction<JSON> f,FutureInstruction<JSON> s, SourceInfo info) {
 		super(info);
 		this.f = f;
 		this.s = s;

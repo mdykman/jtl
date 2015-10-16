@@ -240,7 +240,7 @@ As JTL is a superset of JSON, it inherits 3 reserved words from  that language:
 
 JTL additionally reserves
 
-	and, or, nand, nor
+	and, or, not, nand, nor, div
 
 ## regular expressions 
 The general syntax for a regex match expression is:

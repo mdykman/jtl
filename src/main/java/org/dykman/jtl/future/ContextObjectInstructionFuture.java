@@ -24,18 +24,18 @@ import com.google.common.util.concurrent.ListenableFuture;
       // final InstructionFutureFactory factory;
 
       AsyncExecutionContext<JSON> initContext = null;
-      InstructionFuture<JSON> initInst = null;
+      FutureInstruction<JSON> initInst = null;
       ListenableFuture<JSON> initResult = null;
 
       public ContextObjectInstructionFuture(SourceInfo meta,
       // InstructionFutureFactory factory,
-            final List<Pair<String, InstructionFuture<JSON>>> ll) {
+            final List<Pair<String, FutureInstruction<JSON>>> ll) {
          // this.factory = factory;
          super(meta, ll, true);
          meta.name = "contextobject";
       }
 
-      protected ListenableFuture<JSON> initializeContext(AsyncExecutionContext<JSON> ctx, InstructionFuture<JSON> inst,
+      protected ListenableFuture<JSON> initializeContext(AsyncExecutionContext<JSON> ctx, FutureInstruction<JSON> inst,
             ListenableFuture<JSON> data) throws ExecutionException {
          if(initContext == null) {
             synchronized(this) {
@@ -54,10 +54,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 
       protected ListenableFuture<JSON> contextObject(final AsyncExecutionContext<JSON> ctx,
             final ListenableFuture<JSON> data, boolean imported) throws ExecutionException {
-         InstructionFuture<JSON> defaultInstruction = null;
-         InstructionFuture<JSON> startInstruction = null;
-         InstructionFuture<JSON> init = null;
-         List<InstructionFuture<JSON>> imperitives = new ArrayList<>(ll.size());
+         FutureInstruction<JSON> defaultInstruction = null;
+         FutureInstruction<JSON> startInstruction = null;
+         FutureInstruction<JSON> init = null;
+         List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
          // final AsyncExecutionContext<JSON> context = imported ?
          // ctx.getMasterContext() : ctx.createChild(false, false,data,
          // source);
@@ -66,9 +66,9 @@ import com.google.common.util.concurrent.ListenableFuture;
          String m = ctx.method();
          String entryPoint = m == null ? "_" : "_" + m;
 
-         for(Pair<String, InstructionFuture<JSON>> ii : ll) {
+         for(Pair<String, FutureInstruction<JSON>> ii : ll) {
             final String k = ii.f;
-            final InstructionFuture<JSON> inst = ii.s;
+            final FutureInstruction<JSON> inst = ii.s;
 
             if(k.equals("!init")) {
                if(initInst == null)
@@ -85,7 +85,7 @@ import com.google.common.util.concurrent.ListenableFuture;
             } else if(k.startsWith("!")) {
                // variable, (almost) immediate evaluation
 //                InstructionFuture<JSON> imp = inst;
-                InstructionFuture<JSON> imp = fixContextData(inst);
+                FutureInstruction<JSON> imp = fixContextData(inst);
                context.define(k.substring(1), imp);
                imperitives.add(imp);
             } else if(k.startsWith("$")) {
@@ -100,7 +100,7 @@ import com.google.common.util.concurrent.ListenableFuture;
             // ensure that init is completed so that any modules are
             // installed
             // and imports imported
-            final InstructionFuture<JSON> finst = startInstruction == null ? defaultInstruction : startInstruction;
+            final FutureInstruction<JSON> finst = startInstruction == null ? defaultInstruction : startInstruction;
             AsyncFunction<List<JSON>, JSON> runner = new AsyncFunction<List<JSON>, JSON>() {
 
                @Override
@@ -117,7 +117,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                 	  // let the memo do it's job
   //                   context.define("init", InstructionFutureFactory.value(input2, source));
                      List<ListenableFuture<JSON>> ll = new ArrayList<>();
-                     for(InstructionFuture<JSON> imp : imperitives) {
+                     for(FutureInstruction<JSON> imp : imperitives) {
                         ll.add(imp.call(context, data));
                      }
                      if(!ll.isEmpty())
@@ -131,7 +131,7 @@ import com.google.common.util.concurrent.ListenableFuture;
             }
 
             List<ListenableFuture<JSON>> ll = new ArrayList<>();
-            for(InstructionFuture<JSON> imp : imperitives) {
+            for(FutureInstruction<JSON> imp : imperitives) {
                ll.add(imp.call(context, data));
             }
             if(!ll.isEmpty())
@@ -140,7 +140,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                return finst.call(context, data);
             return immediateCheckedFuture(context.builder().value(true));
          } catch (ExecutionException e) {
-            InstructionFuture<JSON> error = context.getdef("error");
+            FutureInstruction<JSON> error = context.getdef("error");
             if(error == null) {
                System.err.println("WTF!!!!???? no error handler is defined!");
                throw new RuntimeException("WTF!!!!???? no error handler is defined!");

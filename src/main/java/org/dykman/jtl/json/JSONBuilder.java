@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.Locale;
+import java.util.Map;
 
 import org.dykman.jtl.jsonLexer;
 import org.dykman.jtl.jsonParser;
@@ -19,6 +21,8 @@ public interface JSONBuilder {
 //	public JSONObject object(JSON parent, Map<String, JSON> map);
 	public JSONObject object(JSON parent);
 	public JSONObject object(JSON parent, int cap);
+	public JSONObject object(JSON parent, Locale locale);
+	public JSONObject object(JSON parent, Map<String,JSON> map);
 
 	public JSONArray array(JSON parent,boolean bound);
 

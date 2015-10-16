@@ -1,9 +1,20 @@
 {
 	!init: {
 		csv: module("csv", {
-			format: "default", // DEFAULT EXCEL MYSQL RFC4180 TDF
+			format: "Default", // DEFAULT EXCEL MYSQL RFC4180 TDF
 			charset: "UTF-8" // any names java charset
 		})
+	},
+	$pdata: csv.pread($1),
+	$rdata:rand(10,csv.read($1))/sort(Date)/collate(),
+	$cleaned : $rdata/map(*/tonum()),
+	$kleaned : $rdata/map(array(*/tonum())),
+	tonum: number(.)/(number() ? . : $_),
+	_: {
+		cc: $cleaned(),
+		// if the first elemnt of the arry is a umber, assume the whole array is
+		ss: $kleaned()/map("ID " + string(.)),
+//		ss: $cleaned()/array(.)/map("ID " + string(.)),
+		summary: $cleaned()/array(.)/map((.[0]/number()) ? sum() : .)
 	}
-	_: csv.read("test.csv")
 }

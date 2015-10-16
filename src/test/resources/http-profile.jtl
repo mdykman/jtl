@@ -1,7 +1,6 @@
 {
 	script: $0,
 	path: $@,
-	pcnt: $#,
 	method: $method,
 	headers: $headers,
 	params: $req,

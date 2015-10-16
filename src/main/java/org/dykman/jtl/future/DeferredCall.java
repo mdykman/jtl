@@ -5,13 +5,13 @@ import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class DeferredCall implements InstructionFuture<JSON> {
+public class DeferredCall implements FutureInstruction<JSON> {
    final SourceInfo info;
-	public final InstructionFuture<JSON> inst;
+	public final FutureInstruction<JSON> inst;
 	public AsyncExecutionContext<JSON> pcontext;
 	public final ListenableFuture<JSON> data;
 
-	public DeferredCall(SourceInfo source,InstructionFuture<JSON> inst,
+	public DeferredCall(SourceInfo source,FutureInstruction<JSON> inst,
 			AsyncExecutionContext<JSON> context,
 			ListenableFuture<JSON> t) {
 	   this.inst = inst;
@@ -23,7 +23,7 @@ public class DeferredCall implements InstructionFuture<JSON> {
 
 
 	@Override
-	public InstructionFuture<JSON> getBareInstruction() {
+	public FutureInstruction<JSON> getBareInstruction() {
 	   return inst.getBareInstruction();
 	}
 
@@ -39,7 +39,7 @@ public class DeferredCall implements InstructionFuture<JSON> {
 	     return new DeferredCall(info, inst, context, data);
 	  }
 	@Override
-	public InstructionFuture<JSON> unwrap() {
+	public FutureInstruction<JSON> unwrap() {
       return new DeferredCall(info,inst.unwrap(), pcontext, null);
 	}
 

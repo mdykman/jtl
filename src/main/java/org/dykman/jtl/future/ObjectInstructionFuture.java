@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 // rank: all
     class ObjectInstructionFuture extends ObjectInstructionBase {
 
-      public ObjectInstructionFuture(SourceInfo meta, final List<Pair<String, InstructionFuture<JSON>>> ll) {
+      public ObjectInstructionFuture(SourceInfo meta, final List<Pair<String, FutureInstruction<JSON>>> ll) {
          super(meta, ll, true);
          meta.name = "dataobject";
       }
@@ -28,10 +28,10 @@ import com.google.common.util.concurrent.ListenableFuture;
             final ListenableFuture<JSON> data) throws ExecutionException {
 
          final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(ll.size());
-         for(Pair<String, InstructionFuture<JSON>> ii : ll) {
+         for(Pair<String, FutureInstruction<JSON>> ii : ll) {
             final String kk = ii.f;
             final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
-            InstructionFuture<JSON> ki = InstructionFutureFactory.value(kk, context.builder(), getSourceInfo());
+            FutureInstruction<JSON> ki = InstructionFutureFactory.value(kk, context.builder(), getSourceInfo());
   //          newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
 //            newc.define("key", ki);
             newc.define(":", ki);

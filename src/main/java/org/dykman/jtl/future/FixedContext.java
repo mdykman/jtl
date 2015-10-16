@@ -5,14 +5,14 @@ import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-public class FixedContext extends AbstractInstructionFuture {
-	final InstructionFuture<JSON> inst;
+public class FixedContext extends AbstractFutureInstruction {
+	final FutureInstruction<JSON> inst;
 
-	public FixedContext(final InstructionFuture<JSON> inst) {
+	public FixedContext(final FutureInstruction<JSON> inst) {
 		super(inst.getSourceInfo());
 		this.inst = inst;
 	};
-	public InstructionFuture<JSON> getIntruction() {
+	public FutureInstruction<JSON> getIntruction() {
 		return inst;
 	}
 	@Override

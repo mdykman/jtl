@@ -76,8 +76,10 @@ public class LdapModule extends AbstractModule {
 		this.baseConfig = config;
 	}
 	@Override
-	public void define(SourceInfo meta, AsyncExecutionContext<JSON> parent,boolean serverMode) {
+	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
 		// TODO Auto-generated method stub
+	      return context.builder().value(1);
+
 
 	}
 	protected static String stringValue(JSON j) {

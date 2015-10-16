@@ -1,0 +1,11 @@
+{
+	!init: {
+		csv: module("csv", {
+			format: "Default", // DEFAULT EXCEL MYSQL RFC4180 TDF
+			charset: "UTF-8" // any names java charset
+		})
+	},
+	_: {
+		read: rand(10,csv.read($1))/sort(Date)
+	}
+}

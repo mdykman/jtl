@@ -3,9 +3,13 @@ package org.dykman.jtl.json;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.text.Collator;
 import java.util.Arrays;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractJSON implements JSON {
 	JSON parent;
@@ -14,7 +18,10 @@ public abstract class AbstractJSON implements JSON {
 	Integer index = null;
 	JSONBuilder builder = null;
 	static final int charbuffer = 4096;
-//	boolean forcequotes = false;
+
+	static ThreadLocal<Collator> collatort = new ThreadLocal<>();
+
+	static Logger logger = LoggerFactory.getLogger(JSON.class);
 
 	static final char[] SPACES = new char[charbuffer];
 	static {
@@ -23,6 +30,9 @@ public abstract class AbstractJSON implements JSON {
 
 	public AbstractJSON(JSON parent) {
 		this.parent = parent;
+		if(collatort.get()==null) {
+			collatort.set(Collator.getInstance(Locale.getDefault()));
+		}
 	}
 
 
@@ -71,8 +81,9 @@ public abstract class AbstractJSON implements JSON {
 		case STRING:
 			if(rtype == JSONType.ARRAY || rtype == JSONType.OBJECT) return -1;
 			if(rtype !=getType()) return 1;
-			return ((JSONValue)this).stringValue().compareToIgnoreCase(((JSONValue)r).stringValue());
+			return collatort.get().compare(((JSONValue)this).stringValue(), ((JSONValue)r).stringValue());
 		}
+		logger.error("failed to match type in compareTo(");
 		// TODO:: should throw an exception here
 		return -1;
 	}
