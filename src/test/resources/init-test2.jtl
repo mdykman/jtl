@@ -2,8 +2,8 @@
 	!init: {
 		pantheon: import("pantheon.jtl")
 	},
-	_: pantheon.$thisstring,
-//	_:  recipes/cc.pq(pantheon.primaryQuery(.))/amend("Recipe",thingId/ii() or null),
+//	_: pantheon.$thisstring,
+	_:  recipes/cc.pq(pantheon.primaryQuery(.))/amend("Recipe",thingId/ii() or null),
 	ii:  . ? cy(.)/amend("Recipe",thingId/ii() or null) : null,
 	cy: cc.cr(cq($1)),
 	cq: pantheon.recipeQ($1)/*/(resourceId ? 

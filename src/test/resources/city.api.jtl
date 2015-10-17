@@ -16,7 +16,7 @@
 			a.allTimeTotal, a.recipeId, a.slope, a.materialBaseAmount, b.materialBit, e.thingId as resourceId, 
 			a.construction,b.pointValue,f.playerId
 			from cityBuildings a 
-			inner join buildingTypes b on (a.btId = b.btId) 
+			inner join buildingtypes b on (a.btId = b.btId) 
 			left join currentProduction d on (a.buildingId = d.buildingId)
 			left join things e on (e.thingId = d.resourceId)
 			left join warehouse w on (w.buildingId = a.buildingId)
