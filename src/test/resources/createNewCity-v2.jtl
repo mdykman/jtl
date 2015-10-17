@@ -16,12 +16,12 @@
 
 	initializeBuildings: [ 
 		buildinginit(.,1,5,5,"S",40)
-		//,buildinginit(.,13,1,1,"SE",169)
-		//,buildinginit(.,14,5,8,SW,194)
-		//,buildinginit(.,12,8,1,"NE",41)
-		//,buildinginit(.,2,8,8,"NW",1)
-		//,warehouseInit(.,2,8,8,"NW")
-		//,cityApi.addBuilding(., 33,6,8,"S")
+		,buildinginit(.,13,1,1,"SE",169)
+		,buildinginit(.,14,5,8,SW,194)
+		,buildinginit(.,12,8,1,"NE",41)
+		,buildinginit(.,2,8,8,"NW",1)
+		,warehouseInit(.,2,8,8,"NW")
+		,cityApi.addBuilding(., 33,6,8,"S")
 	],
 	
 	buildinginit: cityApi.addBuilding($1,$2,$3,$4,$5)/cityApi.initializeBuilding()/cityApi.initializeWorkers()/cityApi.addBuildingProduction($6),
