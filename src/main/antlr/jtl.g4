@@ -45,10 +45,15 @@ or_expr
     ;
 
 and_expr 
-    : eq_expr 
-    | and_expr 'and' eq_expr
+    : match_expr 
+    | and_expr 'and' match_expr
     ;
 
+match_expr
+   : eq_expr
+   | match_expr '==' eq_expr
+   ;
+   
 eq_expr 
 	: rel_expr
     | eq_expr '=' rel_expr

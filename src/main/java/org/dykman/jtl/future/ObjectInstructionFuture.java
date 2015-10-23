@@ -11,6 +11,7 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 
 import com.google.common.util.concurrent.AsyncFunction;
@@ -19,23 +20,25 @@ import com.google.common.util.concurrent.ListenableFuture;
 // rank: all
     class ObjectInstructionFuture extends ObjectInstructionBase {
 
-      public ObjectInstructionFuture(SourceInfo meta, final List<Pair<String, FutureInstruction<JSON>>> ll) {
+      public ObjectInstructionFuture(SourceInfo meta, final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll) {
          super(meta, ll, true);
          meta.name = "dataobject";
       }
 
-      protected ListenableFuture<JSON> dataObject(final AsyncExecutionContext<JSON> context,
+      protected ListenableFuture<JSON> dataObject(
+    		  final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields,
+    		  final AsyncExecutionContext<JSON> context,
             final ListenableFuture<JSON> data) throws ExecutionException {
 
-         final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(ll.size());
-         for(Pair<String, FutureInstruction<JSON>> ii : ll) {
-            final String kk = ii.f;
-            final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
+         final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(fields.size());
+         for(Pair<ObjectKey, FutureInstruction<JSON>> ii : fields) {
+            final String kk = ii.f.label;
+//            final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
             FutureInstruction<JSON> ki = FutureInstructionFactory.value(kk, context.builder(), getSourceInfo());
   //          newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
 //            newc.define("key", ki);
-            newc.define(":", ki);
-            ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(newc, data),
+            context.define(":", ki);
+            ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(context, data),
                   new AsyncFunction<JSON, Pair<String, JSON>>() {
                      @Override
                      public ListenableFuture<Pair<String, JSON>> apply(JSON input) throws Exception {
@@ -52,7 +55,7 @@ import com.google.common.util.concurrent.ListenableFuture;
                JSONObject obj = context.builder().object(null, input.size());
 
                for(Pair<String, JSON> d : input) {
-                  obj.put(d.f, d.s != null ? d.s : context.builder().value());
+                  obj.put(d.f, d.s != null ? d.s : JSONBuilderImpl.NULL);
                }
                return immediateCheckedFuture(obj);
             }
@@ -60,9 +63,11 @@ import com.google.common.util.concurrent.ListenableFuture;
       }
 
       @Override
-      public ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
+      public ListenableFuture<JSON> _callObject(
+    		  final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, 
+    		  final AsyncExecutionContext<JSON> context,
             final ListenableFuture<JSON> data) throws ExecutionException {
-         return dataObject(context, data);
+         return dataObject(fields,context, data);
       }
 
    }

@@ -8,6 +8,7 @@
 		host: "localhost"
 	}),
 	cc: module("cache",{
+		cs: { max: 10000, on: "read", ttl: 300000 },
 		pq: { max: 5000, on: "read", ttl: 30000 },
 		cr: { max: 5000, on: "read", ttl: 30000 },
 		cat: { max: 10000, on: "read", ttl: 30000 },

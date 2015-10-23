@@ -6,6 +6,7 @@ import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 
@@ -94,7 +95,7 @@ public class DefaultPolymorphicOperator implements
 					case STRING:
 						return builder.value(op(context, left.toString(), ((JSONValue) r).get().toString()));
 					case NULL:
-						return builder.value();
+						return JSONBuilderImpl.NULL;
 					case ARRAY:
 					case LIST:
 					case OBJECT:
@@ -140,17 +141,17 @@ public class DefaultPolymorphicOperator implements
 				break;
 			}
 			case NULL:
-				return builder.value();
+				return JSONBuilderImpl.NULL;
 		}
 		throw new ExecutionException("not implemented yet",info);
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, JSONArray l, JSONArray r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, JSONObject l, JSONObject r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected Long op(AsyncExecutionContext<JSON> context, Long l, Long r) {
@@ -170,34 +171,34 @@ public class DefaultPolymorphicOperator implements
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONArray r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONObject r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> eng, JSONObject l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, Boolean l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, Long l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, Double l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, String l, JSON r) {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 }

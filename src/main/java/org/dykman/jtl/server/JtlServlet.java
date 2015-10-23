@@ -109,7 +109,7 @@ public class JtlServlet extends HttpServlet {
 			break;
 		}
 		default:
-			data = builder.value();
+			data = JSONBuilderImpl.NULL;
 		}
 		return data;
 	}

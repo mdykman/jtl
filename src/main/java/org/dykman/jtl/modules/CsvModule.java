@@ -40,8 +40,9 @@ public class CsvModule extends AbstractModule {
 
 	JSONObject config;
 	static Logger logger = LoggerFactory.getLogger(CsvModule.class);
-	public CsvModule(JSONObject config) {
-		this.config = config;
+	public CsvModule(String key,JSONObject config) {
+		super(key,config);
+//		this.config = config;
 	}
 
 	JSON parseNumberConditionally(JSONBuilder builder, String s) {

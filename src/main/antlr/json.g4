@@ -71,19 +71,19 @@ INTEGER
     :   '-'? INT                 // -3, 45
     |   '-'? INT EXP             // 7e6
     ;
+    
 FLOAT 
     :   '-'? INT '.' [0-9]+ EXP? // 1.35, 1.35E-9, 0.3, -4.5
     ;
+    
 STRING : '"' ('\'' | STRBOD)* '"';
+
 SSTRING : '\'' ('"' | STRBOD)* '\'';
-
-
-//ID   : [a-zA-Z_][a-zA-Z0-9_]* ;
-
 
 //Identifier
 ID
 	:	JavaLetter JavaLetterOrDigit*
+//	: JavaLetter (JavaLetter|[0-9])*
 	;
 
 fragment

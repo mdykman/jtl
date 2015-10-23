@@ -78,7 +78,7 @@ public class ModuleLoader {
 	}
 
 	
-	public void launchAuto(AsyncExecutionContext<JSON> context,boolean serverMode) 
+	public void loadAuto(AsyncExecutionContext<JSON> context,boolean serverMode) 
 			throws ExecutionException {
 		for (Pair<String, JSON> pp : modules) {
 			JSONObject cc = (JSONObject)pp.s;
@@ -111,9 +111,8 @@ public class ModuleLoader {
 			}
 			klass = kk.stringValue();
 			Class<Module> kl = (Class<Module>) Class.forName(klass);
-			Constructor<Module> mc = kl.getConstructor(config.getClass());
-			Module o = mc.newInstance(config);
-			o.setKey(key);
+			Constructor<Module> mc = kl.getConstructor(String.class,JSONObject.class);
+			Module o = mc.newInstance(key,config);
 			return o.define(info, context, serverMode);
 
 //			return 1;

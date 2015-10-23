@@ -264,7 +264,7 @@ public class JtlExecutor {
 				}
 				ModuleLoader ml = ModuleLoader.getInstance(initializedContext.currentDirectory(),initializedContext.builder(),
 						baseConfig);
-				ml.launchAuto(initializedContext, true);
+				ml.loadAuto(initializedContext, true);
 			}
 		}
 		return preExec(req, res, initializedContext, data);

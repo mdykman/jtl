@@ -44,7 +44,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	static final String JTL_VERSION = "0.9.8";
+	static final String JTL_VERSION = "0.9.9";
 
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();
@@ -551,7 +551,7 @@ public class JtlMain {
 	}
 
 	public JSON empty() {
-		return builder.value();
+		return JSONBuilderImpl.NULL;
 	}
 
 	public JSON execute(FutureInstruction<JSON> inst, String source, File init, JSON data, File cwd, Iterator<String> args)

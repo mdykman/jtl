@@ -1,12 +1,16 @@
 package org.dykman.jtl.modules;
 
+import org.dykman.jtl.json.JSONObject;
+
 public abstract class AbstractModule implements Module {
 	
-	
-	String bindingKey;
-	
-	public void setKey(String key) {
-		this.bindingKey = key;
-	}
+	final JSONObject config;	
 
+	final String bindingKey;
+	
+	public AbstractModule (String key,JSONObject config) {
+		bindingKey = key;
+		this.config = config;
+	}
+	
 }

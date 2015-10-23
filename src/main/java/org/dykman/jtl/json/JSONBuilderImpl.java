@@ -39,6 +39,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 		this.cf = cf;
 		
 	}
+	public static JSON NULL = new JSONValue(null);
 
 	private static Map<String, JSON> mapBuilder(Locale locale) {
 		return new TreeMap<>(localeComparator(locale));
@@ -146,7 +147,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 	@Override
 	public JSON value(Object o) {
 		if (o == null)
-			return value();
+			return NULL;
 		if (o instanceof JSON) {
 			System.err.println("value cloning path...  WTF???");
 			return sign(((JSON) o).cloneJSON());

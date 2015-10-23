@@ -31,6 +31,7 @@ import org.dykman.jtl.jtlParser.JpathContext;
 import org.dykman.jtl.jtlParser.JsonContext;
 import org.dykman.jtl.jtlParser.JtlContext;
 import org.dykman.jtl.jtlParser.KeyContext;
+import org.dykman.jtl.jtlParser.Match_exprContext;
 import org.dykman.jtl.jtlParser.Mul_exprContext;
 import org.dykman.jtl.jtlParser.NumberContext;
 import org.dykman.jtl.jtlParser.ObjectContext;
@@ -51,6 +52,7 @@ import org.dykman.jtl.jtlParser.Unary_exprContext;
 import org.dykman.jtl.jtlParser.Union_exprContext;
 import org.dykman.jtl.jtlParser.ValueContext;
 import org.dykman.jtl.jtlParser.VariableContext;
+import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -116,11 +118,11 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
 	@Override
 	public FutureInstructionValue<JSON> visitObject(ObjectContext ctx) {
-		List<Pair<String, FutureInstruction<JSON>>> ins = new ArrayList<>(ctx.getChildCount());
+		List<Pair<ObjectKey, FutureInstruction<JSON>>> ins = new ArrayList<>(ctx.getChildCount());
 		FutureInstructionValue<JSON> pp;
 		for (PairContext p : ctx.pair()) {
 			pp = visitPair(p);
-			ins.add(new Pair<String, FutureInstruction<JSON>>(pp.ninst.f, pp.ninst.s));
+			ins.add(new Pair<ObjectKey, FutureInstruction<JSON>>(pp.ninst.f, pp.ninst.s));
 		}
 
 		try {
@@ -143,7 +145,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		if (id != null) {
 			k = visitKey(id);
 		}
-		String ks = k.string;
+		ObjectKey ks = k.key;
 
 		FutureInstructionValue<JSON> v = visitValue(ctx.value());
 		return new FutureInstructionValue<JSON>(ks, v.inst);
@@ -155,11 +157,13 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	   if(ic!=null) {
 	      String s = visitIdent(ic).string;
 	      if(ctx.getChildCount() > 1) {
-	         return new FutureInstructionValue<JSON>(ctx.getChild(0).getText() + s);
+	    	  s = ctx.getChild(0).getText() + s;
+//	    	  s = ctx.getChild(0).getText() + "." + s;
+//	         return new FutureInstructionValue<JSON>(ctx.getChild(0).getText() + s);
 	      }
-         return new FutureInstructionValue<JSON>(s);
+         return new FutureInstructionValue<JSON>(new ObjectKey(s, false));
 	   }
-	   return new FutureInstructionValue<JSON>(visitString(ctx.string()).string);
+	   return new FutureInstructionValue<JSON>(new ObjectKey(visitString(ctx.string()).string,true));
 	}
 
 	@Override
@@ -357,7 +361,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
 	@Override
 	public FutureInstructionValue<JSON> visitAnd_expr(And_exprContext ctx) {
-		FutureInstructionValue<JSON> a = visitEq_expr(ctx.eq_expr());
+		FutureInstructionValue<JSON> a = visitMatch_expr(ctx.match_expr());
 		And_exprContext c = ctx.and_expr();
 		if (c != null) {
 			return new FutureInstructionValue<JSON>(dyadic(getSource(ctx),visitAnd_expr(c).inst,a.inst, 
@@ -376,7 +380,17 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			return a;
 		}
 	}
-
+	@Override
+	public FutureInstructionValue<JSON> visitMatch_expr(Match_exprContext ctx) {
+		FutureInstructionValue<JSON> a  = visitEq_expr(ctx.eq_expr());
+		Match_exprContext c = ctx.match_expr();
+		if(c!=null) {
+			return new FutureInstructionValue<JSON>(match(getSource(ctx),
+					visitMatch_expr(c).inst,a.inst));
+		} else {
+			return a;
+		}
+	}
 	@Override
 	public FutureInstructionValue<JSON> visitEq_expr(Eq_exprContext ctx) {
 		FutureInstructionValue<JSON> a = visitRel_expr(ctx.rel_expr());

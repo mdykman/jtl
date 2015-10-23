@@ -1,16 +1,21 @@
 package org.dykman.jtl.future;
 
 import org.dykman.jtl.Pair;
+import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
 
 public class FutureInstructionValue<T> {
 	public FutureInstruction<T> inst;
 //	public Duo<Instruction<T>,Instruction<T>> duo;
-	public Pair<String,FutureInstruction<T>> ninst;
+	public Pair<ObjectKey,FutureInstruction<T>> ninst;
+	public ObjectKey key;
 	
 	public String string;
 	public Number number;
 	public FutureInstructionValue(String s) {
 		string = s;
+	}
+	public FutureInstructionValue(ObjectKey k) {
+		key = k;
 	}
    public FutureInstructionValue(Number s) {
       number = s;
@@ -23,7 +28,7 @@ public class FutureInstructionValue<T> {
 		duo = new Duo<>(first,second);
 	}
 	*/
-	public FutureInstructionValue(String first,FutureInstruction<T> second) {
+	public FutureInstructionValue(ObjectKey first,FutureInstruction<T> second) {
 		ninst = new Pair<>(first,second);
 	}
 }

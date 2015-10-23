@@ -4,6 +4,8 @@
 	},
 
 	findCity: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1,$2]),
+//	findCity: cc.cs(myfindCity($1,$2)),
+//	myfindCity: db.query("SELECT pcId from playerCities where xLoc=? and yLoc=?", [$1,$2]),
 
 	addCity: db.insert("INSERT into playerCities set playerId=?, xLoc=?, yLoc=?, name=?, level=?", [$1,$2,$3,$4,$5]), 
 

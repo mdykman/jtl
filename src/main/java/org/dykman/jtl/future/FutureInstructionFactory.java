@@ -5,6 +5,7 @@ import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 //import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
+import static org.dykman.jtl.future.FutureInstructionFactory.fixContextData;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -32,11 +33,13 @@ import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.jsonVisitor;
+import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.dykman.jtl.modules.ModuleLoader;
@@ -92,7 +95,7 @@ public class FutureInstructionFactory {
 									if (ff.exists())
 										return context.builder().parse(ff);
 									logger.error("in file(): failed to find file " + ff.getPath());
-									return context.builder().value();
+									return JSONBuilderImpl.NULL;
 								}
 							};
 							return context.executor().submit(cc);
@@ -165,7 +168,7 @@ public class FutureInstructionFactory {
 						// 2 params
 						JSON js = jit.next();
 						if (js == null) {
-							return immediateCheckedFuture(builder.value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 						int cc = nf.intValue();
 						switch (js.getType()) {
@@ -243,7 +246,7 @@ public class FutureInstructionFactory {
 				if (gbe != null) {
 					mapfunc = gbe.unwrap();
 				} else {
-					return immediateCheckedFuture(context.builder().value());
+					return immediateCheckedFuture(JSONBuilderImpl.NULL);
 				}
 				AsyncFunction<JSON, JSON> asy = new AsyncFunction<JSON, JSON>() {
 					@Override
@@ -417,9 +420,9 @@ public class FutureInstructionFactory {
 								inst = fi.getIntruction();
 								if (inst instanceof ObjectInstructionBase) {
 									ObjectInstructionBase oib = (ObjectInstructionBase) inst;
-									List<Pair<String, FutureInstruction<JSON>>> prs = oib.pairs();
-									for (Pair<String, FutureInstruction<JSON>> ip : prs) {
-										String k = ip.f;
+									List<Pair<ObjectKey, FutureInstruction<JSON>>> prs = oib.pairs();
+									for (Pair<ObjectKey, FutureInstruction<JSON>> ip : prs) {
+										String k = ip.f.label;
 										FutureInstruction<JSON> fii = fixContextData(ip.s);
 										if ("!init".equals(k)) {
 											initInst = FutureInstructionFactory.memo(fii.getSourceInfo(), fii);
@@ -683,7 +686,7 @@ public class FutureInstructionFactory {
 							return islong ? immediateCheckedFuture(context.builder().value(acc))
 									: immediateCheckedFuture(context.builder().value(facc));
 						}
-						return Futures.immediateCheckedFuture(context.builder().value());
+						return Futures.immediateCheckedFuture(JSONBuilderImpl.NULL);
 					}
 				});
 			}
@@ -719,7 +722,7 @@ public class FutureInstructionFactory {
 							}
 							return immediateCheckedFuture(context.builder().value(facc));
 						}
-						return Futures.immediateCheckedFuture(context.builder().value());
+						return Futures.immediateCheckedFuture(JSONBuilderImpl.NULL);
 					}
 				});
 			}
@@ -774,7 +777,7 @@ public class FutureInstructionFactory {
 							return islong ? immediateCheckedFuture(context.builder().value(acc))
 									: immediateCheckedFuture(context.builder().value(facc));
 						}
-						return Futures.immediateCheckedFuture(context.builder().value());
+						return Futures.immediateCheckedFuture(JSONBuilderImpl.NULL);
 					}
 				});
 			}
@@ -829,7 +832,7 @@ public class FutureInstructionFactory {
 							return islong ? immediateCheckedFuture(context.builder().value(acc))
 									: immediateCheckedFuture(context.builder().value(facc));
 						}
-						return Futures.immediateCheckedFuture(context.builder().value());
+						return Futures.immediateCheckedFuture(JSONBuilderImpl.NULL);
 					}
 				});
 			}
@@ -944,7 +947,7 @@ public class FutureInstructionFactory {
 					return fi.call(context, data);
 				} catch (ExecutionException e) {
 					// eat the access exception and quietly return null
-					return immediateCheckedFuture(context.builder().value());
+					return immediateCheckedFuture(JSONBuilderImpl.NULL);
 				}
 			}
 		};
@@ -1045,7 +1048,7 @@ public class FutureInstructionFactory {
 
 	// rank all
 	public static FutureInstruction<JSON> value(JSONBuilder builder, SourceInfo meta) {
-		return value(builder.value(), meta);
+		return value(JSONBuilderImpl.NULL, meta);
 	}
 
 	// rank all
@@ -1119,10 +1122,10 @@ public class FutureInstructionFactory {
 							if (j.getType() == JSONType.LIST) {
 								JList jl = (JList) j;
 								for (JSON jj : jl) {
-									arr.add(jj == null ? context.builder().value() : jj);
+									arr.add(jj == null ? JSONBuilderImpl.NULL : jj);
 								}
 							} else {
-								arr.add(j == null ? context.builder().value() : j);
+								arr.add(j == null ? JSONBuilderImpl.NULL : j);
 							}
 						}
 						return immediateCheckedFuture(arr);
@@ -1572,8 +1575,9 @@ public class FutureInstructionFactory {
 						public ListenableFuture<JSON> apply(JSON input) throws Exception {
 							String str = stringValue(input);
 							FutureInstruction<JSON> defi = null;
-							for (Pair<String, FutureInstruction<JSON>> pp : base.pairs()) {
-								if ("_".equals(pp.f)) {
+							for (Pair<ObjectKey, FutureInstruction<JSON>> pp : base.pairs()) {
+								
+								if ("_".equals(pp.f.label) && pp.f.quoted) {
 									defi = pp.s;
 								}
 								if (str.equals(pp.f)) {
@@ -1583,7 +1587,7 @@ public class FutureInstructionFactory {
 							if (defi != null) {
 								return defi.call(pcontext, data);
 							}
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 					});
 				} else
@@ -1744,28 +1748,47 @@ public class FutureInstructionFactory {
 	}
 
 	// rank all
-	public static FutureInstruction<JSON>  object (SourceInfo meta, final List<Pair<String, FutureInstruction<JSON>>> ll,
+	public static FutureInstruction<JSON>  object (SourceInfo meta, final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll,
 			boolean forceContext) throws ExecutionException {
 		boolean isContext = forceContext;
-		List<Pair<String, FutureInstruction<JSON>>> fields = new ArrayList<>();
-		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
+//		List<Pair<String, FutureInstruction<JSON>>> fields = new ArrayList<>();
+//		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
 
 		meta.name = "object";
 		if (isContext == false)
-			for (Pair<String, FutureInstruction<JSON>> ii : ll) {
-				String k = ii.f;
-				if (k.charAt(0) == '$') {
-				} else if (k.charAt(0) == '!') {
-				//	imperitives.add();
-				} else if ("_".equals(ii.f)) {
+			for (Pair<ObjectKey, FutureInstruction<JSON>> ii : ll) {
+				if ((!ii.f.quoted) &&"_".equals(ii.f.label)) {
 					isContext = true;
 					break;
 				}
 			}
-		FutureInstruction<JSON>  res = isContext ? new ContextObjectInstructionFuture(meta, ll) : new ObjectInstructionFuture(meta, ll);
+		FutureInstruction<JSON>  res = isContext ? 
+				new ContextObjectInstructionFuture(meta, ll) : 
+					new ObjectInstructionFuture(meta, ll);
 		return res;
 	}
 
+	public static FutureInstruction<JSON> match(SourceInfo meta,
+			final FutureInstruction<JSON> l, FutureInstruction<JSON> r) {
+		meta.name = "match";
+		return new AbstractFutureInstruction(meta) {
+			@Override
+			public ListenableFuture<JSON> _call(
+					final AsyncExecutionContext<JSON> context, 
+					final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				return transform(allAsList(l.call(context, data),r.call(context, data)),
+						new AsyncFunction<List<JSON>, JSON>() {
+
+							@Override
+							public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+								return immediateCheckedFuture(context.builder().value(
+										input.get(0).equals(input.get(1))));
+							}
+						});
+			}
+		};
+	}
 	// rank: all
 	public static FutureInstruction<JSON> stepParent(SourceInfo meta) {
 		meta.name = "parent";
@@ -1777,7 +1800,7 @@ public class FutureInstructionFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						JSON p = input.getParent();
-						JSON res = p == null ? context.builder().value() : p;
+						JSON res = p == null ? JSONBuilderImpl.NULL : p;
 						return immediateCheckedFuture(res);
 					}
 				});
@@ -1796,7 +1819,7 @@ public class FutureInstructionFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						if (input == null || input.isTrue() == false) {
-							return immediateCheckedFuture(builder.value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 						return immediateCheckedFuture(k);
 					}
@@ -1825,7 +1848,7 @@ public class FutureInstructionFactory {
 								ll.add(transform(fexp.call(context, jj), function(input, context.builder())));
 							}
 							if (ll.size() == 0)
-								return immediateCheckedFuture(context.builder().value());
+								return immediateCheckedFuture(JSONBuilderImpl.NULL);
 							return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
 								@Override
@@ -1879,7 +1902,7 @@ public class FutureInstructionFactory {
 										int n = c - col.size();
 										if (n > 0) {
 											for (int i = 0; i < n; ++i) {
-												col.add(context.builder().value());
+												col.add(JSONBuilderImpl.NULL);
 											}
 										}
 										col.add(pp.s);
@@ -2202,7 +2225,7 @@ public class FutureInstructionFactory {
 							ListenableFuture<JSON> lf = get(obj);
 							if (lf != null)
 								return lf;
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 						case ARRAY:
 						case LIST: {
@@ -2229,10 +2252,10 @@ public class FutureInstructionFactory {
 										return immediateCheckedFuture(unbound);
 									}
 								});
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 						default:
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						}
 					}
 				});
@@ -2391,7 +2414,7 @@ public class FutureInstructionFactory {
 						JSON rb = it.next();
 						JSONType btype = rb.getType();
 						if (btype == JSONType.NULL || btype == JSONType.OBJECT)
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 
 						JSONArray unbound = context.builder().array(ra);
 						switch (ra.getType()) {
@@ -2411,7 +2434,7 @@ public class FutureInstructionFactory {
 												l = ((l + larr.size()) % larr.size());
 											JSON g = larr.get(l.intValue());
 											if (g != null)
-												unbound.add(g != null ? g : context.builder().value());
+												unbound.add(g != null ? g : JSONBuilderImpl.NULL);
 										}
 									}
 										break;
@@ -2433,7 +2456,7 @@ public class FutureInstructionFactory {
 													int inc = la < lb ? 1 : -1;
 													for (; (la - inc) != lb; la += inc) {
 														JSON je = larr.get(la.intValue());
-														unbound.add(je != null ? je : context.builder().value());
+														unbound.add(je != null ? je : JSONBuilderImpl.NULL);
 													}
 												}
 											}
@@ -2441,9 +2464,9 @@ public class FutureInstructionFactory {
 											for (JSON jj : jarr) {
 												if (jj.isNumber()) {
 													JSON je = larr.get(((JSONValue) jj).longValue().intValue());
-													unbound.add(je != null ? je : context.builder().value());
+													unbound.add(je != null ? je : JSONBuilderImpl.NULL);
 												} else {
-													unbound.add(context.builder().value());
+													unbound.add(JSONBuilderImpl.NULL);
 												}
 											}
 										}
@@ -2464,7 +2487,7 @@ public class FutureInstructionFactory {
 									if (jj != null)
 										unbound.add(jj);
 									else
-										unbound.add(context.builder().value());
+										unbound.add(JSONBuilderImpl.NULL);
 								}
 							} else if (rb instanceof JSONValue) {
 								String s = rb.stringValue();
@@ -2472,7 +2495,7 @@ public class FutureInstructionFactory {
 								if (jj != null)
 									unbound.add(jj);
 								else
-									unbound.add(context.builder().value());
+									unbound.add(JSONBuilderImpl.NULL);
 							}
 						}
 							break;
@@ -2536,7 +2559,7 @@ public class FutureInstructionFactory {
 						}
 						int n = unbound.size();
 						if (n == 0)
-							return immediateCheckedFuture(context.builder().value());
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
 						if (n == 1)
 							return immediateCheckedFuture(unbound.get(0));
 						return immediateCheckedFuture(unbound);
@@ -2577,7 +2600,7 @@ public class FutureInstructionFactory {
 							final JSONObject src = (JSONObject) inp;
 							JSON param = src.get(ks);
 							if (param == null)
-								param = context.builder().value();
+								param = JSONBuilderImpl.NULL;
 							return transform(ai.call(context, immediateCheckedFuture(inp)),
 									new KeyedAsyncFunction<JSON, JSON, String>(ks) {
 
@@ -2752,7 +2775,7 @@ public class FutureInstructionFactory {
 							});
 						}
 
-						return immediateCheckedFuture(context.builder().value());
+						return immediateCheckedFuture(JSONBuilderImpl.NULL);
 					};
 
 				});
@@ -3086,7 +3109,7 @@ public class FutureInstructionFactory {
 					}
 
 				}
-				return number != null ? builder.value(check.check(number)) : builder.value();
+				return number != null ? builder.value(check.check(number)) : JSONBuilderImpl.NULL;
 			}
 
 			@Override
@@ -3239,7 +3262,7 @@ public class FutureInstructionFactory {
 					throws ExecutionException {
 				FutureInstruction<JSON> inst = context.getdef(sel);
 				if (inst == null)
-					return immediateCheckedFuture(context.builder().value());
+					return immediateCheckedFuture(JSONBuilderImpl.NULL);
 				return inst.call(context, data);
 			}
 		};

@@ -87,7 +87,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		switch(pt.getText()) {
 		case "true": return new DataValue<JSON>(builder.value(true));
 		case "false": return new DataValue<JSON>(builder.value(false));
-		case "null": return new DataValue<JSON>(builder.value());
+		case "null": return new DataValue<JSON>(JSONBuilderImpl.NULL);
 		default: return new  DataValue<JSON>(builder.value(pt.getText()));
 		}
 	}

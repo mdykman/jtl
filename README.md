@@ -102,6 +102,35 @@ After options and files have been processed, any remaining arguments are passed 
 	 # launch a server bound to all interfaces based at a specified directory
     $ jtl --binding 0.0.0.0 -D src/test/resources
 
+## JSON
+The JSON parser provided by JTL supports a somewhat extended syntax
+* object keys do not need to be quoted if they contain no spaces and do not begin with non-letter character 
+* strings may be single-quoted or double-quoted
+* line comments are allowed using `//`
+
+The formal definition of the values allowed in an unquoted key is given below. It is based on the definition of a valid identifier as specified in Java 8.
+
+```
+JavaLetter
+	:	[a-zA-Z_] // these are the "java letters" below 0xFF
+	|	// covers all characters above 0xFF which are not a surrogate
+		~[\u0000-\u00FF\uD800-\uDBFF]
+		{Character.isJavaIdentifierStart(_input.LA(-1))}?
+	|	// covers UTF-16 surrogate pairs encodings for U+10000 to U+10FFFF
+		[\uD800-\uDBFF] [\uDC00-\uDFFF]
+		{Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
+	;
+
+JavaLetterOrDigit
+	: JavaLetter
+	| [0-9] 
+	;
+```
+
+In CLI mode, the default output behaviour is to avoid quoting keys if they conform to item 1, listed above.  This behaviour may be over-ridden with the command line switch `-q`
+
+In server mode, keys are always quoted.
+
 ## data types 
 All data is JSON which is to say objects, arrays and scalars. Any reference to a value in this document could be refering to any of these unless specified otherwise.
 
@@ -140,7 +169,7 @@ Jpath is a notation for navigating and manipulating json data, analogous to XPat
 
 Like XPath, jpath expressions are evaluated from left to right against implicit context data. 
 
-Unlike XPath expressions, jpath is not string-embedded allowing path components to be freely intermixed with literal data expressions. For the sake of convenience, the term __jpath__ will be used when refering to path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
+Unlike XPath expressions, jpath expressions are not string-embedded allowing path components to be freely intermixed with literal data expressions. For the sake of convenience, the term __jpath__ will be used when refering to path expressions and the term __jtl__ wil be used when refering to overall program structure, but the notation is recursive.
 
 __data.json__
 ```
@@ -195,8 +224,10 @@ sales[1..3,5]
 sales/[1..5]
 ```
 
-When the data on the left is an array and the contents of the dereference operator is numeric,
-elements are selected from that array.
+When the data on the left is an array and the contents of the dereference operator is numeric, those numbers are treated as indices by which values are selected from that array.
+
+
+When data on the left is an object and the contents of the dereference operator are strings, those string are interpreted as keys by which values are selected from that object.
 
 ### mixing json and jpath expressions
 Json object and arrays may contain embedded jpath expressions anywhere a json value might be used.
@@ -219,10 +250,9 @@ $\_    | script input data | script input data   | function input data
 $0     | path of current script|path of current script|name of current function
 $1..$n | command-line arguments|http path arguments|function arguments
 $@     | array of command-line arguments|array of http path arguments|array of function arguments
-$#     | count of command-line arguments|count of http path arguments|count of function arguments
 
 ### named contexts
-Using the builtin `module` or `include` functions in an init block (see Init Block) may load additional
+Using the builtin `module` or `import` functions in an init block (see Init Block) may load additional
 functions and/or variables into a named context. They can be accessed via:
 * variables `identifier . $identifier`
 * functions `identifier . identifier ( )`

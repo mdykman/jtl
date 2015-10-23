@@ -40,11 +40,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class HttpModule extends AbstractModule {
 
-	final JSONObject baseConfig;
 	static Logger logger = LoggerFactory.getLogger(HttpModule.class);
 
-	public HttpModule(JSONObject config) {
-		baseConfig = config;
+	public HttpModule(String key,JSONObject config) {
+		super(key,config);
 	}
 
 	@Override

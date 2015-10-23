@@ -2,71 +2,150 @@ package org.dykman.jtl.future;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONBuilderImpl;
 
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import static com.google.common.util.concurrent.Futures.allAsList;
+import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
+import static com.google.common.util.concurrent.Futures.transform;
 import static org.dykman.jtl.future.FutureInstructionFactory.*;
+
 public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
-      final List<Pair<String, FutureInstruction<JSON>>> ll;
+	final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll;
 
-      public ObjectInstructionBase(SourceInfo info, List<Pair<String, FutureInstruction<JSON>>> pp, boolean itemize) {
-         super(info, true);
-         ll = pp;
-      }
+	AsyncExecutionContext<JSON> initContext = null;
+	FutureInstruction<JSON> initInst = null;
+	ListenableFuture<JSON> initResult = null;
+	boolean isContextObject = false;
 
-      public abstract ListenableFuture<JSON> _callObject(final AsyncExecutionContext<JSON> context,
-            final ListenableFuture<JSON> data) throws ExecutionException;
+	static  class ObjectKey {
+		final String label;
+		final boolean quoted;
+		public ObjectKey(String l, boolean b) {
+			label = l;
+			quoted = b;
+		}
+	}
 
-      public final ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
-            final ListenableFuture<JSON> data) throws ExecutionException {
- ///        if(context.isInclude()) {
-  //          return _import(context, data);
-  //       } else {
-            return _callObject(context, data);
-  //       }
+	public ObjectInstructionBase(SourceInfo info, List<Pair<ObjectKey, FutureInstruction<JSON>>> pp, boolean itemize) {
+		super(info, true);
+		ll = pp;
+	}
 
-      }
+	public abstract ListenableFuture<JSON> _callObject(
+			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, 
+			final AsyncExecutionContext<JSON> context,
+			final ListenableFuture<JSON> data) throws ExecutionException;
 
-      public ListenableFuture<JSON> _import(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data) {
-         List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
-         List<ListenableFuture<JSON>> rr = new ArrayList<>();
+	public final ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context,
+			final ListenableFuture<JSON> data) throws ExecutionException {
 
-         // ListenableFuture<JSON> initInst = null;
-         FutureInstruction<JSON> init = null;
-         for(Pair<String, FutureInstruction<JSON>> pp : ll) {
-            String k = pp.f;
-            FutureInstruction<JSON> inst = pp.s;
-            if(k.equals("!init")) {
-               init = fixContextData(singleton(inst.getSourceInfo(), inst));
-               /*
-                * if(init == null) synchronized(this) { if(init == null) { init
-                * = singleton(inst.getSourceInfo(), inst); } }
-                */
-            } else if(k.equals("_")) {
-               // ignore in import
-            } else if(k.startsWith("!")) {
-               // variable, (almost) immediate evaluation
-               FutureInstruction<JSON> imp = fixContextData(inst);
-               context.define(k.substring(1), imp);
-               imperitives.add(imp);
-            } else if(k.startsWith("$")) {
-               // variable, deferred evaluation
-               context.define(k.substring(1), fixContextData(deferred(inst.getSourceInfo(), inst, context, data)));
-            } else {
-               // define a function
-               context.define(k, FutureInstructionFactory.fixContextData( inst));
-            }
+		FutureInstruction<JSON> init = null;
+		List<Pair<ObjectKey, FutureInstruction<JSON>>> fields = new ArrayList<>();
+		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
 
-         }
-         return null;
-      }
+		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : ll) {
+			String k = ii.f.label;
+			char ic = k.charAt(0);
+			boolean notquoted = !ii.f.quoted;
+			if (notquoted && "!init".equals(k)) {
+				init = ii.s;
+			} else if (notquoted && ic == '$') {
+				FutureInstruction<JSON> imp = fixContextData(
+						FutureInstructionFactory.deferred(ii.s.getSourceInfo(), ii.s, context, data));
+				context.define(k.substring(1), imp);
+			} else if (notquoted && ic == '!') {
+				FutureInstruction<JSON> imp = fixContextData(ii.s);
+				context.define(k.substring(1), imp);
+				imperitives.add(imp);
+			} else {
+				fields.add(ii);
+			}
+		}
+		if(init != null || imperitives.size() > 0 || (isContextObject && (fields.size() > 0))) {
+			context = context.createChild(false, false, data, source);
+		}
+		final      AsyncExecutionContext<JSON> ctx = context;
+		return transform(runImperatives(init, imperitives, context, data), new AsyncFunction<JSON, JSON>() {
+			@Override
+			public ListenableFuture<JSON> apply(JSON input) throws Exception {
+				return _callObject(fields, ctx, data);
+			}
+		});
+		// }
 
-      public List<Pair<String, FutureInstruction<JSON>>> pairs() {
-         return ll;
-      };
-   }
+	}
+
+	protected ListenableFuture<JSON> runImperatives(final FutureInstruction<JSON> init,
+			final List<FutureInstruction<JSON>> imperitives, final AsyncExecutionContext<JSON> context,
+			final ListenableFuture<JSON> data) throws ExecutionException {
+		try {
+			// ensure that init is completed so that any modules are
+			// installed
+			// and imports imported
+			// final FutureInstruction<JSON> finst = init;
+			AsyncFunction<JSON, JSON> runner = new AsyncFunction<JSON, JSON>() {
+				@Override
+				public ListenableFuture<JSON> apply(final JSON input) throws Exception {
+					List<ListenableFuture<JSON>> ll = new ArrayList<>();
+					for (FutureInstruction<JSON> imp : imperitives) {
+						ll.add(imp.call(context, data));
+					}
+					return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+						@Override
+						public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+							// TODO overlay the series of init results into a single one
+							return immediateCheckedFuture(JSONBuilderImpl.NULL);
+						}
+					});
+				}
+			};
+
+			if (init != null)
+				return transform(init.call(context, data), runner);
+			return runner.apply(JSONBuilderImpl.NULL);
+		} catch (Exception e) {
+			FutureInstruction<JSON> error = context.getdef("error");
+			if (error == null) {
+				logger.error("WTF!!!!???? no error handler is defined!");
+				throw new RuntimeException("WTF!!!!???? no error handler is defined!");
+			}
+			AsyncExecutionContext<JSON> ec = context.createChild(true, false, data, source);
+			ec.define("0", FutureInstructionFactory.value("error", context.builder(), source));
+			ec.define("1", FutureInstructionFactory.value(500L, context.builder(), source));
+			ec.define("2", FutureInstructionFactory.value(e.getLocalizedMessage(), context.builder(), source));
+			return error.call(ec, data);
+		}
+	}
+
+	protected ListenableFuture<JSON> initializeContext(AsyncExecutionContext<JSON> ctx, FutureInstruction<JSON> inst,
+			ListenableFuture<JSON> data) throws ExecutionException {
+		if (initContext == null) {
+			synchronized (this) {
+				if (initContext == null) {
+					initResult = inst.call(ctx, data);
+					initContext = ctx;
+				}
+			}
+		}
+		// TODO:: I think this 'injection' cycle is entirely unneccessry
+		ctx.inject(initContext);
+		for (Map.Entry<String, AsyncExecutionContext<JSON>> nc : initContext.getNamedContexts().entrySet()) {
+			ctx.inject(nc.getKey(), nc.getValue());
+		}
+		return initResult;
+	}
+
+	public List<Pair<ObjectKey, FutureInstruction<JSON>>> pairs() {
+		return ll;
+	};
+}

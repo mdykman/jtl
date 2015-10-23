@@ -16,6 +16,7 @@ import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
+import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.slf4j.Logger;
@@ -27,31 +28,31 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-
 public class CacheModule extends AbstractModule {
 
-	JSONObject config;	
-	ListenableFuture<JSON> NO_RESULT =null;
+	static final ListenableFuture<JSON> NO_RESULT = Futures.immediateCheckedFuture(JSONBuilderImpl.NULL);
 
-	public CacheModule(JSONObject config) {
-		this.config = config;
+	public CacheModule(String key, JSONObject config) {
+		super(key,config);
 	}
 	static Logger logger = LoggerFactory.getLogger(CacheModule.class);
 
 	@Override
 	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
-		NO_RESULT= Futures.immediateCheckedFuture(context.builder().value());
 		for (Pair<String, JSON> pp : config) {
 			if ("server-mode".equals(pp.f)) {
+				// ignore this value..
 //				serverMode = pp.s.isTrue();
 			} else {
 				SourceInfo si = meta.clone();
-				si.name = "cache:" + pp.f;
-				context.define(pp.f, new AbstractFutureInstruction(si, true) {
-					final JSONObject c = (JSONObject) pp.s;
-					Cache<JSON, ListenableFuture<JSON>> cache = null;
+				si.name = bindingKey + ":" + pp.f;
+				context.define(pp.f, new AbstractFutureInstruction(si) {
+					final JSONObject cacheConfig = (JSONObject) pp.s;
+					JSON mm = cacheConfig.get("misses");
+					final boolean useMissCache = mm!=null && mm.isTrue();
+					private Cache<JSON, ListenableFuture<JSON>> cache = null;
 
-					Cache<JSON, Boolean> misses = null;
+					private Cache<JSON, Boolean> misses = null;
 
 					protected long getDef(Long l, long def) {
 						if (l != null)
@@ -66,19 +67,23 @@ public class CacheModule extends AbstractModule {
 					}
 
 					public Cache<JSON, Boolean> getMissCache() {
+						if(!useMissCache) return null;
 						if (misses == null)
 							synchronized (this) {
 								if (misses == null) {
-									JSON j = c.get("max");
+									JSON j = cacheConfig.get("max");
 									final Long max = ((j == null) ? null : ((JSONValue) j).longValue());
 
-									j = c.get("ttl");
+									j = cacheConfig.get("missttl");
 									final Long ttl = (j == null) ? null : ((JSONValue) j).longValue();
 
-									j = c.get("on");
+									j = cacheConfig.get("on");
 									String on = j == null ? null : ((JSONValue) j).stringValue();
 									on = getDef(on, "access");
 
+									if(logger.isInfoEnabled()) {
+										logger.info("creating negative cache " + si.name + " max="+max+",ttl="+ttl+",on="+on);
+									}
 									if ("access".equals(on)) {
 										misses = CacheBuilder.newBuilder().maximumSize(getDef(max, 10000))
 												.initialCapacity(256)
@@ -97,18 +102,18 @@ public class CacheModule extends AbstractModule {
 						if (cache == null)
 							synchronized (this) {
 								if (cache == null) {
-									JSON j = c.get("max");
+									JSON j = cacheConfig.get("max");
 									final Long max = ((j == null) ? null : ((JSONValue) j).longValue());
 
-									j = c.get("ttl");
+									j = cacheConfig.get("ttl");
 									final Long ttl = (j == null) ? null : ((JSONValue) j).longValue();
 
-									j = c.get("on");
+									j = cacheConfig.get("on");
 									String on = j == null ? null : ((JSONValue) j).stringValue();
 									on = getDef(on, "access");
 
 									if(logger.isInfoEnabled()) {
-										logger.info("creating cache " + pp.f + " max="+max+",ttl="+ttl+",on="+on);
+										logger.info("creating cache " + si.name + " max="+max+",ttl="+ttl+",on="+on);
 									}
 									if ("access".equals(on)) {
 										cache = CacheBuilder.newBuilder().maximumSize(getDef(max, 10000))
@@ -150,9 +155,10 @@ public class CacheModule extends AbstractModule {
 									while (jit.hasNext()) {
 										arr.add(jit.next());
 									}
+									
 									Cache<JSON, Boolean> mmc = getMissCache();
-									if (mmc.getIfPresent(arr) != null) {
-										return Futures.immediateCheckedFuture(context.builder().value());
+									if (mmc!=null && mmc.getIfPresent(arr) != null) {
+										return NO_RESULT;
 									} else {
 										ListenableFuture<JSON> val = getCache().get(arr, new Callable<ListenableFuture<JSON>>() {
 											@Override

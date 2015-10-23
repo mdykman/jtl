@@ -80,7 +80,7 @@ public class JTLTest {
 		context.setInit(true);
 
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), getConfig());
-		ml.launchAuto(context, true);
+		ml.loadAuto(context, true);
 
 		ListenableFuture<JSON> result = inst.call(context, Futures.immediateCheckedFuture(data));
 		JSON j = result.get();
@@ -96,7 +96,7 @@ public class JTLTest {
 				Futures.immediateCheckedFuture(input), SourceInfo.internal("test"));
 		context.setRuntime(true);
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), config);
-		ml.launchAuto(context, true);
+		ml.loadAuto(context, true);
 		return context;
 	}
 	
@@ -120,10 +120,11 @@ public class JTLTest {
 		JSON res = runFile(code, d);
 		JSON jj = runExpression(".[1]/children[1]/children[1]/name", res);
 		assertEquals("g", jj.stringValue());
-		JSON expected = builder.parse("[\"c\",\"d\",\"e\",\"f\",\"g\"]");
+		JSON expected = builder.parse("['c','d','e','f','g']");
 		jj=runExpression("*/children/*/*/children/*/*/name", res);
 		assertEquals(expected, jj);
-		jj=runExpression("*/children/*/*/children", res);
+		jj=runExpression("**/filter(id==10)[0]/name", res);
+		assertEquals("tracy rocks", jj.stringValue());
 //		 System.out.println(jj);
 //		 jj = runExpression("**/filter(id = 3)", res);
 //		 System.out.println(jj);

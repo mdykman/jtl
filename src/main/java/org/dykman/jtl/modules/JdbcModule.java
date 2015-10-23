@@ -26,6 +26,7 @@ import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class JdbcModule extends AbstractModule {
 	}
 
 	
-	final JSONObject baseConfig;
+//	final JSONObject baseConfig;
 	final String key;
 	boolean debug = false;
 	static Logger logger = LoggerFactory.getLogger(JdbcModule.class);
@@ -52,12 +53,13 @@ public class JdbcModule extends AbstractModule {
 	final Executor queryExecutor;
 	final Executor insertExecutor;
 
-	public JdbcModule(JSONObject config) {
-		this.baseConfig = config;
+	public JdbcModule(String key,JSONObject config) {
+		super(key,config);
+//		this.baseConfig = config;
 		JSON j = config.get("debug");
 		if (j != null)
 			debug = j.isTrue();
-		j = baseConfig.get("insert_id");
+		j = this.config.get("insert_id");
 		final String insertIdExpr = j == null ? null : j.stringValue();
 		this.key = "@jdbc-" + bindingKey + "-" + Long.toHexString(System.identityHashCode(this));
 
@@ -99,7 +101,7 @@ public class JdbcModule extends AbstractModule {
 					logger.info(idstat);
 					PreparedStatement lid = stat.getConnection().prepareStatement(idstat);
 					ResultSet rs = lid.executeQuery();
-					JSON r = builder.value();
+					JSON r = JSONBuilderImpl.NULL;
 					if (rs.next()) {
 						r = builder.value(new Long(rs.getInt(1)));
 					}
@@ -111,7 +113,7 @@ public class JdbcModule extends AbstractModule {
 					ResultSet rs = stat.getGeneratedKeys();
 					int cc = 0;
 					JSONArray arr = builder.array(null);
-					JSON j = builder.value();
+					JSON j = JSONBuilderImpl.NULL;
 					while (rs.next()) {
 						Object col = rs.getObject(1);
 						j = builder.value(col);
@@ -384,7 +386,7 @@ public class JdbcModule extends AbstractModule {
 	@Override
 	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context, boolean serverMode)
 			throws ExecutionException {
-		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(baseConfig, key, serverMode);
+		JdbcConnectionWrapper wrapper = new JdbcConnectionWrapper(this.config, key, serverMode);
 		SourceInfo si = meta.clone();
 		si.name = "query";
 		si.code = "*internal*";

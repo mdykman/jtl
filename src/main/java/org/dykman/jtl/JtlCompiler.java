@@ -108,7 +108,8 @@ public class JtlCompiler {
 		ctx.define(s, inst);
 	}
 
-	public AsyncExecutionContext<JSON> createInitialContext(JSON data, JSONObject config, File scriptBase, File init,
+	public AsyncExecutionContext<JSON> createInitialContext(
+			JSON data, JSONObject config, File scriptBase, File init,
 			JSONBuilder builder, ListeningExecutorService les) throws IOException, ExecutionException {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
@@ -170,7 +171,6 @@ public class JtlCompiler {
 		define(context, "amend", amend(meta));
 		define(context, "keys", keys(meta));
 
-		// ?? define("apply", apply());
 
 		// 0 args: return boolean type test
 		// 1 arg: attempts to coerce to the specified type

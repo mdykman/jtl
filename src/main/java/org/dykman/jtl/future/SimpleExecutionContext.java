@@ -16,6 +16,7 @@ import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONBuilderImpl;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -209,7 +210,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 							return c;
 					}
 					if (create) {
-						c = this.createChild(false, include, null, info);
+						c = this.createChild(false, include, immediateFuture(JSONBuilderImpl.NULL), info);
 						namedContexts.put(label, c);
 					}
 				}

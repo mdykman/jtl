@@ -72,8 +72,8 @@ public class LdapModule extends AbstractModule {
 		}
 	}
 
-	public LdapModule(JSONObject config) {
-		this.baseConfig = config;
+	public LdapModule(String key,JSONObject config) {
+		super(key,config);
 	}
 	@Override
 	public JSON define(SourceInfo meta, AsyncExecutionContext<JSON> context,boolean serverMode) {
