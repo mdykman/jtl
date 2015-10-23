@@ -31,7 +31,6 @@ import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
-import org.dykman.jtl.modules.JdbcModule;
 import org.dykman.jtl.server.JtlServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
-	static final String JTL_VERSION = "0.9.9";
+	static final String JTL_VERSION = JtlVersion.JTL_VERSION;
 
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();

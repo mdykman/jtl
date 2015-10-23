@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
@@ -29,14 +30,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected boolean isInit = false;
 	protected boolean isRuntime = false;
 
-	public boolean isFunctionContext() {
-		return functionContext;
-	}
-
-	public boolean isInclude() {
-		return include;
-	}
-
 	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
 	protected String method = null;
@@ -50,7 +43,16 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	JSONBuilder builder = null;
 
 	boolean debug = false;
+	 JtlCompiler compiler = null;
 	final Map<String, AsyncExecutionContext<JSON>> namedContexts = new ConcurrentHashMap<>();
+
+	public boolean isFunctionContext() {
+		return functionContext;
+	}
+
+	public boolean isInclude() {
+		return include;
+	}
 
 	public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
 		return namedContexts;
@@ -76,6 +78,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		this.currentDirectory = f;
 		this.debug = debug;
 		this.include = include;
+		compiler = new JtlCompiler(builder);
 	}
 
 	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
@@ -111,6 +114,21 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return immediateFuture(conf);
 	}
 
+	public JtlCompiler compiler(JtlCompiler c) {
+		compiler = c;
+		return c;
+	}
+	@Override
+	public JtlCompiler compiler() {
+		JtlCompiler c = compiler;
+		AsyncExecutionContext<JSON> p = this.getParent();
+		while (c == null && p != null) {
+			c = p.compiler();
+			p = p.getParent();
+		}
+		return c;
+		
+	}
 	@Override
 	public JSONBuilder builder() {
 		JSONBuilder r = this.builder;

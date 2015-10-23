@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
@@ -20,6 +21,8 @@ public interface AsyncExecutionContext<T> {
 	public JSONBuilder builder();
 	// public AsyncExecutionContext<T> getMasterContext();
 
+	public JtlCompiler compiler();
+	
 	public File currentDirectory();
 
 	public File file(String in);

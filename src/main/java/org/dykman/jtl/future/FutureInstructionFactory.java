@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.dykman.jtl.ExecutionException;
-import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
@@ -132,7 +131,7 @@ public class FutureInstructionFactory {
 				FutureInstruction<JSON> f = context.getdef("1");
 				FutureInstruction<JSON> s = context.getdef("2");
 				ArrayList<ListenableFuture<JSON>> d = new ArrayList<>();
-				d.add(data);
+//				d.add(data);
 				if (f != null) {
 					d.add(f.call(context, data));
 				}
@@ -144,8 +143,8 @@ public class FutureInstructionFactory {
 					@Override
 					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 						Iterator<JSON> jit = input.iterator();
-						JSON parent = jit.next();
-						int n = input.size() - 1;
+//						JSON parent = jit.next();
+						int n = input.size();
 						JSONBuilder builder = context.builder();
 						if (n == 0) {
 							// no params
@@ -382,11 +381,9 @@ public class FutureInstructionFactory {
 			@Override
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> data) throws ExecutionException {
-				List<ListenableFuture<JSON>> ll = new ArrayList<>(3);
-				// InstructionFuture<JSON> key =
-				// context.getdef(JTL_INTERNAL_KEY);
+				List<ListenableFuture<JSON>> ll = new ArrayList<>(8);
 				FutureInstruction<JSON> key = context.getdef(":");
-
+				final SourceInfo si = this.source;
 				ll.add(key.call(context, data));
 				int cc = 1;
 				while (true) {
@@ -397,7 +394,6 @@ public class FutureInstructionFactory {
 				}
 
 				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-
 					@Override
 					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 						Iterator<JSON> jit = input.iterator();
@@ -405,14 +401,12 @@ public class FutureInstructionFactory {
 						final List<FutureInstruction<JSON>> imperitives = new ArrayList<>(input.size());
 
 						AsyncExecutionContext<JSON> mc = context.getInit().getNamedContext(key, true, false, source);
-						// TODO:: associate a compiler to the context
-						final JtlCompiler compiler = new JtlCompiler(context.builder());
-						// List<ListenableFuture<JSON>> ll = new ArrayList<>();
+
 						FutureInstruction<JSON> initInst = null;
 						while (jit.hasNext()) {
 							String ff = stringValue(jit.next());
 							File toParse = new File(context.currentDirectory(), ff);
-							FutureInstruction<JSON> inst = compiler.parse(toParse);
+							FutureInstruction<JSON> inst = mc.compiler().parse(toParse);
 							if (inst instanceof FixedContext) {
 								FixedContext fi = (FixedContext) inst;
 								inst = fi.getIntruction();
@@ -445,54 +439,9 @@ public class FutureInstructionFactory {
 									}
 								}
 							}
-							AsyncFunction<List<JSON>, JSON> impSync = new AsyncFunction<List<JSON>, JSON>() {
-
-								@Override
-								public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
-									JSONArray arr = context.builder().array(null);
-									for (JSON j : input) {
-										arr.add(j);
-									}
-									return immediateCheckedFuture(arr);
-								}
-							};
-
-							if (initInst != null) {
-								AsyncFunction<JSON, JSON> func = new AsyncFunction<JSON, JSON>() {
-
-									@Override
-									public ListenableFuture<JSON> apply(JSON input) throws Exception {
-										List<ListenableFuture<JSON>> ll = new ArrayList<>();
-
-										for (FutureInstruction<JSON> ii : imperitives) {
-											ll.add(ii.call(context, data));
-
-										}
-										return transform(allAsList(ll), impSync);
-									}
-								};
-
-							} else {
-								List<ListenableFuture<JSON>> ll = new ArrayList<>();
-								for (FutureInstruction<JSON> ii : imperitives) {
-									ll.add(ii.call(context, data));
-								}
-								return transform(allAsList(ll), impSync);
-							}
+							return ObjectInstructionBase.runImperatives(initInst, imperitives, mc, data);	
 						}
-
-						return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-
-							@Override
-							public ListenableFuture<JSON> apply(List<JSON> list) throws Exception {
-								JSONArray out = context.builder().array(null);
-								for (JSON j : list) {
-									out.add(j);
-								}
-								return immediateCheckedFuture(out);
-							}
-						});
-
+						throw new ExecutionException("imported file did not represent an object",si);
 					}
 				});
 			}
@@ -655,13 +604,11 @@ public class FutureInstructionFactory {
 				if (arg != null) {
 					data = arg.call(context, data);
 				}
-				// final ListenableFuture<JSON> d=data;
+
 				return transform(data, new AsyncFunction<JSON, JSON>() {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						// System.err.println("sum is passed a " +
-						// input.getClass().getName());
 						if (input instanceof JSONArray) {
 							Long acc = 0L;
 							Double facc = 0.0;
@@ -1136,8 +1083,6 @@ public class FutureInstructionFactory {
 
 	public static FutureInstruction<JSON> dyadic(SourceInfo meta, FutureInstruction<JSON> left,
 			FutureInstruction<JSON> right, DyadicAsyncFunction<JSON> f) {
-		// already writeen by the function provider
-		// meta.name="dyadic";
 		return new AbstractFutureInstruction(meta, true) {
 
 			@SuppressWarnings("unchecked")

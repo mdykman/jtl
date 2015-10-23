@@ -8,7 +8,7 @@
  */
 
 group='org.dykman'
-version='0.9.9'
+version='0.9.10'
 
 
 
@@ -167,6 +167,18 @@ clean {
 
 clean.dependsOn cleanCompileJava
 
+sourceSets {
+    main {
+        java {
+            srcDirs += "src/target/generated"
+        }
+    }
+}
+
+task cleanGenerateVersion {
+	File f = new File("src/target/generated/org/dykman/jtl/JtlVersion.java")
+	f.delete();
+}
 
 task generateVersion {
 	File f = new File("src/target/generated/org/dykman/jtl/JtlVersion.java")
@@ -175,13 +187,16 @@ task generateVersion {
 		out.println("""
 package org.dykman.jtl;
 
+
 public class JtlVersion {
-	static final String JTL_VERSION=${version};
+	static final String JTL_VERSION="${version}";
 }
 		""");
 	}
 
 }
+
+clean.dependsOn cleanGenerateVersion
 
 sourceSets.main.java.srcDirs += "target/generated"
 compileJava.dependsOn generateVersion
