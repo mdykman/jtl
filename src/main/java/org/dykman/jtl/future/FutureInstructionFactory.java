@@ -5,7 +5,6 @@ import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 //import static com.google.common.util.concurrent.Futures.immediateFailedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
-import static org.dykman.jtl.future.FutureInstructionFactory.fixContextData;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -32,7 +31,6 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.jsonVisitor;
 import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
@@ -423,18 +421,19 @@ public class FutureInstructionFactory {
 									List<Pair<ObjectKey, FutureInstruction<JSON>>> prs = oib.pairs();
 									for (Pair<ObjectKey, FutureInstruction<JSON>> ip : prs) {
 										String k = ip.f.label;
+										boolean notquoted = !ip.f.quoted;
 										FutureInstruction<JSON> fii = fixContextData(ip.s);
-										if ("!init".equals(k)) {
+										if (notquoted && "!init".equals(k)) {
 											initInst = FutureInstructionFactory.memo(fii.getSourceInfo(), fii);
 											mc.define(k.substring(1), initInst);
-										} else if ("_".equals(k)) {
+										} else if (notquoted && "_".equals(k)) {
 											context.getInit().define(key, fii);
 										} else {
 											char ic = k.charAt(0);
-											if (ic == '$') {
+											if (notquoted && ic == '$') {
 												mc.define(k.substring(1), FutureInstructionFactory
 														.deferred(fii.getSourceInfo(), fii, context, data));
-											} else if (ic == '!') {
+											} else if (notquoted && ic == '!') {
 												FutureInstruction<JSON> imp = FutureInstructionFactory
 														.memo(fii.getSourceInfo(), fii);
 												mc.define(k.substring(1), imp);
@@ -1254,13 +1253,14 @@ public class FutureInstructionFactory {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
-				final FutureInstruction<JSON> exp = context.getdef("1");
-				if (exp == null) {
-					return data;
-				}
+				FutureInstruction<JSON> exp = context.getdef("1");
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
 				ll.add(data);
-				ll.add(exp.call(context, data));
+				if(exp==null) {
+					ll.add(immediateCheckedFuture(context.builder().value("\\s+")));
+				} else {
+					ll.add(exp.call(context, data));
+				}
 				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
 					@Override
@@ -2995,14 +2995,6 @@ public class FutureInstructionFactory {
 		meta.name = "value";
 
 		return isType(meta, null, JSONType.NULL, JSONType.DOUBLE, JSONType.LONG, JSONType.STRING);
-	}
-
-	static abstract class ConverterFunction implements AsyncFunction<JSON, JSON> {
-		JSONBuilder builder;
-
-		public void setBuilder(JSONBuilder b) {
-			builder = b;
-		}
 	}
 
 	public static FutureInstruction<JSON> isString(SourceInfo meta) {

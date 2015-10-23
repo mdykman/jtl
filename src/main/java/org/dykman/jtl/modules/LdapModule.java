@@ -3,9 +3,7 @@ package org.dykman.jtl.modules;
 import java.util.Hashtable;
 
 import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.naming.directory.SearchControls;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
 

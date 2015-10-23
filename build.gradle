@@ -183,7 +183,8 @@ public class JtlVersion {
 
 }
 
-// compileJava.dependsOn generateVersion
+sourceSets.main.java.srcDirs += "target/generated"
+compileJava.dependsOn generateVersion
 
 startScripts {
 	doLast {
@@ -192,17 +193,6 @@ startScripts {
 	}
 }
 
-
-compileJava {
-   classpath = classpath + ":src/target/generated"
-}
-
-/*
-configurations {
-    verGenCompile.extendsFrom mainCompile
-    verGenRuntime.extendsFrom mainRuntime
-}
-*/
 
 distZip {
 //    into(project.name) {

@@ -2,7 +2,6 @@ package org.dykman.jtl.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 
@@ -22,6 +21,7 @@ import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 
+@SuppressWarnings("serial")
 public class JtlServlet extends HttpServlet {
 
 	final JSONBuilder builder;

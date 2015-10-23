@@ -1,0 +1,13 @@
+{
+	$str: "this is a string",
+	$arr: [10,11,12,13,14,15,16],
+	$obj: {
+		id: 3,
+		foo: "bar"
+	},
+	_: {
+		s: $str[2,4],
+		a: $arr[2,4],
+		o: $obj["id"]
+	}
+}
