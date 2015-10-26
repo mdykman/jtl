@@ -8,6 +8,7 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilderImpl;
 
 import com.google.common.util.concurrent.AsyncFunction;
@@ -56,16 +57,20 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 			String k = ii.f.label;
 			char ic = k.charAt(0);
 			boolean notquoted = !ii.f.quoted;
-			if (notquoted && "!init".equals(k)) {
-				init = ii.s;
+			if (notquoted && ic == '!') {
+				if(k.length()<2) throw new ExecutionException("unnamed imperative: " + k,source);
+				String l = k.substring(1);
+				FutureInstruction<JSON> imp = FutureInstructionFactory.memo(
+						source,fixContextData(ii.s));
+				context.define(l, imp);
+				if("init".equals(l)) init = imp;
+				else imperitives.add(imp);
 			} else if (notquoted && ic == '$') {
-				FutureInstruction<JSON> imp = fixContextData(
-						FutureInstructionFactory.deferred(ii.s.getSourceInfo(), ii.s, context, data));
+				if(k.length()<2) throw new ExecutionException("unnamed variable: " + k,source);
+				String l = k.substring(1);
+				FutureInstruction<JSON> imp = FutureInstructionFactory.deferred(
+						source, fixContextData(ii.s), context, data);
 				context.define(k.substring(1), imp);
-			} else if (notquoted && ic == '!') {
-				FutureInstruction<JSON> imp = fixContextData(ii.s);
-				context.define(k.substring(1), imp);
-				imperitives.add(imp);
 			} else {
 				fields.add(ii);
 			}
@@ -74,52 +79,54 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 			context = context.createChild(false, false, data, source);
 		}
 		final      AsyncExecutionContext<JSON> ctx = context;
-		return transform(runImperatives(init, imperitives, context, data), new AsyncFunction<JSON, JSON>() {
+		return transform(runImperatives(init, imperitives, ctx, data), new AsyncFunction<JSON, JSON>() {
 			@Override
 			public ListenableFuture<JSON> apply(JSON input) throws Exception {
 				return _callObject(fields, ctx, data);
 			}
 		});
-		// }
+
 
 	}
 
-	public static  ListenableFuture<JSON> runImperatives(final FutureInstruction<JSON> init,
-			final List<FutureInstruction<JSON>> imperitives, final AsyncExecutionContext<JSON> context,
+	public static  ListenableFuture<JSON> runImperatives(
+			final FutureInstruction<JSON> init,
+			final List<FutureInstruction<JSON>> imperitives, 
+			final AsyncExecutionContext<JSON> context,
 			final ListenableFuture<JSON> data) throws ExecutionException {
 		try {
-			// ensure that init is completed so that any modules are
-			// installed
-			// and imports imported
-			// final FutureInstruction<JSON> finst = init;
 			AsyncFunction<JSON, JSON> runner = new AsyncFunction<JSON, JSON>() {
 				@Override
-				public ListenableFuture<JSON> apply(final JSON input) throws Exception {
+				public ListenableFuture<JSON> apply(final JSON input) 
+						throws Exception {
+					// input is the result of the init instruction, if any 
+					// and is not directly relevant to the other imperatives
+					// as long as it is complete
 					List<ListenableFuture<JSON>> ll = new ArrayList<>();
 					for (FutureInstruction<JSON> imp : imperitives) {
-						ll.add(imp.call(context, data));
+						// imperatives, who underlaying function has been memo0zed higher
+						// up, can be set in motion without directly caring about the outcome.
+						// they will leave a variable in the context for which they were declared
+						// in case anyone is interested in the outcome
+						imp.call(context, data);
 					}
-					return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-
-						@Override
-						public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
-							// TODO overlay the series of init results into a single one
-							return immediateCheckedFuture(JSONBuilderImpl.NULL);
-						}
-					});
+					return immediateCheckedFuture(JSONBuilderImpl.ONE);
 				}
 			};
 
 			if (init != null)
-				return transform(init.call(context, data), runner);
+				return transform(init.call(context, context.config()), runner);
 			return runner.apply(JSONBuilderImpl.NULL);
 		} catch (Exception e) {
 			FutureInstruction<JSON> error = context.getdef("error");
 			if (error == null) {
 				logger.error("WTF!!!!???? no error handler is defined!");
-				throw new RuntimeException("WTF!!!!???? no error handler is defined!");
+				throw new RuntimeException("WTF!!!!???? no error handler is defined!",e);
 			}
-			SourceInfo info = SourceInfo.internal("imperatives");
+			SourceInfo info = e instanceof ExecutionException ? 
+					((ExecutionException)e).getSourceInfo()
+					: SourceInfo.internal("imperatives");
+			
 			AsyncExecutionContext<JSON> ec = context.createChild(true, false, data, info);
 			ec.define("0", FutureInstructionFactory.value("error", context.builder(), info));
 			ec.define("1", FutureInstructionFactory.value(500L, context.builder(), info));
@@ -139,10 +146,12 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 			}
 		}
 		// TODO:: I think this 'injection' cycle is entirely unneccessry
+		/*
 		ctx.inject(initContext);
 		for (Map.Entry<String, AsyncExecutionContext<JSON>> nc : initContext.getNamedContexts().entrySet()) {
 			ctx.inject(nc.getKey(), nc.getValue());
 		}
+		*/
 		return initResult;
 	}
 

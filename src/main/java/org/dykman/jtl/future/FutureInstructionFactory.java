@@ -405,7 +405,7 @@ public class FutureInstructionFactory {
 						FutureInstruction<JSON> initInst = null;
 						while (jit.hasNext()) {
 							String ff = stringValue(jit.next());
-							File toParse = new File(context.currentDirectory(), ff);
+							File toParse = new File(mc.currentDirectory(), ff);
 							FutureInstruction<JSON> inst = mc.compiler().parse(toParse);
 							if (inst instanceof FixedContext) {
 								FixedContext fi = (FixedContext) inst;
@@ -418,7 +418,7 @@ public class FutureInstructionFactory {
 										boolean notquoted = !ip.f.quoted;
 										FutureInstruction<JSON> fii = fixContextData(ip.s);
 										if (notquoted && "!init".equals(k)) {
-											initInst = FutureInstructionFactory.memo(fii.getSourceInfo(), fii);
+											initInst = FutureInstructionFactory.memo(ip.s.getSourceInfo(), fii);
 											mc.define(k.substring(1), initInst);
 										} else if (notquoted && "_".equals(k)) {
 											context.getInit().define(key, fii);
@@ -439,9 +439,9 @@ public class FutureInstructionFactory {
 									}
 								}
 							}
-							return ObjectInstructionBase.runImperatives(initInst, imperitives, mc, data);	
 						}
-						throw new ExecutionException("imported file did not represent an object",si);
+						return ObjectInstructionBase.runImperatives(initInst, imperitives, mc, data);	
+//						throw new ExecutionException("imported file did not represent an object",si);
 					}
 				});
 			}

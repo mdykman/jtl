@@ -40,6 +40,8 @@ public class JSONBuilderImpl implements JSONBuilder {
 		
 	}
 	public static JSON NULL = new JSONValue(null);
+	public static JSON ZERO = new JSONValue(null,0L);
+	public static JSON ONE = new JSONValue(null,1L);
 
 	private static Map<String, JSON> mapBuilder(Locale locale) {
 		return new TreeMap<>(localeComparator(locale));
@@ -78,17 +80,17 @@ public class JSONBuilderImpl implements JSONBuilder {
 
 	static Comparator<String> localeComparator(Locale locale) {
 		 return new Comparator<String>() {
-				@Override
-				public int compare(String o1, String o2) {
-					Collator cc = collatort.get();
-					if(cc == null) {
-						cc = Collator.getInstance(locale
-								);
+			@Override
+			public int compare(String o1, String o2) {
+				Collator cc = collatort.get();
+				if(cc == null) {
+					cc = Collator.getInstance(locale);
 						collatort.set(cc);
-					}
-					return cc.compare(o1, o2);
 				}
-			   };	}
+				return cc.compare(o1, o2);
+			}
+		 };	
+	}
 
 	public JSONBuilderImpl() {
 		this(false);
