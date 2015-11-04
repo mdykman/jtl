@@ -159,6 +159,10 @@ public class JTLTest {
 		assertTrue(j instanceof JSONArray);
 		JSONArray array = (JSONArray) j;
 		assertTrue(array.size() == 10);
+		j = runExpression(".[-1]", array);
+		assertTrue(j instanceof JSONValue);
+		assertEquals((Long)29L, (Long)((JSONValue)j).longValue());
+		
 	}
 	@Test
 	public void testDerefObject() throws Exception {

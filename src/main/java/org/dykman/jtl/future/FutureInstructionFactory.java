@@ -2419,6 +2419,7 @@ public class FutureInstructionFactory {
 										for (JSON jj : (JSONArray) j) {
 											if (jj.isNumber()) {
 												int n = ((JSONValue) jj).longValue().intValue();
+												if(n < 0) n = (n + sourceSize) % sourceSize; 
 												if (n < 0 || n > sourceSize) {
 													throw new ExecutionException("index out of range: " + n, source);
 												} else {
