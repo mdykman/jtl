@@ -153,6 +153,13 @@ public class JTLTest {
 			assertEquals(j, expected);
 		}
 	}
+	
+	@Test public void testArrays() throws Exception {
+		JSON j = runExpression("[20..29]", JSONBuilderImpl.NULL);
+		assertTrue(j instanceof JSONArray);
+		JSONArray array = (JSONArray) j;
+		assertTrue(array.size() == 10);
+	}
 	@Test
 	public void testDerefObject() throws Exception {
 //		JSON expected = builder.parse("['c','d','e','f','g']");
