@@ -1,0 +1,6 @@
+﻿{
+	!init: {
+		curl:"http"
+	},
+	_:curl.get('http://www.ford.com/services/attributes/Attributes.json?make=Ford&model=focus&year=2016')
+}

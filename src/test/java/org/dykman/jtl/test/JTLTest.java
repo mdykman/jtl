@@ -103,6 +103,7 @@ public class JTLTest {
 	protected JSON runFile(File code, JSON input) throws Exception {
 		return runFile(code, input, null, getConfig());
 	}
+	
 	protected JSON runFile(File code, JSON input,File init,JSONObject config) throws Exception {
 		FutureInstruction<JSON> inst = compiler.parse(code);
 		ListenableFuture<JSON> inf = Futures.immediateCheckedFuture(input);
@@ -118,12 +119,14 @@ public class JTLTest {
 		JSON d = builder.parse(new File(base, "data2.json"));
 		File code = new File(base, "test-jdbc.jtl");
 		JSON res = runFile(code, d);
-		JSON jj = runExpression(".[1]/children[1]/children[1]/name", res);
-		assertEquals("g", jj.stringValue());
+		System.out.println(res);
+		JSON jj = runExpression(".", res);
+//		assertEquals("g", jj.stringValue());
 		JSON expected = builder.parse("['c','d','e','f','g']");
 		jj=runExpression("*/children/*/*/children/*/*/name", res);
 		assertEquals(expected, jj);
-		jj=runExpression("**/filter(id==10)[0]/name", res);
+		jj=runExpression("**/filter(id==10)/name[0]", res);
+//		expected = builder.parse("\"tracy rocks\"");
 		assertEquals("tracy rocks", jj.stringValue());
 //		 System.out.println(jj);
 //		 jj = runExpression("**/filter(id = 3)", res);
@@ -150,7 +153,30 @@ public class JTLTest {
 			assertEquals(j, expected);
 		}
 	}
+	@Test
+	public void testDerefObject() throws Exception {
+//		JSON expected = builder.parse("['c','d','e','f','g']");
+		JSON data = builder.parse("{ foo:[2,4,6], bar: 'thing', fubar: true }");
+		JSON j = runExpression(".['bar']", data);
+		assertEquals("thing", j.stringValue());
+		j = runExpression(".['foo','bar'][0]", data);
+		assertTrue(j instanceof JSONArray);
+		
+		JSONArray array = (JSONArray) j;
+		assertTrue(array.size() == 3);
+	}
+	@Test
+	public void testDerefString() throws Exception {
+		JSON data = builder.parse("\" abcdefghijklmnopqrstuvwxyz\"");
+		JSON j = runExpression(".[8,5,12,12,15,0,23,15,18,12,4]", data);
+		assertEquals("hello world", j.stringValue());
+		j = runExpression(".[-4..-1]", data);
+		assertEquals("wxyz", j.stringValue());
 
+		j = runExpression(".[1..3]", data);
+		assertEquals("abc", j.stringValue());
+//		System.out.println(j.stringValue());
+	}
 	@Test
 	public void testKeys() throws Exception {
 		JSON data = getBaseData();

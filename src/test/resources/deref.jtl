@@ -1,6 +1,7 @@
 {
 	$str: "this is a string",
 	$arr: [10,11,12,13,14,15,16],
+	$alpha: " abcdefghijklmnopqrstuvwxyz",
 	$obj: {
 		id: 3,
 		foo: "bar"
@@ -8,6 +9,8 @@
 	_: {
 		s: $str[2,4],
 		a: $arr[2,4],
-		o: $obj["id"]
+		o: $obj["id"],
+		hello: $alpha[8,5,12,12,15,0,23,15,18,12,4],
+		inv: $str[-1..-6]
 	}
 }

@@ -8,7 +8,8 @@ import java.util.Iterator;
 
 import org.dykman.jtl.factory.CollectionFactory;
 
-public class JSONArray extends AbstractJSON implements Iterable<JSON> {
+@SuppressWarnings("serial")
+public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<JSON> {
 	protected Collection<JSON> arr = new ArrayList<>();
 
 	int hash = 45860934;
@@ -44,6 +45,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		JSONArray rj = (JSONArray) r;
 		return 0 == deepCompare(rj);
 	}
+	
 	public int deepCompare(JSONArray r) {
 		if(arr.size()!= r.size()) return arr.size() - r.size();
 		Iterator<JSON> rit = r.iterator();
@@ -54,16 +56,12 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 		}
 		return 0;
 	}
+	
+	@Override
 	public JSON cloneJSON() {
-		return builder.array(null, builder.collection(this.arr));
-		/*
-		JSONArray res = builder.array(parent);
-		int i = 0;
-		for(JSON j:arr) {
-			res.add(j);
-		}
-		return res;
-		*/
+		JSONArray j = builder.array(null, builder.collection(this.arr));
+		j.setRanged(this.isRanged());
+		return j;
 	}
 
 	@Override
@@ -72,6 +70,7 @@ public class JSONArray extends AbstractJSON implements Iterable<JSON> {
 	}
 
 	public Collection<JSON> collection() { return arr; }
+	
 	public static JSONArray create(JSON parent, CollectionFactory<JSON> factory) {
 		return new JSONArray(parent, factory.createCollection());
 	}

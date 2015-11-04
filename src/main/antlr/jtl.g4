@@ -115,7 +115,11 @@ pathelement
     ;
     
 pathindex
-	: '[' indexlist ']'
+	: '[' indexlist2 ']'
+	;
+	
+indexlist2
+	: indexl (',' indexl)*
 	;
 	
 indexlist
@@ -127,9 +131,9 @@ indexl
 	;
 
 array
-  :   '[' value (',' value)* ']' 
+//  :   '[' value (',' value)* ']' 
+  : '[' indexlist ']'
   |   '[' ']' // empty array
-//  | '[' indexlist ']'
   ;
 
 pathstep 

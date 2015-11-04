@@ -7,10 +7,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import javax.management.RuntimeErrorException;
 
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -106,7 +109,11 @@ public class HttpModule extends AbstractModule {
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					for (Pair<String, JSON> pp : p) {
-						nvps.add(new NameValuePair(pp.f, pp.s.toString()));
+						try {
+						nvps.add(new NameValuePair(URLEncoder.encode(pp.f,"UTF-8"), URLEncoder.encode(pp.s.toString(),"UTF-8")));
+						} catch(UnsupportedEncodingException e) {
+							throw new RuntimeException(e);
+						}
 					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}

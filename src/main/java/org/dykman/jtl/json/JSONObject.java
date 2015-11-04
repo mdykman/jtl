@@ -10,7 +10,7 @@ import java.util.Set;
 import org.dykman.jtl.Pair;
 
 public class JSONObject extends AbstractJSON implements
-		Iterable<Pair<String, JSON>> {
+		JSONContainer, Iterable<Pair<String, JSON>> {
 	final Map<String, JSON> obj;
 	int hash = 12345678;
 

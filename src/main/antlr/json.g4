@@ -67,6 +67,7 @@ fragment UNICODE : 'u' HEX HEX HEX HEX ;
 fragment HEX : [0-9a-fA-F] ;
 
 fragment STRBOD :  (ESC | ~[\'\"\\]+);
+
 INTEGER
     :   '-'? INT                 // -3, 45
     |   '-'? INT EXP             // 7e6
@@ -82,8 +83,7 @@ SSTRING : '\'' ('"' | STRBOD)* '\'';
 
 //Identifier
 ID
-	:	JavaLetter JavaLetterOrDigit*
-//	: JavaLetter (JavaLetter|[0-9])*
+	:	JavaLetter ([0-9]|JavaLetter)*
 	;
 
 fragment

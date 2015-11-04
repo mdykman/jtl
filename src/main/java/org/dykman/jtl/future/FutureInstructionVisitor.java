@@ -26,6 +26,7 @@ import org.dykman.jtl.jtlParser.FuncderefContext;
 import org.dykman.jtl.jtlParser.IdContext;
 import org.dykman.jtl.jtlParser.IdentContext;
 import org.dykman.jtl.jtlParser.IndexlContext;
+import org.dykman.jtl.jtlParser.Indexlist2Context;
 import org.dykman.jtl.jtlParser.IndexlistContext;
 import org.dykman.jtl.jtlParser.JpathContext;
 import org.dykman.jtl.jtlParser.JsonContext;
@@ -169,8 +170,9 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	@Override
 	public FutureInstructionValue<JSON> visitArray(ArrayContext ctx) {
 		List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
-		for (ValueContext vc : ctx.value()) {
-			ins.add(visitValue(vc).inst);
+		IndexlistContext ind=ctx.indexlist();
+		if(ind!=null) {
+			return visitIndexlist(ind); 
 		}
 		return new FutureInstructionValue<JSON>(array(ins,getSource(ctx)));
 	}
@@ -525,7 +527,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			return visitPath(pc);
 		FutureInstructionValue<JSON> a = visitFilter_path(ctx.filter_path());
 		FutureInstructionValue<JSON> b = visitValue(ctx.value());
-		return new FutureInstructionValue<>(dereference(getSource(ctx),a.inst, b.inst));
+		return new FutureInstructionValue<>(dereference(getSource(ctx),a.inst, b.linst));
 	}
 
 	@Override
@@ -564,7 +566,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		FutureInstructionValue<JSON> pif = visitPathelement(pc);
 		FutureInstructionValue<JSON> vif = visitPathindex(ctx.pathindex());
 
-		return new FutureInstructionValue<JSON>(dereference(getSource(ctx),pif.inst, vif.inst));
+		return new FutureInstructionValue<JSON>(dereference(getSource(ctx),pif.inst, vif.linst));
 	}
 
 	@Override
@@ -686,8 +688,20 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
    
 	@Override
 	public FutureInstructionValue<JSON> visitPathindex(PathindexContext ctx) {
-		return visitIndexlist(ctx.indexlist());
+		return visitIndexlist2(ctx.indexlist2());
 	}
+	@Override
+	public FutureInstructionValue<JSON> visitIndexlist2(Indexlist2Context ctx) {
+		List<FutureInstruction<JSON>> elements = new ArrayList<>();
+	//	List<IndexlContext> l= ctx.indexl();
+		for(IndexlContext dxlc: ctx.indexl()) {
+			elements.add(visitIndexl(dxlc).inst);
+			
+		}
+		
+		return new FutureInstructionValue<>(elements);
+	}
+
 
 	@Override
 	public FutureInstructionValue<JSON> visitIndexlist(IndexlistContext ctx) {
@@ -697,6 +711,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			elements.add(visitIndexl(dxlc).inst);
 			
 		}
+		
 		return new FutureInstructionValue<>(array(elements,getSource(ctx)));
 	}
 
@@ -705,12 +720,8 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		List<ValueContext> cl = ctx.value();
 		FutureInstruction<JSON> inst = visitValue(cl.get(0)).inst;
 		if (cl.size() > 1) {
-			List<FutureInstruction<JSON>> elements = new ArrayList<>();
-			elements.add(inst);
-			elements.add(visitValue(cl.get(1)).inst);
 			return new FutureInstructionValue<>(
 					new RangeInstruction(inst, visitValue(cl.get(1)).inst, getSource(ctx)));
-//			return new InstructionFutureValue<>(array(elements,getSource(ctx)));
 		} else {
 			return new FutureInstructionValue<>(inst);
 		}
