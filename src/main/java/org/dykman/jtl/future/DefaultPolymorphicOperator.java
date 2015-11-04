@@ -185,6 +185,9 @@ public class DefaultPolymorphicOperator implements
 	protected JSON op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
 		return JSONBuilderImpl.NULL;
 	}
+	protected JSON op(AsyncExecutionContext<JSON> eng, JSON l, JSONArray r) {
+		return JSONBuilderImpl.NULL;
+	}
 
 	protected JSON op(AsyncExecutionContext<JSON> context, Boolean l, JSON r) {
 		return JSONBuilderImpl.NULL;
@@ -197,6 +200,7 @@ public class DefaultPolymorphicOperator implements
 	protected JSON op(AsyncExecutionContext<JSON> context, Double l, JSON r) {
 		return JSONBuilderImpl.NULL;
 	}
+
 
 	protected JSON op(AsyncExecutionContext<JSON> context, String l, JSON r) {
 		return JSONBuilderImpl.NULL;

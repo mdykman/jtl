@@ -2811,7 +2811,7 @@ public class FutureInstructionFactory {
 			FutureInstruction<JSON> b) {
 		meta.name = "add";
 
-		return dyadic(meta, a, b, new DefaultPolymorphicOperator(meta) {
+		return dyadic(meta, a, b, new ArithmaticPolymophicOperator(meta) {
 			@Override
 			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
 				return l + r;
@@ -2843,17 +2843,6 @@ public class FutureInstructionFactory {
 			}
 
 			@Override
-			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-				JSONArray arr = builder.array(null);
-
-				for (JSON j : l.collection()) {
-					arr.add(j);
-				}
-				arr.add(r);
-				return arr;
-			}
-
-			@Override
 			public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
 				JSONObject obj = builder.object(null);
 				for (Map.Entry<String, JSON> ee : r.map().entrySet()) {
@@ -2875,7 +2864,7 @@ public class FutureInstructionFactory {
 			FutureInstruction<JSON> b) {
 		meta.name = "sub";
 
-		return dyadic(meta, a, b, new DefaultPolymorphicOperator(meta) {
+		return dyadic(meta, a, b, new ArithmaticPolymophicOperator(meta) {
 			@Override
 			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
 				return l - r;
@@ -2911,19 +2900,6 @@ public class FutureInstructionFactory {
 			}
 
 			@Override
-			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSON r) {
-				JSONArray arr = builder.array(null);
-				// this needs to be a deep clone for the internal referencing to
-				// hold.
-				for (JSON j : l.collection()) {
-					if (!j.equals(r)) {
-						arr.add(j);
-					}
-				}
-				return arr;
-			}
-
-			@Override
 			public JSONObject op(AsyncExecutionContext<JSON> eng, JSONObject l, JSONObject r) {
 				JSONObject obj = builder.object(null, l.size() + r.size());
 				for (Map.Entry<String, JSON> ee : r.map().entrySet()) {
@@ -2940,7 +2916,7 @@ public class FutureInstructionFactory {
 	public static FutureInstruction<JSON> mulInstruction(SourceInfo meta, FutureInstruction<JSON> a,
 			FutureInstruction<JSON> b) {
 		meta.name = "mul";
-		return dyadic(meta, a, b, new DefaultPolymorphicOperator(meta) {
+		return dyadic(meta, a, b, new ArithmaticPolymophicOperator(meta) {
 			@Override
 			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
 				return l * r;
@@ -2959,7 +2935,7 @@ public class FutureInstructionFactory {
 			FutureInstruction<JSON> b) {
 		meta.name = "div";
 
-		return dyadic(meta, a, b, new DefaultPolymorphicOperator(meta) {
+		return dyadic(meta, a, b, new ArithmaticPolymophicOperator(meta) {
 			@Override
 			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
 				return l / r;
@@ -2976,7 +2952,7 @@ public class FutureInstructionFactory {
 	public static FutureInstruction<JSON> modInstruction(SourceInfo meta, FutureInstruction<JSON> a,
 			FutureInstruction<JSON> b) {
 		meta.name = "mod";
-		return dyadic(meta, a, b, new DefaultPolymorphicOperator(meta) {
+		return dyadic(meta, a, b, new ArithmaticPolymophicOperator(meta) {
 			@Override
 			public Double op(AsyncExecutionContext<JSON> eng, Double l, Double r) {
 				return l % r;

@@ -355,7 +355,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 						return result;
 //						return or == a.isTrue() ? a : b;
 					}
-				}));
+				},false));
 		} else {
 			return a;
 		}
@@ -377,7 +377,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 						}
 						return builder.value(a.isTrue() && b.isTrue());
 					}
-				}));
+				},false));
 		} else {
 			return a;
 		}
@@ -407,7 +407,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 						boolean e = a.equals(b);
 						return builder.value(inv ^ e);
 					}
-				}));
+				},false));
 
 		} else {
 			return a;
@@ -454,7 +454,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 					};
 					break;
 			}
-			return new FutureInstructionValue<JSON>(dyadic(getSource(ctx), visitRel_expr(c).inst, a.inst,df));
+			return new FutureInstructionValue<JSON>(dyadic(getSource(ctx), visitRel_expr(c).inst, a.inst,df,false));
 		} else {
 			return a;
 		}
