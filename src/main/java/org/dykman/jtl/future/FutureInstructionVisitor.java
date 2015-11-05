@@ -371,7 +371,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 					@Override
 					public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
 						if (a.getType() == JSONType.LIST) {
-							JList newf = builder.frame((JList) a);
+							JList newf = ((JList) a.cloneJSON());
 							if (b.isTrue())
 								((JList) a).add(b);
 						}

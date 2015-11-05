@@ -15,19 +15,22 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 	int hash = 45860934;
 	private ArrayList<JSON> theList = null;
 	private boolean bound = true;
-	
+
 	private boolean ranged = false;
-	
+
 	public boolean isRanged() {
 		return ranged;
 	}
+
 	public void setRanged(boolean ranged) {
 		this.ranged = ranged;
 	}
+
 	public JSONArray(JSON parent, Collection<JSON> coll) {
-		this(parent,coll,true);
+		this(parent, coll, true);
 	}
-	public JSONArray(JSON parent, Collection<JSON> coll,boolean bound) {
+
+	public JSONArray(JSON parent, Collection<JSON> coll, boolean bound) {
 		super(parent);
 		this.bound = bound;
 		arr = coll;
@@ -36,30 +39,43 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 	public boolean contains(JSON j) {
 		return arr.contains(j);
 	}
+
 	public void setCollection(Collection<JSON> arr) {
 		this.arr = arr;
 	}
+
 	public boolean equals(JSON r) {
-		if(r == null) return false;
-		if(r.getType()!= JSONType.ARRAY) return false;
+		if (r == null)
+			return false;
+		if (r.getType() != JSONType.ARRAY)
+			return false;
 		JSONArray rj = (JSONArray) r;
 		return 0 == deepCompare(rj);
 	}
-	
+
 	public int deepCompare(JSONArray r) {
-		if(arr.size()!= r.size()) return arr.size() - r.size();
+		if (arr.size() != r.size())
+			return arr.size() - r.size();
 		Iterator<JSON> rit = r.iterator();
-		for(JSON j: this) {
+		for (JSON j : this) {
 			JSON rj = rit.next();
 			int rc = j.compareTo(rj);
-			if(rc != 0) return rc;
+			if (rc != 0)
+				return rc;
 		}
 		return 0;
 	}
-	
+
+
 	@Override
-	public JSON cloneJSON() {
-		JSONArray j = builder.array(null, builder.collection(this.arr));
+	public JSON cloneJSON(boolean deep) {
+		JSONArray j;
+		if (deep) {
+			j = builder.array(null);
+			j.addAll(this);
+		} else {
+			j = builder.array(null, deep ? builder.collection(this.arr) : this.arr);
+		}
 		j.setRanged(this.isRanged());
 		return j;
 	}
@@ -69,33 +85,46 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 		return arr.size() > 0;
 	}
 
-	public Collection<JSON> collection() { return arr; }
-	
+	public Collection<JSON> collection() {
+		return arr;
+	}
+
 	public static JSONArray create(JSON parent, CollectionFactory<JSON> factory) {
 		return new JSONArray(parent, factory.createCollection());
 	}
+
 	public void add(JSON j) {
-		add(j,false);
-	}
-	public void add(JSON j,boolean dontclone) {
-		if (locked)
-			raise("container is locked");
-		if(bound) {
-			if(!dontclone) j = j.cloneJSON();
-			j.setParent(this);
-			j.setIndex(arr.size());
-			j.lock();
-		}
-		hash ^= j.hashCode();
-		arr.add(j);
+		add(j, false);
 	}
 
-	@Override public int hashCode() { return hash; }
+	public void add(JSON j, boolean dontclone) {
+		if (locked)
+			raise("container is locked");
+		if (j instanceof JList) {
+			addAll((JList) j);
+		} else {
+			if (bound) {
+				if (!dontclone)
+					j = j.cloneJSON();
+				j.setParent(this);
+				j.setIndex(arr.size());
+				j.lock();
+			}
+			hash ^= j.hashCode();
+			arr.add(j);
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return hash;
+	}
+
 	public void addAll(JSONArray a) {
 		if (locked)
 			raise("container is locked");
 
-		for(JSON j : a) {
+		for (JSON j : a) {
 			add(j);
 		}
 	}
@@ -115,9 +144,10 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 		if (theList == null) {
 			theList = asList();
 		}
-		if(arr.size() == 0) return null;
+		if (arr.size() == 0)
+			return null;
 		// let negatives reference from the end
-		i=(i+theList.size()) % theList.size(); 
+		i = (i + theList.size()) % theList.size();
 		return theList.get(i);
 	}
 
@@ -135,9 +165,11 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 	}
 
 	JSONType firstChildType() {
-		if(arr.size() == 0) return null;
+		if (arr.size() == 0)
+			return null;
 		return arr.iterator().next().getType();
 	}
+
 	boolean childIsArray() {
 		if (arr.size() == 0)
 			return false;
@@ -149,13 +181,13 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 	}
 
 	@Override
-	public void write(Writer out, int indent, int depth,boolean fq) throws IOException {
+	public void write(Writer out, int indent, int depth, boolean fq) throws IOException {
 		out.write('[');
 
 		boolean first = true;
 		JSONType ctype = firstChildType();
 		if (ctype != JSONType.ARRAY && ctype != JSONType.LIST) {
-			if (indent > 0 && ctype!=JSONType.OBJECT)
+			if (indent > 0 && ctype != JSONType.OBJECT)
 				out.write(' ');
 			for (JSON j : arr) {
 				if (first) {
@@ -165,24 +197,25 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 					if (indent > 0)
 						out.write(' ');
 				}
-				j.write(out, indent, depth + (ctype != JSONType.OBJECT ? 1 : 0),fq);
+				j.write(out, indent, depth + (ctype != JSONType.OBJECT ? 1 : 0), fq);
 			}
 		} else {
 			for (JSON j : arr) {
 				if (first) {
 					first = false;
-//					if(indent>0) out.write(' ');
+					// if(indent>0) out.write(' ');
 				} else {
 					out.write(',');
-					if(indent > 0) out.write('\n');
-					indent(out,indent,depth+1);
+					if (indent > 0)
+						out.write('\n');
+					indent(out, indent, depth + 1);
 				}
-				j.write(out, indent, depth + 1,fq);
+				j.write(out, indent, depth + 1, fq);
 			}
 
 		}
 
-		if (indent > 0 && ctype != JSONType.ARRAY && ctype != JSONType.LIST && ctype!=JSONType.OBJECT)
+		if (indent > 0 && ctype != JSONType.ARRAY && ctype != JSONType.LIST && ctype != JSONType.OBJECT)
 			out.write(' ');
 		out.write(']');
 	}

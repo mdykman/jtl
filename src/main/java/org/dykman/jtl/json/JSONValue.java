@@ -58,7 +58,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 	}
 
 	@Override
-	public JSON cloneJSON() {
+	public JSON cloneJSON(boolean deep) {
 		return new JSONValue(parent, type, o);
 	}
 
@@ -150,6 +150,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 	public boolean equals(JSON r) {
 		return 0 == compareTo(r);
 	}
+	/*
 	public boolean __equals(JSON r) {
 		if (r == null)
 			return false;
@@ -170,7 +171,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 		default: return false;
 		}
 	}
-
+*/
 	@Override
 	public void write(Writer out, int n, int d,boolean fq) throws IOException {
 		if (o == null) {

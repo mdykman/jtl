@@ -77,7 +77,7 @@ public abstract class AbstractFutureInstruction implements
 
                      @Override
                      public ListenableFuture<JSON> apply(List<JSON> input2) throws Exception {
-                        JList frame = context.builder().frame(input.getParent());
+                        JList frame = context.builder().list(input.getParent());
                         addToFrame(frame, input2, true);
                         return Futures.immediateCheckedFuture(frame);
                      }

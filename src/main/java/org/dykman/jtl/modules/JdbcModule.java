@@ -67,7 +67,7 @@ public class JdbcModule extends AbstractModule {
 			@Override
 			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
 				ResultSet rs = stat.executeQuery();
-				JList frame = builder.frame();
+				JList frame = builder.list();
 				ResultSetMetaData rsm = rs.getMetaData();
 				int n = rsm.getColumnCount();
 				while (rs.next()) {

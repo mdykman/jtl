@@ -19,6 +19,7 @@ public interface JSON extends Comparable<JSON>, Serializable {
 	public boolean isNumber();
 	
 	public JSON cloneJSON();
+	public JSON cloneJSON(boolean deep);
 	public boolean equals(JSON r);
 	public int compareTo(JSON r);
 	public String path();

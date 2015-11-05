@@ -137,7 +137,12 @@ public abstract class AbstractJSON implements JSON {
 	}
 	
 	@Override
-	abstract public JSON cloneJSON();
+	abstract public JSON cloneJSON(boolean deep);
+	@Override
+	public JSON cloneJSON() {
+		return cloneJSON(true);
+	}
+
 
 	@Override
 	public void lock() {

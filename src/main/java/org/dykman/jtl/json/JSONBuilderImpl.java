@@ -152,6 +152,8 @@ public class JSONBuilderImpl implements JSONBuilder {
 			return NULL;
 		if (o instanceof JSON) {
 			System.err.println("value cloning path...  WTF???");
+			Exception ee = new Exception("value cloning??");
+			ee.printStackTrace();
 			return sign(((JSON) o).cloneJSON());
 		}
 		if (o instanceof Boolean)
@@ -226,7 +228,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 
 	
 	@Override
-	public JList frame() {
+	public JList list() {
 		JList f = new JList(cf.createCollection());
 		return (JList) sign(f);
 	}
@@ -243,7 +245,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	@Override
-	public JList frame(JSON parent) {
+	public JList list(JSON parent) {
 		// Collection<JSON> cc = cf.copyCollection(f.collection());
 		return (JList) sign(new JList(parent, cf.createCollection()));
 	}

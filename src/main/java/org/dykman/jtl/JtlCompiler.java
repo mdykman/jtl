@@ -162,6 +162,7 @@ public class JtlCompiler {
 		define(context, "min", min(meta));
 		define(context, "max", max(meta));
 		define(context, "avg", avg(meta));
+		define(context, "pivot", pivot(meta));
 
 		// object-oriented
 		define(context, "group", groupBy(meta));

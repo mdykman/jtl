@@ -29,9 +29,9 @@ public interface JSONBuilder {
 	public JSONArray array(JSON parent);
 	public JSONArray array(JSON parent, int cap);
 	public JSONArray array(JSON parent, Collection<JSON> col);
-	public JList frame();
+	public JList list();
 //	public Frame frame(Frame f);
-	public JList frame(JSON parent);
+	public JList list(JSON parent);
 	public JList frame(JSON parent,Collection<JSON> col);
 
 	public JSON parse(File in) throws IOException;

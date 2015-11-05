@@ -197,9 +197,14 @@ public class JSONObject extends AbstractJSON implements
 	public JSON get(String k) {
 		return obj.get(k);
 	}
-	public JSON cloneJSON() {
-//		JSONObject obj = builder.object(parent);
-		JSONObject obj = builder.object(null, builder.map(this.obj));
+	public JSON cloneJSON(boolean deep) {
+		JSONObject obj;
+		if(deep) {
+			obj = builder.object(null);
+			obj.putAll(this);
+		} else {
+			obj = builder.object(null, builder.map(this.obj));
+		}
 		/*
 		Iterator<Map.Entry<String, JSON>> it = this.obj.entrySet().iterator();
 		while(it.hasNext()) {

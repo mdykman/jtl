@@ -17,7 +17,7 @@ public class JList extends JSONArray {
 	}
 
 	public JSON cloneJSON() {
-		JList res = builder.frame();
+		JList res = builder.list();
 		int i = 0;
 		for(JSON j:arr) {
 			res.add(j);
@@ -28,9 +28,14 @@ public class JList extends JSONArray {
 	public void add(JSON j) {
 		add(j,false);
 	}
+	
 	public void add(JSON j,boolean dontclone) {
-		hash ^= j.hashCode();
-		arr.add(j);
+		if(j instanceof JList) {
+			addAll((JList) j);
+		} else {
+			hash ^= j.hashCode();
+			arr.add(j);
+		}
 	}
 
 }

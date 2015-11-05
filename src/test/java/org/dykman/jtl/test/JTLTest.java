@@ -119,7 +119,7 @@ public class JTLTest {
 		JSON d = builder.parse(new File(base, "data2.json"));
 		File code = new File(base, "test-jdbc.jtl");
 		JSON res = runFile(code, d);
-		System.out.println(res);
+//		System.out.println(res);
 		JSON jj = runExpression(".", res);
 //		assertEquals("g", jj.stringValue());
 		JSON expected = builder.parse("['c','d','e','f','g']");
@@ -174,7 +174,7 @@ public class JTLTest {
 		assertTrue(j instanceof JSONArray);
 		
 		JSONArray array = (JSONArray) j;
-		assertTrue(array.size() == 3);
+		assertEquals(3,array.size());
 	}
 	@Test
 	public void testDerefString() throws Exception {

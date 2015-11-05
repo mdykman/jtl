@@ -98,6 +98,7 @@ public class DefaultPolymorphicOperator implements
 						return JSONBuilderImpl.NULL;
 					case ARRAY:
 					case LIST:
+						return op(context, left, ((JSONArray) r));
 					case OBJECT:
 						return op(context, left, r);
 				}
@@ -118,6 +119,7 @@ public class DefaultPolymorphicOperator implements
 						// return new JSONValue(null);
 					case ARRAY:
 					case LIST:
+						return op(context, left, ((JSONArray) r));
 					case OBJECT:
 						return op(context, left, r);
 				}
@@ -193,11 +195,11 @@ public class DefaultPolymorphicOperator implements
 		return JSONBuilderImpl.NULL;
 	}
 
-	protected JSON op(AsyncExecutionContext<JSON> context, Long l, JSON r) {
+	protected JSON op(AsyncExecutionContext<JSON> context, Number l, JSON r) {
 		return JSONBuilderImpl.NULL;
 	}
-
-	protected JSON op(AsyncExecutionContext<JSON> context, Double l, JSON r) {
+	
+	protected JSON op(AsyncExecutionContext<JSON> context, JSON l, Number r) {
 		return JSONBuilderImpl.NULL;
 	}
 
