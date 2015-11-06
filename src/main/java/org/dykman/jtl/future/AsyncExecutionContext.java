@@ -24,6 +24,8 @@ public interface AsyncExecutionContext<T> {
 	public JtlCompiler compiler();
 	
 	public File currentDirectory();
+	public Exception exception();
+	public Exception exception(Exception e);
 
 	public File file(String in);
 

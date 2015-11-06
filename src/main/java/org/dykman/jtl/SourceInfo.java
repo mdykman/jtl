@@ -5,6 +5,8 @@ import java.util.Locale;
 
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.json.JSONBuilder;
+import org.dykman.jtl.json.JSONObject;
 
 public class SourceInfo {
 
@@ -41,6 +43,20 @@ public class SourceInfo {
       si.endline = endline;
       si.endposition = endposition;
       return si;
+   }
+   
+   public JSONObject toJson(JSONBuilder builder) {
+	   JSONObject obj = builder.object(null);
+	   obj.put("name", builder.value(name));
+	   obj.put("source", builder.value(source));
+	   obj.put("code", builder.value(code));
+	   
+	   obj.put("line", builder.value(line));
+	   obj.put("endline", builder.value(endline));
+	   obj.put("position", builder.value(position));
+	   obj.put("endposition", builder.value(endposition));
+
+	   return obj;
    }
 
    // @Override

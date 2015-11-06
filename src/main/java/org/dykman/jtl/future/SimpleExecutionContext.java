@@ -29,6 +29,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected final boolean include;
 	protected boolean isInit = false;
 	protected boolean isRuntime = false;
+	protected Exception runtimeException;
 
 	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
@@ -398,6 +399,19 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	public void setNamespace(String namespace) {
 		this.namespace = namespace;
+	}
+
+	@Override
+	public Exception exception() {
+		return runtimeException;
+	}
+
+	@Override
+	public Exception exception(Exception e) {
+		if(runtimeException==null) {
+			runtimeException = e;
+		}
+		return runtimeException;
 	}
 
 }

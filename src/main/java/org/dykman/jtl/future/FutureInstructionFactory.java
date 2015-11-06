@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,9 @@ import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.dykman.jtl.modules.ModuleLoader;
 
+import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -892,7 +895,7 @@ public class FutureInstructionFactory {
 	}
 
 	public static FutureInstruction<JSON> variable(SourceInfo meta, final String name) {
-		final FunctionInstruction fi = function(meta, name, null);
+		final FunctionInvocationInstruction fi = function(meta, name, null);
 		fi.setVariable(true);
 		return new AbstractFutureInstruction(fi.getSourceInfo()) {
 
@@ -978,10 +981,10 @@ public class FutureInstructionFactory {
 
 	}
 
-	public static FunctionInstruction function(SourceInfo meta, final String name,
+	public static FunctionInvocationInstruction function(SourceInfo meta, final String name,
 			final List<FutureInstruction<JSON>> iargs) {
 		meta.name = "function";
-		return new FunctionInstruction(meta, name, iargs);
+		return new FunctionInvocationInstruction(meta, name, iargs);
 	}
 
 	// rank all
@@ -1152,8 +1155,97 @@ public class FutureInstructionFactory {
 
 	}
 
-	public static final ListenableFuture<JSON> FNULL = 
-			immediateCheckedFuture(JSONBuilderImpl.NULL);
+	public static FutureInstruction<JSON> errorHandler(
+			final AsyncExecutionContext<JSON> context,
+			final FutureInstruction<JSON> inst,
+			final FutureInstruction<JSON> handler,
+			final SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+			
+
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				try {
+					final ListenableFuture<JSON> result = inst.call(context, data);
+					return new ForwardingListenableFuture<JSON>() {
+						@Override
+						public JSON get() {
+							try {
+								return delegate().get();
+							} catch (Exception e) {
+								try {
+									return handleException(context,e).get();
+								} catch (java.util.concurrent.ExecutionException|InterruptedException e1) {
+									throw new RuntimeException("catastrophic error while error handling", e1);
+								}
+							}
+						}
+						@Override
+						public JSON get(long timeout,TimeUnit unit) {
+							try {
+								return delegate().get(timeout,unit);
+							} catch (Exception e) {
+								try {
+									return handleException(context, e).get();
+								} catch (java.util.concurrent.ExecutionException|InterruptedException e1) {
+									throw new RuntimeException("catastrophic error while error handling", e1);
+								}
+							}
+						}
+
+						@Override
+						protected ListenableFuture<JSON> delegate() {
+							return result;
+						}
+					};
+				} catch (Exception e) {
+					return handleException(context, e);
+				}
+			}
+
+			protected ListenableFuture<JSON> evaluateError(AsyncExecutionContext<JSON> context, SourceInfo si,
+					Throwable e) throws ExecutionException {
+				JSONBuilder builder = context.builder();
+				List<FutureInstruction<JSON>> iargs = new ArrayList<>(2);
+				iargs.add(FutureInstructionFactory.value(
+						builder.value(e.getLocalizedMessage()), source));
+				FutureInstruction<JSON> eh = new FunctionInvocationInstruction(
+						source, "error", iargs, handler);
+
+				return eh.call(context, immediateCheckedFuture(si.toJson(builder)));
+			}
+			
+			protected ListenableFuture<JSON> handleException(
+					AsyncExecutionContext<JSON> ctx,Exception e) {
+				ctx.exception(e);
+				Throwable t = e;
+				SourceInfo si;
+
+				if(!(t instanceof java.util.concurrent.ExecutionException)) {
+					t = t.getCause();
+				}
+
+				// TODO:: this exception digging could be more robust
+				if(!(t instanceof ExecutionException)) {
+					t = t.getCause();
+				}
+				if (t instanceof ExecutionException) {
+					ExecutionException ee = (ExecutionException) t;
+					si = ee.getSourceInfo();
+				} else {
+					si = SourceInfo.internal("internal");
+				}
+				try {
+					return evaluateError(context, si, t);
+				} catch (Exception ee) {
+					throw new RuntimeException("error handler failed catastrophically", ee);
+				}
+			}
+		};
+	}
+
+	public static final ListenableFuture<JSON> FNULL = immediateCheckedFuture(JSONBuilderImpl.NULL);
+
 	// rank all
 	public static FutureInstruction<JSON> pivot(SourceInfo meta) {
 		meta.name = "pivot";
@@ -1166,26 +1258,26 @@ public class FutureInstructionFactory {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						if(input==null || ! (input instanceof JSONArray)) {
+						if (input == null || !(input instanceof JSONArray)) {
 							return FNULL;
 						}
 						JSONArray outer = context.builder().array(null);
 						boolean first = true;
-						for(JSON j : (JSONArray) input) {
-							if(j==null ||  ! (j instanceof JSONArray)) {
+						for (JSON j : (JSONArray) input) {
+							if (j == null || !(j instanceof JSONArray)) {
 								return FNULL;
 							}
 							int coli = 0;
-							for(JSON jj: (JSONArray) j) {
+							for (JSON jj : (JSONArray) j) {
 								JSONArray inner;
-								if(first) {
+								if (first) {
 									inner = context.builder().array(null);
-								}
-								else {
-									inner = (JSONArray)outer.get(coli);
+								} else {
+									inner = (JSONArray) outer.get(coli);
 								}
 								inner.add(jj);
-								if(first) outer.add(inner);
+								if (first)
+									outer.add(inner);
 								coli++;
 							}
 							first = false;
@@ -1196,6 +1288,7 @@ public class FutureInstructionFactory {
 			}
 		};
 	}
+
 	// rank all
 	public static FutureInstruction<JSON> unique(SourceInfo meta) {
 		meta.name = "unique";
