@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
     class ObjectInstructionFuture extends ObjectInstructionBase {
 
       public ObjectInstructionFuture(SourceInfo meta, final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll) {
-         super(meta, ll, false);
+         super(meta, ll, true);
          meta.name = "dataobject";
       }
 
