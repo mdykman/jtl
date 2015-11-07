@@ -5,16 +5,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.antlr.v4.runtime.ANTLRErrorStrategy;
 import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
-import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.jtlParser.JtlContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.future.FutureInstructionFactory;
@@ -29,6 +34,10 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import static org.dykman.jtl.future.FutureInstructionFactory.*;
 
 public class JtlCompiler {
+	
+	static Logger logger = LoggerFactory.getLogger(JtlCompiler.class);
+
+	
 	final JSONBuilder jsonBuilder;
 	boolean trace;
 	boolean profile;
@@ -79,12 +88,22 @@ public class JtlCompiler {
 			String file, jtlLexer lexer, boolean trace, boolean profile)
 			throws IOException {
 		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
+		BailErrorStrategy bstrat = new BailErrorStrategy();
+		parser.setErrorHandler(bstrat);
 		parser.setTrace(trace);
 		parser.setProfile(profile);
-		JtlContext tree = parser.jtl();
-		FutureInstructionVisitor visitor = new FutureInstructionVisitor(file, jsonBuilder, imported);
-		FutureInstructionValue<JSON> v = visitor.visit(tree);
-		return FutureInstructionFactory.fixContextData(v.inst);
+		try {
+			JtlContext tree = parser.jtl();
+//			RecognitionException re = tree.exception;
+			FutureInstructionVisitor visitor = 
+					new FutureInstructionVisitor(file, jsonBuilder, imported);
+			FutureInstructionValue<JSON> v = visitor.visit(tree);
+			return FutureInstructionFactory.fixContextData(v.inst);
+		} catch(Exception e) {
+			logger.error(e.getLocalizedMessage());
+			return FutureInstructionFactory.value(jsonBuilder.value(), 
+					SourceInfo.internal("parser"));
+		}
 	}
 
 	public static SourceInfo getSource(String source, ParserRuleContext ctx, String name) {

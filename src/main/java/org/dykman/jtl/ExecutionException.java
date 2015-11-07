@@ -1,9 +1,9 @@
 package org.dykman.jtl;
 
 @SuppressWarnings("serial")
-public class ExecutionException extends Exception {
+public class ExecutionException extends JtlException {
 
-   SourceInfo info;
+	SourceInfo info;
 	public ExecutionException(String message, Throwable cause,SourceInfo info) {
 		super(message, cause);
       this.info = info;
