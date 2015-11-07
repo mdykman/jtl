@@ -33,10 +33,7 @@ import com.google.common.util.concurrent.ListenableFuture;
          final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(fields.size());
          for(Pair<ObjectKey, FutureInstruction<JSON>> ii : fields) {
             final String kk = ii.f.label;
-//            final AsyncExecutionContext<JSON> newc = context.createChild(false, false, data, source);
             FutureInstruction<JSON> ki = FutureInstructionFactory.value(kk, context.builder(), getSourceInfo());
-  //          newc.define(InstructionFutureFactory.JTL_INTERNAL_KEY, ki);
-//            newc.define("key", ki);
             context.define(":", ki);
             ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(context, data),
                   new AsyncFunction<JSON, Pair<String, JSON>>() {

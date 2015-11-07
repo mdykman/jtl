@@ -2814,9 +2814,7 @@ public class FutureInstructionFactory {
 
 	public static FutureInstruction<JSON> amend(SourceInfo meta) {
 		meta.name = "amend";
-
 		return new AbstractFutureInstruction(meta, true) {
-
 			@Override
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> data) throws ExecutionException {
@@ -2834,7 +2832,6 @@ public class FutureInstructionFactory {
 					ai = null;
 				}
 				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-
 					@Override
 					public ListenableFuture<JSON> apply(final List<JSON> input) throws Exception {
 						Iterator<JSON> jit = input.iterator();
@@ -2843,14 +2840,12 @@ public class FutureInstructionFactory {
 						if (kj != null) {
 							final String ks = stringValue(kj);
 							if (ai != null && jd.getType() == JSONType.OBJECT) {
+								context.define(":", value(immediateCheckedFuture(context.builder().value(ks)),source));
 								return transform(ai.call(context, data),
 										new KeyedAsyncFunction<JSON, JSON, String>(ks) {
-
 									@Override
 									public ListenableFuture<JSON> apply(JSON input) throws Exception {
-
 										final JSONObject obj = context.builder().object(jd.getParent());
-										// context.builder().o
 										for (Pair<String, JSON> pp : (JSONObject) jd) {
 											if (!pp.f.equals(ks))
 												obj.put(pp.f, pp.s);
@@ -2863,7 +2858,6 @@ public class FutureInstructionFactory {
 							}
 						} else {
 							return transform(ai.call(context, data), new AsyncFunction<JSON, JSON>() {
-
 								@Override
 								public ListenableFuture<JSON> apply(JSON input) throws Exception {
 									if (input.getType() == JSONType.OBJECT) {
