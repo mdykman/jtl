@@ -37,7 +37,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	}
 
 	public ObjectInstructionBase(SourceInfo info, List<Pair<ObjectKey, FutureInstruction<JSON>>> pp, boolean itemize) {
-		super(info, true);
+		super(info, itemize);
 		ll = pp;
 	}
 

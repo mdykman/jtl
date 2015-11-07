@@ -868,6 +868,7 @@ public class FutureInstructionFactory {
 						// immediateCheckedFuture(input));
 
 						if (input instanceof JSONArray) {
+							final boolean isList = input instanceof JList;
 							List<ListenableFuture<JSON>> ll = new ArrayList<>();
 							for (JSON j : (JSONArray) input) {
 								ll.add(inst.call(context, immediateCheckedFuture(j)));
@@ -876,7 +877,9 @@ public class FutureInstructionFactory {
 
 								@Override
 								public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
-									JList f = context.builder().list();
+									JSONArray f = isList ?  
+										context.builder().list() :  
+										context.builder().array(null);
 									for (JSON j : input) {
 										f.add(j);
 									}
@@ -1875,10 +1878,6 @@ public class FutureInstructionFactory {
 	public static FutureInstruction<JSON> object(SourceInfo meta,
 			final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll, boolean forceContext) throws ExecutionException {
 		boolean isContext = forceContext;
-		// List<Pair<String, FutureInstruction<JSON>>> fields = new
-		// ArrayList<>();
-		// List<FutureInstruction<JSON>> imperitives = new
-		// ArrayList<>(ll.size());
 
 		meta.name = "object";
 		if (isContext == false)
@@ -3320,35 +3319,24 @@ public class FutureInstructionFactory {
 					return immediateCheckedFuture(input);
 
 				}
+/*				
 				boolean proceed = false;
 				for (JSONType t : types) {
 					if (t.equals(type)) {
 						proceed = true;
 					}
 				}
-				final JSONArray destarr = builder.list();
-				if (proceed) {
-					if (type == JSONType.LIST) {
-						List<ListenableFuture<JSON>> ll = new ArrayList<>();
-						for (JSON j : (JSONArray) input) {
-							ll.add(apply(j));
-						}
-						return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
-
-							@Override
-							public ListenableFuture<JSON> apply(List<JSON> inp) throws Exception {
-								for (JSON j : inp) {
-									destarr.add(j);
-								}
-								return immediateCheckedFuture(destarr);
-							}
-						});
+				*/
+				final JSONArray destarr = builder.array(input.getParent());
+				if (type == JSONType.LIST) {
+					for (JSON j : (JSONArray) input) {
+						destarr.add(j);
 					}
+					return immediateCheckedFuture(destarr);
 				} else {
 					destarr.add(input);
-
+					return immediateCheckedFuture(destarr);
 				}
-				return immediateCheckedFuture(destarr);
 			}
 
 		}, types);

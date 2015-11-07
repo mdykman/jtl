@@ -28,7 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
       // InstructionFutureFactory factory,
             final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll) {
          // this.factory = factory;
-         super(meta, ll, true);
+         super(meta, ll, false);
          meta.name = "contextobject";
      	isContextObject = true;
       }
