@@ -3235,7 +3235,7 @@ public class FutureInstructionFactory {
 					JList ff = builder.list();
 					JList inf = (JList) j;
 					for (JSON jj : inf) {
-						ff.add(builder.value(toNumber(jj)));
+						ff.add(toNumber(jj));
 					}
 					return ff;
 				}

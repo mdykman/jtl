@@ -75,13 +75,12 @@ public class JtlCompiler {
 		return parse(src, lexer, trace, profile);
 	}
 
-	protected FutureInstruction<JSON> parse(String file, jtlLexer lexer, boolean trace, boolean profile)
+	protected FutureInstruction<JSON> parse(
+			String file, jtlLexer lexer, boolean trace, boolean profile)
 			throws IOException {
-		// lexer.
 		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
 		parser.setTrace(trace);
 		parser.setProfile(profile);
-		// parser.getCurrentToken();
 		JtlContext tree = parser.jtl();
 		FutureInstructionVisitor visitor = new FutureInstructionVisitor(file, jsonBuilder, imported);
 		FutureInstructionValue<JSON> v = visitor.visit(tree);

@@ -451,6 +451,7 @@ public class JtlMain {
 						JSON data = main.empty();
 						JSON result = main.execute(inst, source,init, data, cexddir, argIt);
 						result.write(pw, indent, enquote);
+
 					} else if (!argIt.hasNext()) {
 						// empty arguments
 						JSON data = main.parse(System.in);
