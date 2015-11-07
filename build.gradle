@@ -120,7 +120,6 @@ dependencies {
 
 	 // jdbc drivers
     runtime 'mysql:mysql-connector-java:5.1.35'
-    runtime 'postgresql:postgresql:9.1-901-1.jdbc4'
     runtime 'org.xerial:sqlite-jdbc:3.8.10.1'
 	runtime 'org.apache.phoenix:phoenix:4.5.2-HBase-1.1'
 //	runtime 'org.apache.hive:hive-jdbc:1.2.1'
