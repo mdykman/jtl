@@ -119,18 +119,13 @@ public class JTLTest {
 		JSON d = builder.parse(new File(base, "data2.json"));
 		File code = new File(base, "test-jdbc.jtl");
 		JSON res = runFile(code, d);
-//		System.out.println(res);
 		JSON jj = runExpression(".", res);
-//		assertEquals("g", jj.stringValue());
-		JSON expected = builder.parse("['c','d','e','f','g']");
-		jj=runExpression("*/children/*/*/children/*/*/name", res);
+		assertEquals(res, jj);
+ 		JSON expected = builder.parse("['c','d','e','f','g']");
+		jj=runExpression("children/children/name", res);
 		assertEquals(expected, jj);
-		jj=runExpression("**/filter(id==10)/name[0]", res);
-//		expected = builder.parse("\"tracy rocks\"");
+		jj=runExpression("**/filter(id==10)[0]/name", res);
 		assertEquals("tracy rocks", jj.stringValue());
-//		 System.out.println(jj);
-//		 jj = runExpression("**/filter(id = 3)", res);
-//		 System.out.println(jj);
 	}
 
 	@Test
@@ -139,7 +134,7 @@ public class JTLTest {
 		JSON j = runExpression("people/count()", data);
 		assertTrue(j.isNumber());
 		if (j.isNumber()) {
-			assertTrue(((JSONValue) j).longValue() == 7);
+			assertTrue(((JSONValue) j).longValue() == 7L);
 		}
 	}
 

@@ -2269,33 +2269,19 @@ public class FutureInstructionFactory {
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				return transform(data, new AsyncFunction<JSON, JSON>() {
-
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						JList frame = context.builder().list(input);
+						JList frame = context.builder().list(null);
+						this.apply(input,frame);
+						return immediateCheckedFuture(frame);
+					}
+					public void apply(JSON input,JList frame) throws Exception {	
 						switch (input.getType()) {
-						case LIST: {
+						case LIST:
 							for (JSON j : (JSONArray) input) {
-								switch (j.getType()) {
-								case LIST:
-									for (JSON k : (JSONArray) j) {
-										frame.add(k);
-									}
-									break;
-								// return immediateCheckedFuture(frame);
-								case ARRAY:
-								case OBJECT: {
-									frame.add(j);
-									// for (Pair<String, JSON> pp : (JSONObject)
-									// j) {
-									// frame.add(pp.s);
-									// }
-								}
-								default:
-								}
+								this.apply(j, frame);
 							}
 							break;
-						}
 						case ARRAY: {
 							for (JSON j : (JSONArray) input) {
 								frame.add(j);
@@ -2310,7 +2296,6 @@ public class FutureInstructionFactory {
 						}
 						default:
 						}
-						return immediateCheckedFuture(frame);
 					}
 				});
 			}
@@ -3153,7 +3138,7 @@ public class FutureInstructionFactory {
 			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
 				return l % r;
 			}
-		});
+		},true);
 	}
 
 	public static FutureInstruction<JSON> isValue(SourceInfo meta) {

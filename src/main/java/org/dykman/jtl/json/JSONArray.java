@@ -47,7 +47,7 @@ public class JSONArray extends AbstractJSON implements JSONContainer, Iterable<J
 	public boolean equals(JSON r) {
 		if (r == null)
 			return false;
-		if (r.getType() != JSONType.ARRAY)
+		if (r.getType() != getType())
 			return false;
 		JSONArray rj = (JSONArray) r;
 		return 0 == deepCompare(rj);

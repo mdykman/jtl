@@ -181,12 +181,10 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	public FutureInstructionValue<JSON> visitValue(ValueContext ctx) {
 		JpathContext jc = ctx.jpath();
 			return visitJpath(jc);
-//		throw new RuntimeException("unknown value type");
 	}
 
 	@Override
 		public FutureInstructionValue<JSON> visitString(StringContext ctx) {
-//		TerminalNode tn = ctx.StringLiteral();
 		TerminalNode tn = ctx.STRING();
 		String s = null;
 		if(tn != null) {
@@ -200,7 +198,6 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
 	@Override
    public FutureInstructionValue<JSON> visitFf(FfContext ctx) {
-      // TODO Auto-generated method stub
       return super.visitFf(ctx);
    }
 	

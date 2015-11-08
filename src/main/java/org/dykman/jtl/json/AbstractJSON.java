@@ -58,7 +58,7 @@ public abstract class AbstractJSON implements JSON {
 		case LIST:
 		case ARRAY:
 			if(rtype != JSONType.ARRAY && rtype != JSONType.LIST) return rtype == JSONType.OBJECT ? -1 : 1;
-			if(rtype != JSONType.OBJECT) return 1;
+//			if(rtype != JSONType.OBJECT) return 1;
 			return ((JSONArray) this).deepCompare((JSONArray) r);
 		case BOOLEAN:
 			if(rtype == JSONType.NULL) return 1;
