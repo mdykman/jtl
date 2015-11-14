@@ -1,4 +1,4 @@
-.classpath
+# .classpath
 .gradle/
 .project
 .settings/
@@ -6,4 +6,3 @@ bin/
 target/
 build/
 jtl-*
-jtl
