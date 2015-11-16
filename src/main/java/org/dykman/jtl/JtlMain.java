@@ -31,6 +31,7 @@ import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.modules.ModuleLoader;
 import org.dykman.jtl.server.JtlServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jline.console.ConsoleReader;
 import jline.console.completer.CandidateListCompletionHandler;
 import jline.console.completer.Completer;
-import sun.management.snmp.jvminstr.JvmThreadInstanceTableMetaImpl;
 
 @SuppressWarnings("deprecation")
 public class JtlMain {
@@ -590,6 +590,8 @@ public class JtlMain {
 	public JSON execute(FutureInstruction<JSON> inst, String source, File init, JSON data, File cwd, JSONArray args)
 			throws Exception {
 		AsyncExecutionContext<JSON> context = createInitialContext(data, cwd, init);
+		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), config);
+		ml.loadAuto(context, false);
 		return execute(inst, context, source, init, data, cwd, args);
 	}
 	
@@ -604,7 +606,7 @@ public class JtlMain {
 		if (arr != null)
 			for (JSON v : arr) {
 				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("cli")));
-				arr.add(v);
+//				arr.add(v);
 			}
 
 		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("cli")));

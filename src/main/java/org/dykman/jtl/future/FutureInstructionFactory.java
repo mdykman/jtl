@@ -68,7 +68,7 @@ public class FutureInstructionFactory {
 	public static FutureInstruction<JSON> memo(SourceInfo meta, final FutureInstruction<JSON> inst) {
 		if (inst instanceof MemoInstructionFuture)
 			return inst;
-		meta.name = "memo";
+//		meta.name = "memo";
 		return new MemoInstructionFuture(meta, inst);
 	}
 
@@ -412,6 +412,7 @@ public class FutureInstructionFactory {
 						while (jit.hasNext()) {
 							String ff = stringValue(jit.next());
 							File toParse = new File(mc.currentDirectory(), ff);
+							logger.info("importing " + toParse.getAbsolutePath());
 							FutureInstruction<JSON> inst = mc.compiler().parse(toParse);
 							if (inst instanceof FixedContext) {
 								FixedContext fi = (FixedContext) inst;
@@ -2638,7 +2639,8 @@ public class FutureInstructionFactory {
 							};
 							break;
 						default:
-							throw new ExecutionException("illegal reference expression", source);
+							return immediateCheckedFuture(context.builder().value());
+//							throw new ExecutionException("illegal reference expression", source);
 						}
 
 						List<ListenableFuture<JSON>> ll = new ArrayList<>();

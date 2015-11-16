@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -39,6 +40,7 @@ import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 
 import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class HttpModule extends AbstractModule {
@@ -57,6 +59,45 @@ public class HttpModule extends AbstractModule {
 		context.define("delete", _deleteInstruction(meta, context.builder()));
 		context.define("patch", _patchInstruction(meta, context.builder()));
 		context.define("form", _formInstruction(meta, context.builder()));
+		context.define("enc", new AbstractFutureInstruction(meta) {	
+			@Override
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> arg = context.getdef("1");
+				final ListenableFuture<JSON> in;
+				if(arg != null) in = arg.call(context, data);
+				else in = data;
+				return transform(in, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String s = input.stringValue();
+						return Futures.immediateCheckedFuture(context.builder().value(
+								URLEncoder.encode(s, "UTF-8")));
+					}
+				});
+			}
+		});
+		context.define("dec", new AbstractFutureInstruction(meta) {	
+			@Override
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> arg = context.getdef("1");
+				final ListenableFuture<JSON> in;
+				if(arg != null) in = arg.call(context, data);
+				else in = data;
+				return transform(in, new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String s = input.stringValue();
+						return Futures.immediateCheckedFuture(context.builder().value(
+								URLDecoder.decode(s, "UTF-8")));
+					}
+				});
+			}
+		});
+		
 		return context.builder().value(1);
 
 	}

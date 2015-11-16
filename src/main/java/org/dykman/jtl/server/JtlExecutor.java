@@ -115,9 +115,7 @@ public class JtlExecutor {
 		this.boundScript = boundScript;
 		this.dirDefault = dirDefault;
 		this.builder = new JSONBuilderImpl(canonical);
-		this.compiler = new JtlCompiler(builder
-				
-				);
+		this.compiler = new JtlCompiler(builder);
 		JSONObject bc = (JSONObject) builder.parse(new File(jtlBase, "conf/config.json"));
 
 		if (config != null) {

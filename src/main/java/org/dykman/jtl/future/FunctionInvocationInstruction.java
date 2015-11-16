@@ -2,9 +2,7 @@ package org.dykman.jtl.future;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;

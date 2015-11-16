@@ -79,7 +79,10 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		this.currentDirectory = f;
 		this.debug = debug;
 		this.include = include;
-		compiler = new JtlCompiler(builder);
+		if(builder == null) {
+			throw new RuntimeException("RIGHT HERE");
+		}
+		compiler = parent != null ? parent.compiler() : new JtlCompiler(builder);
 	}
 
 	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
@@ -246,7 +249,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data,
 			SourceInfo source) {
-		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, null, data, null, currentDirectory(), fc,
+		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, builder, data, conf, currentDirectory(), fc,
 				include, debug);
 
 		// if(fc && data!=null)
@@ -290,7 +293,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	// @Override
 	public Pair<String, FutureInstruction<JSON>> getDefInternal(String ns, String name) {
-		// System.out.println("context seeking " + name + " in " +
+		System.out.println("context seeking " + name + " in " + ns);
 		// System.identityHashCode(this));
 
 		FutureInstruction<JSON> r = functions.get(name);

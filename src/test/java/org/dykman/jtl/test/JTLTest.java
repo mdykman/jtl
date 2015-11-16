@@ -80,7 +80,7 @@ public class JTLTest {
 		context.setInit(true);
 
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), getConfig());
-		ml.loadAuto(context, true);
+		ml.loadAuto(context, false);
 
 		ListenableFuture<JSON> result = inst.call(context, Futures.immediateCheckedFuture(data));
 		JSON j = result.get();
@@ -96,7 +96,7 @@ public class JTLTest {
 				Futures.immediateCheckedFuture(input), SourceInfo.internal("test"));
 		context.setRuntime(true);
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), config);
-		ml.loadAuto(context, true);
+		ml.loadAuto(context, false);
 		return context;
 	}
 	

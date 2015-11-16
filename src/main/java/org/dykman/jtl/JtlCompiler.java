@@ -43,6 +43,7 @@ public class JtlCompiler {
 	boolean profile;
 	boolean imported;
 
+	
 	public JtlCompiler(JSONBuilder jsonBuilder) {
 		this(jsonBuilder, false, false, false);
 	}
@@ -100,7 +101,7 @@ public class JtlCompiler {
 			FutureInstructionValue<JSON> v = visitor.visit(tree);
 			return FutureInstructionFactory.fixContextData(v.inst);
 		} catch(Exception e) {
-			logger.error(e.getLocalizedMessage());
+			logger.error(e.getLocalizedMessage(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
 					SourceInfo.internal("parser"));
 		}
