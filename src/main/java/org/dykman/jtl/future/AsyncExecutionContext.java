@@ -78,7 +78,7 @@ public interface AsyncExecutionContext<T> {
 	public FutureInstruction<T> getdef(String name);
 
 	// public Pair<String,InstructionFuture<T>> getdef(String ns,String name);
-	public Pair<String, FutureInstruction<JSON>> getDefInternal(String ns, String name);
+	public Pair<String, FutureInstruction<JSON>> getDefPair(String name);
 
 	public void inject(AsyncExecutionContext<T> cc);
 

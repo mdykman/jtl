@@ -75,19 +75,8 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 		return context;
 	}
 
-	static boolean isSpecial(String s) {
-		if (SpecialSymbols.contains(s))
-			return true;
-		if (Character.isDigit(s.charAt(0)))
-			return true;
-		return false;
-
-	}
-
-	static List SpecialSymbols;
-
-	static {
-		SpecialSymbols = Arrays.asList(new String[] { "@", "?", ":", ";", "#", "!", "%", "^", "&", "*" });
+	public static boolean isSpecial(String s) {
+		return SimpleExecutionContext.isSpecial(s);
 	}
 
 	@Override
@@ -96,17 +85,15 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 			throws ExecutionException {
 		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
 		String ns = null;
-		if (fc != null && !isSpecial(name)) {
-			ns = fc.getNamespace();
-		}
 		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data);
 		FutureInstruction<JSON> func = instruction;
 		if(func == null) {
-			Pair<String, FutureInstruction<JSON>> rr = context.getDefInternal(ns, name);
+			Pair<String, FutureInstruction<JSON>> rr = context.getDefPair(name);
 			if (rr != null) {
 				func = rr.s;
 				ns = rr.f;
-				childContext.define("$", FutureInstructionFactory.value(context.builder().value(ns == null ? "" : ns), source));
+				childContext.define("$", FutureInstructionFactory.value(
+						context.builder().value(ns == null ? "" : ns), source));
 			}
 		}
 

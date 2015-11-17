@@ -4,13 +4,13 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
@@ -18,12 +18,16 @@ import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
+	static Logger logger = LoggerFactory.getLogger(SimpleExecutionContext.class);
+	
 	protected final AsyncExecutionContext<JSON> parent;
 	protected final boolean functionContext;
 	protected final boolean include;
@@ -260,9 +264,9 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	protected String namespace = null;
-
+/*
 	// @Override
-	public Pair<String, FutureInstruction<JSON>> getdef(String ns, String name) {
+	private Pair<String, FutureInstruction<JSON>> getdef(String ns, String name) {
 		FutureInstruction<JSON> r = null;
 		Pair<String, FutureInstruction<JSON>> rr = null;
 		if (ns != null) {
@@ -282,46 +286,83 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		}
 		return rr;
 	}
-
-	@Override
-	public FutureInstruction<JSON> getdef(String name) {
-		Pair<String, FutureInstruction<JSON>> rr = getDefInternal(null, name);
-		if (rr != null)
-			return rr.s;
+*/
+	
+	public Pair<String, FutureInstruction<JSON>> getNamespacedDefinition(String ns,String name) {
+		AsyncExecutionContext<JSON> named = null;
+		AsyncExecutionContext<JSON> base = this;
+		while(base!=null && named == null) {
+			named = getNamedContext(ns);
+			base = base.getParent();
+		}
+		if(named!=null) {
+			return new Pair<String, FutureInstruction<JSON>>(ns, named.getdef(name));
+		}
 		return null;
 	}
-
+	@Override
+	public Pair<String, FutureInstruction<JSON>> getDefPair(String name) {
+		FutureInstruction<JSON> r = null;
+		String fns = null;
+		String[] parts = name.split("[.]", 2);
+		if(parts.length == 2) {
+			return getNamespacedDefinition(parts[0], parts[1]);
+		} else {
+			AsyncExecutionContext<JSON> fc = this.getFunctionContext();
+			String ns = fc!=null ? fc.getNamespace() : null;
+			if(ns!=null) {
+				Pair<String, FutureInstruction<JSON>> pp = getNamespacedDefinition(ns, name);
+				if(pp!=null) return pp;
+			}
+			SimpleExecutionContext sec = this;
+			boolean isNumeric = Character.isDigit(name.charAt(0));
+			while(sec!=null && r==null) {
+				r = sec.functions.get(name);
+				if(isNumeric && sec.isFunctionContext())  break;
+				sec =(SimpleExecutionContext) sec.getParent();
+			}
+		}
+		return new Pair<>(fns,r);
+	}
+	
+	public FutureInstruction<JSON> getdef(String name) {
+		Pair<String,FutureInstruction<JSON>> pp = getDefPair(name);
+		if(pp !=null) return pp.s;
+		return null;
+	}
+	
+/*
 	// @Override
-	public Pair<String, FutureInstruction<JSON>> getDefInternal(String ns, String name) {
-		System.out.println("context seeking " + name + " in " + ns);
+	public Pair<String, FutureInstruction<JSON>> getDefInternal(String currentNamespace, String name) {
+		System.out.println("context seeking " + name + " in " + currentNamespace);
 		// System.identityHashCode(this));
 
-		FutureInstruction<JSON> r = functions.get(name);
+//		FutureInstruction<JSON> r = functions.get(name);
 		// r = functions.get(name);
-		if (r != null)
-			return new Pair<>(null, r);
+//		if (r != null)
+//			return new Pair<>(null, r);
 
 		String[] parts = name.split("[.]", 2);
 		Pair<String, FutureInstruction<JSON>> rr = null;
 		if (parts.length > 1) {
-			rr = ns != null ? getdef(ns, name) : null;
-			if (rr != null) {
-				define(name, rr.s);
-				return rr;
-			}
 			rr = getdef(parts[0], parts[1]);
 		} else {
-			if (ns != null)
-				rr = getdef(ns, name);
-			if (rr == null && parent != null && !(functionContext && Character.isDigit(name.charAt(0)))) {
-				rr = parent.getDefInternal(null, name);
+			SimpleExecutionContext sec = this;
+			if (currentNamespace != null) {
+				rr = getdef(currentNamespace, name);
+			}
+			if (rr == null) {
+				rr = getdef(null, name);
+				if(rr == null && parent != null && !(functionContext && SimpleExecutionContext.isSpecial(name))) {
+					rr = parent.getDefInternal(null, name);
+				}
 			}
 		}
-		if (rr != null)
-			define(name, rr.s);
+//		if (rr != null)
+//			define(name, rr.s);
 		return rr;
 	}
-
+*/
 	public void setExecutionService(ListeningExecutorService s) {
 		executorService = s;
 	}
@@ -415,6 +456,23 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			runtimeException = e;
 		}
 		return runtimeException;
+	}
+
+	
+	static List SpecialSymbols;
+
+	static {
+		SpecialSymbols = Arrays.asList(new String[] { "?", ":", ";", "#", "!", "%", "^", "&", "*" });
+	}
+
+
+	public static boolean isSpecial(String s) {
+		if (SpecialSymbols.contains(s))
+			return true;
+		if (Character.isDigit(s.charAt(0)))
+			return true;
+		return false;
+	
 	}
 
 }
