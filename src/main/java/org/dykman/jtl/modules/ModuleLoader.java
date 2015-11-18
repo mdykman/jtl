@@ -88,8 +88,9 @@ public class ModuleLoader {
 				String key = j.stringValue();
 				logger.info("autoloading " + pp.f + " as " + key);
 				JSONObject mc = (JSONObject) cc.get("config");
+				AsyncExecutionContext<JSON> ctx = context.getNamedContext(key, true, false, SourceInfo.internal("auto"));
 				create(SourceInfo.internal("moduleloader"), 
-						pp.f, key, context, serverMode, mc == null? context.builder().object(null):mc);
+						pp.f, key, ctx, serverMode, mc == null? context.builder().object(null):mc);
 			};
 		}
 	}

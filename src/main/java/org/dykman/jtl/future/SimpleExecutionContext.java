@@ -292,12 +292,24 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		AsyncExecutionContext<JSON> named = null;
 		AsyncExecutionContext<JSON> base = this;
 		while(base!=null && named == null) {
-			named = getNamedContext(ns);
+			named = base.getNamedContext(ns);
+			if(named!=null) {
+				FutureInstruction<JSON> fi = named.getdef(name);
+				if(fi!=null) return new Pair<>(ns, fi);
+				else named = null;
+			}
 			base = base.getParent();
 		}
+		/*
 		if(named!=null) {
-			return new Pair<String, FutureInstruction<JSON>>(ns, named.getdef(name));
+			FutureInstruction<JSON> fi = named.getdef(name);
+			if(fi == null && parent != null) {
+				named = parent.getNamedContext(ns);
+				if(named!=null)  fi = named.getdef(name);
+			}
+			if(fi!=null) return new Pair<>(ns, fi);
 		}
+		*/
 		return null;
 	}
 	@Override
@@ -308,17 +320,19 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		if(parts.length == 2) {
 			return getNamespacedDefinition(parts[0], parts[1]);
 		} else {
+			boolean special = isSpecial(name);
 			AsyncExecutionContext<JSON> fc = this.getFunctionContext();
-			String ns = fc!=null ? fc.getNamespace() : null;
+			String ns = fc!=null && !special ? fc.getNamespace() : null;
 			if(ns!=null) {
 				Pair<String, FutureInstruction<JSON>> pp = getNamespacedDefinition(ns, name);
 				if(pp!=null) return pp;
 			}
 			SimpleExecutionContext sec = this;
-			boolean isNumeric = Character.isDigit(name.charAt(0));
+
+			boolean isNumber = Character.isDigit(name.charAt(0));
 			while(sec!=null && r==null) {
 				r = sec.functions.get(name);
-				if(isNumeric && sec.isFunctionContext())  break;
+				if(isNumber && sec.isFunctionContext())  break;
 				sec =(SimpleExecutionContext) sec.getParent();
 			}
 		}

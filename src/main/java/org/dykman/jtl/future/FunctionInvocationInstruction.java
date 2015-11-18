@@ -38,7 +38,7 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
 		if(name.contains(".")) {
-			String pp[] = name.split("[.]");
+			String pp[] = name.split("[.]",2);
 			context.define("0", FutureInstructionFactory.value(context.builder().value(pp[1]), source));
 		} else {
 			context.define("0", FutureInstructionFactory.value(context.builder().value(name), source));
