@@ -1,7 +1,8 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -10,7 +11,7 @@ public class MemoInstructionFuture extends AbstractFutureInstruction {
    final FutureInstruction<JSON> inst;
    final String key;
    
-   MemoInstructionFuture(SourceInfo info,FutureInstruction<JSON> inst) {
+   public MemoInstructionFuture(SourceInfo info,FutureInstruction<JSON> inst) {
       super(info);
       this.inst = inst;
       // TODO a stronger key would be advisable

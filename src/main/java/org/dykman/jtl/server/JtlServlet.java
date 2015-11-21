@@ -14,12 +14,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.operator.FutureInstruction;
 
 @SuppressWarnings("serial")
 public class JtlServlet extends HttpServlet {
@@ -62,6 +62,7 @@ public class JtlServlet extends HttpServlet {
 			boolean canon = "true".equalsIgnoreCase(s);
 
 			jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript, "default.json", canon);
+			
 		} catch (IOException e) {
 			throw new ServletException(e);
 		}
@@ -120,6 +121,7 @@ public class JtlServlet extends HttpServlet {
 		String ss = req.getParameter("indent");
 		try {
 			JSON r = jtlExecutor.execute(req, resp, parseData(req));
+			resp.setContentType("application/json");
 			int indent = ss == null ? 0 : Integer.parseInt(ss);
 			r.write(resp.getWriter(), indent, true);
 			resp.getWriter().flush();

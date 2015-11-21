@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.operator.FutureInstruction;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;

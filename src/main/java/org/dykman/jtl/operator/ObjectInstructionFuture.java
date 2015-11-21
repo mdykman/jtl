@@ -1,4 +1,4 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
@@ -10,6 +10,7 @@ import java.util.List;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
@@ -18,7 +19,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 // rank: all
-    class ObjectInstructionFuture extends ObjectInstructionBase {
+    public class ObjectInstructionFuture extends ObjectInstructionBase {
 
       public ObjectInstructionFuture(SourceInfo meta, final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll) {
          super(meta, ll, true);

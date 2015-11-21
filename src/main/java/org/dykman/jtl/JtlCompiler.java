@@ -1,6 +1,9 @@
 package org.dykman.jtl;
 
 import java.io.FileInputStream;
+
+import static org.dykman.jtl.operator.FutureInstructionFactory.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,11 +21,11 @@ import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.jtlParser.JtlContext;
+import org.dykman.jtl.operator.FutureInstruction;
+import org.dykman.jtl.operator.FutureInstructionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
-import org.dykman.jtl.future.FutureInstructionFactory;
 import org.dykman.jtl.future.FutureInstructionValue;
 import org.dykman.jtl.future.FutureInstructionVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
@@ -30,8 +33,6 @@ import org.dykman.jtl.future.SimpleExecutionContext;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-
-import static org.dykman.jtl.future.FutureInstructionFactory.*;
 
 public class JtlCompiler {
 	

@@ -15,13 +15,13 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.operator.AbstractFutureInstruction;
+import org.dykman.jtl.operator.FutureInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

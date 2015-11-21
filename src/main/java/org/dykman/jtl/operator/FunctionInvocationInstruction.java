@@ -1,4 +1,4 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +7,8 @@ import java.util.List;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
+import org.dykman.jtl.future.SimpleExecutionContext;
 import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -71,7 +73,6 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 
 		}
 		context.define("@", FutureInstructionFactory.paramArray(source, insts));
-
 		return context;
 	}
 

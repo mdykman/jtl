@@ -6,9 +6,9 @@ import org.apache.log4j.PatternLayout;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.*;
 import org.dykman.jtl.modules.ModuleLoader;
+import org.dykman.jtl.operator.FutureInstruction;
 
 import static org.junit.Assert.*;
 

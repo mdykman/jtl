@@ -8,11 +8,11 @@ import java.util.List;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.operator.AbstractFutureInstruction;
+import org.dykman.jtl.operator.FutureInstruction;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;

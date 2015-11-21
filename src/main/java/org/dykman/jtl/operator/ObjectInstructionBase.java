@@ -1,4 +1,4 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,7 @@ import java.util.Map;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilderImpl;
@@ -17,7 +18,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
-import static org.dykman.jtl.future.FutureInstructionFactory.*;
+import static org.dykman.jtl.operator.FutureInstructionFactory.*;
 
 public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll;
@@ -27,9 +28,9 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	ListenableFuture<JSON> initResult = null;
 	boolean isContextObject = false;
 
-	static  class ObjectKey {
-		final String label;
-		final boolean quoted;
+	public static  class ObjectKey {
+		public final String label;
+		public final boolean quoted;
 		public ObjectKey(String l, boolean b) {
 			label = l;
 			quoted = b;

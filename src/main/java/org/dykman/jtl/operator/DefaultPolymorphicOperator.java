@@ -1,7 +1,8 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
@@ -13,8 +14,8 @@ import org.dykman.jtl.json.JSONValue;
 public class DefaultPolymorphicOperator implements
 // PolymorphicOperator,
 	DyadicAsyncFunction<JSON> {
-	JSONBuilder builder;
-	SourceInfo info;
+	public JSONBuilder builder;
+	public SourceInfo info;
 	public DefaultPolymorphicOperator(SourceInfo info) {
 	   this.info = info;
 	}

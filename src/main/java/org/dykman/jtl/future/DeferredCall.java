@@ -3,6 +3,8 @@ package org.dykman.jtl.future;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.operator.FutureInstruction;
+
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class DeferredCall implements FutureInstruction<JSON> {

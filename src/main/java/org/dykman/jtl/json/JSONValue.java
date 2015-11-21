@@ -180,9 +180,15 @@ public class JSONValue extends AbstractJSON implements JSON {
 			if (o instanceof Boolean) {
 				out.write(((Boolean) o) ? "true" : "false");
 			} else if (o instanceof String) {
-				out.write('"');
-				out.write(StringEscapeUtils.escapeJson(o.toString()));
-				out.write('"');
+				writeAsString(out, o.toString());
+//				write(out,o.toString(),0,0,true);
+//				out.write('"');
+//				StringEscapeUtils.es
+//				System.err.println("write in " + o.toString());
+//				System.err.println("write out " + StringEscapeUtils.escapeJson(o.toString()));
+//				out.write(o.toString());
+//				out.write(StringEscapeUtils.escapeJson(o.toString()));
+//				out.write('"');
 			} else {
 				out.write(o.toString());
 			}

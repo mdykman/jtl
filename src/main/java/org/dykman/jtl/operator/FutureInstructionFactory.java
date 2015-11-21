@@ -1,4 +1,4 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
@@ -33,7 +33,9 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.jsonVisitor;
-import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
+import org.dykman.jtl.future.AsyncExecutionContext;
+import org.dykman.jtl.future.DeferredCall;
+import org.dykman.jtl.future.FixedContext;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -45,11 +47,11 @@ import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;
 import org.dykman.jtl.modules.ModuleLoader;
 
-import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
 
 public class FutureInstructionFactory {
 

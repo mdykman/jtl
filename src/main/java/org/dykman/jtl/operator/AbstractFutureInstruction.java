@@ -1,10 +1,11 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -21,7 +22,7 @@ public abstract class AbstractFutureInstruction implements
 		FutureInstruction<JSON> {
    final protected SourceInfo source;
    final protected boolean items;
-	static Logger logger = LoggerFactory.getLogger(AbstractFutureInstruction.class);
+	public static Logger logger = LoggerFactory.getLogger(AbstractFutureInstruction.class);
 
    public AbstractFutureInstruction(SourceInfo meta) {
       this(meta == null ? SourceInfo.internal("default") : meta,false);

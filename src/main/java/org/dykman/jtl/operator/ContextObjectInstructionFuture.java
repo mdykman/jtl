@@ -1,10 +1,11 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import static com.google.common.util.concurrent.Futures.allAsList;
 
 
 import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
+import static org.dykman.jtl.operator.FutureInstructionFactory.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,15 +13,15 @@ import java.util.Map;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
-import static org.dykman.jtl.future.FutureInstructionFactory.*;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 // rank: all
-    class ContextObjectInstructionFuture extends ObjectInstructionBase {
+    public class ContextObjectInstructionFuture extends ObjectInstructionBase {
       // final InstructionFutureFactory factory;
 
 

@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.ArithmaticPolymophicOperator;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
+import org.dykman.jtl.operator.ArithmaticPolymophicOperator;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.json.JSONValue;

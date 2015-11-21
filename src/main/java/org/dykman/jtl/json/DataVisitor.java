@@ -4,6 +4,7 @@ package org.dykman.jtl.json;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.jsonBaseVisitor;
 import org.dykman.jtl.jsonParser.ArrayContext;
@@ -125,6 +126,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		}
 		String k = tn.getText();
 		k=k.substring(1,k.length()-1);
+		k = StringEscapeUtils.unescapeJson(k);
 		return new DataValue<JSON>(k);
 		
 	}

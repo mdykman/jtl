@@ -3,7 +3,8 @@ package org.dykman.jtl.future;
 import java.util.List;
 
 import org.dykman.jtl.Pair;
-import org.dykman.jtl.future.ObjectInstructionBase.ObjectKey;
+import org.dykman.jtl.operator.FutureInstruction;
+import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
 
 public class FutureInstructionValue<T> {
 	public FutureInstruction<T> inst;

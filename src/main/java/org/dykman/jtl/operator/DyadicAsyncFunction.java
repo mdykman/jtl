@@ -1,6 +1,7 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import org.dykman.jtl.ExecutionException;
+import org.dykman.jtl.future.AsyncExecutionContext;
 
 
 public interface DyadicAsyncFunction<T> {

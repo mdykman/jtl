@@ -28,11 +28,11 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
-import org.dykman.jtl.future.AbstractFutureInstruction;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstruction;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
+import org.dykman.jtl.operator.AbstractFutureInstruction;
+import org.dykman.jtl.operator.FutureInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.dykman.jtl.json.JSONBuilder;
@@ -151,7 +151,7 @@ public class HttpModule extends AbstractModule {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					for (Pair<String, JSON> pp : p) {
 						try {
-						nvps.add(new NameValuePair(URLEncoder.encode(pp.f,"UTF-8"), URLEncoder.encode(pp.s.toString(),"UTF-8")));
+						nvps.add(new NameValuePair(URLEncoder.encode(pp.f,"UTF-8"), URLEncoder.encode(pp.s.stringValue(),"UTF-8")));
 						} catch(UnsupportedEncodingException e) {
 							throw new RuntimeException(e);
 						}
@@ -305,8 +305,11 @@ public class HttpModule extends AbstractModule {
 									mm.addRequestHeader("Accept-Charset", "utf-8");
 									int n = client.executeMethod(mm);
 									Header ct = mm.getResponseHeader("Content-Type");
-									String rtype = ct.getValue();
-									boolean json = rtype.contains("/json");
+									boolean json = false;
+									if(ct!=null) {
+										String rtype = ct.getValue();
+										json = rtype.contains("/json");
+									}
 									if (json) {
 										JSON jj = read(mm, context.builder());
 										if (!(n >= 200 && n < 300)) {

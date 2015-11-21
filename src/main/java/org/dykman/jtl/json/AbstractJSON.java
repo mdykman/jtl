@@ -93,7 +93,12 @@ public abstract class AbstractJSON implements JSON {
 
 	protected void writeAsString(Writer writer, String s) throws IOException {
 		writer.write('"');
-		writer.write(StringEscapeUtils.escapeJson(s));
+//		System.err.println("writeAsString: in " + s);
+//		System.err.println("writeAsString: out " + StringEscapeUtils.escapeJson(s));
+//System.err.println("writeAsString: in " + s);
+		s = StringEscapeUtils.escapeJson(s);
+//System.err.println("writeAsString: out " + s);
+		writer.write(s);
 		writer.write('"');
 
 	}

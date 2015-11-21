@@ -18,6 +18,7 @@ import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
+import org.dykman.jtl.operator.FutureInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -226,15 +227,10 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	public AsyncExecutionContext<JSON> getNamedContext(String label, boolean create, boolean include, SourceInfo info) {
 		AsyncExecutionContext<JSON> c = namedContexts.get(label);
-		if (c == null) {
+		if (c == null && create) {
 			synchronized (this) {
 				c = namedContexts.get(label);
 				if (c == null) {
-					if (parent != null) {
-						c = parent.getNamedContext(label, false, include, info);
-						if (c != null)
-							return c;
-					}
 					if (create) {
 						c = this.createChild(false, include, immediateFuture(JSONBuilderImpl.NULL), info);
 						namedContexts.put(label, c);
