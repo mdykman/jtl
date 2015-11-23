@@ -40,10 +40,11 @@ public class ExecutionException extends JtlException {
 	}
 	
 	public String report() {
-	   StringBuilder builder = new StringBuilder();
-	   builder.append("Exception: ").append(getLocalizedMessage())
-	      .append(" -- ").append(info.name).append(" ")
-	      .append(info.line).append(":").append(info.position);
-	   return builder.toString();
-	}
+		   StringBuilder builder = new StringBuilder();
+		   builder.append("Exception after `").append(info.code)
+		   		.append("': ").append(getLocalizedMessage())
+		   		.append(" -- ").append(info.name).append(" ")
+		   		.append(info.line).append(":").append(info.position);
+		   return builder.toString();
+		}
 }

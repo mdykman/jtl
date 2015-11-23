@@ -512,6 +512,10 @@ public class JtlMain {
 						pw.close();
 				}
 			}
+		} catch (JtlParseException e) {
+			System.err.println(e.report());
+			if (verbose)
+				e.printStackTrace();
 		} catch (ExecutionException e) {
 			System.err.println(e.report());
 			if (verbose)

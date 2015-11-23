@@ -3,8 +3,12 @@ package org.dykman.jtl.modules;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static com.google.common.util.concurrent.Futures.transform;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -25,12 +29,14 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.apache.commons.io.IOUtils;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
+import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.operator.AbstractFutureInstruction;
 import org.dykman.jtl.operator.FutureInstruction;
 import org.slf4j.Logger;
@@ -47,8 +53,8 @@ public class HttpModule extends AbstractModule {
 
 	static Logger logger = LoggerFactory.getLogger(HttpModule.class);
 
-	public HttpModule(String key,JSONObject config) {
-		super(key,config);
+	public HttpModule(String key, JSONObject config) {
+		super(key, config);
 	}
 
 	@Override
@@ -59,45 +65,47 @@ public class HttpModule extends AbstractModule {
 		context.define("delete", _deleteInstruction(meta, context.builder()));
 		context.define("patch", _patchInstruction(meta, context.builder()));
 		context.define("form", _formInstruction(meta, context.builder()));
-		context.define("enc", new AbstractFutureInstruction(meta) {	
+		context.define("enc", new AbstractFutureInstruction(meta) {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				FutureInstruction<JSON> arg = context.getdef("1");
 				final ListenableFuture<JSON> in;
-				if(arg != null) in = arg.call(context, data);
-				else in = data;
+				if (arg != null)
+					in = arg.call(context, data);
+				else
+					in = data;
 				return transform(in, new AsyncFunction<JSON, JSON>() {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						String s = input.stringValue();
-						return Futures.immediateCheckedFuture(context.builder().value(
-								URLEncoder.encode(s, "UTF-8")));
+						return Futures.immediateCheckedFuture(context.builder().value(URLEncoder.encode(s, "UTF-8")));
 					}
 				});
 			}
 		});
-		context.define("dec", new AbstractFutureInstruction(meta) {	
+		context.define("dec", new AbstractFutureInstruction(meta) {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
 				FutureInstruction<JSON> arg = context.getdef("1");
 				final ListenableFuture<JSON> in;
-				if(arg != null) in = arg.call(context, data);
-				else in = data;
+				if (arg != null)
+					in = arg.call(context, data);
+				else
+					in = data;
 				return transform(in, new AsyncFunction<JSON, JSON>() {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						String s = input.stringValue();
-						return Futures.immediateCheckedFuture(context.builder().value(
-								URLDecoder.decode(s, "UTF-8")));
+						return Futures.immediateCheckedFuture(context.builder().value(URLDecoder.decode(s, "UTF-8")));
 					}
 				});
 			}
 		});
-		
+
 		return context.builder().value(1);
 
 	}
@@ -128,9 +136,20 @@ public class HttpModule extends AbstractModule {
 			public HttpMethod method(String url, JSONObject p) {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
-					for (Pair<String, JSON> pp : p) {
-						// TODO:: I probably should be url-encoding these
-						post.addParameter(pp.f, pp.s.toString());
+					try {
+						for (Pair<String, JSON> pp : p) {
+							if (pp.s instanceof JSONArray) {
+								for (JSON av : (JSONArray) pp.s) {
+									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									post.addParameter(pp.f, ss);
+								}
+							} else {
+								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								post.addParameter(pp.f, ss);
+							}
+						}
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
 					}
 				}
 
@@ -149,12 +168,20 @@ public class HttpModule extends AbstractModule {
 				HttpMethod get = new GetMethod(url);
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-					for (Pair<String, JSON> pp : p) {
-						try {
-						nvps.add(new NameValuePair(URLEncoder.encode(pp.f,"UTF-8"), URLEncoder.encode(pp.s.stringValue(),"UTF-8")));
-						} catch(UnsupportedEncodingException e) {
-							throw new RuntimeException(e);
+					try {
+						for (Pair<String, JSON> pp : p) {
+							if (pp.s instanceof JSONArray) {
+								for (JSON av : (JSONArray) pp.s) {
+									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									nvps.add(new NameValuePair(pp.f, ss));
+								}
+							} else {
+								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								nvps.add(new NameValuePair(pp.f, ss));
+							}
 						}
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
 					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
@@ -173,8 +200,20 @@ public class HttpModule extends AbstractModule {
 				HttpMethod get = new DeleteMethod(url);
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
-					for (Pair<String, JSON> pp : p) {
-						nvps.add(new NameValuePair(pp.f, pp.s.toString()));
+					try {
+						for (Pair<String, JSON> pp : p) {
+							if (pp.s instanceof JSONArray) {
+								for (JSON av : (JSONArray) pp.s) {
+									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									nvps.add(new NameValuePair(pp.f, ss));
+								}
+							} else {
+								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								nvps.add(new NameValuePair(pp.f, ss));
+							}
+						}
+					} catch (UnsupportedEncodingException e) {
+						throw new RuntimeException(e);
 					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
@@ -229,6 +268,7 @@ public class HttpModule extends AbstractModule {
 		public PatchMethod(String url) {
 			super(url);
 		}
+
 		@Override
 		public String getName() {
 			return "PATCH";
@@ -276,6 +316,24 @@ public class HttpModule extends AbstractModule {
 				}
 				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
+					protected int saveFile(String filename, InputStream toSave) throws Exception {
+						int n;
+						logger.info("saving stream to " + filename);
+						File f = new File(filename);
+						File parent = f.getParentFile();
+						if (parent == null) {
+							parent = new File(".");
+						}
+						if (!parent.canWrite()) {
+							throw new ExecutionException("unable to save to file " + f.getAbsolutePath(), source);
+						}
+						FileOutputStream os = new FileOutputStream(f);
+						n = IOUtils.copy(toSave, os);
+						os.close();
+
+						return n;
+					}
+
 					@Override
 					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 						Iterator<JSON> jit = input.iterator();
@@ -284,14 +342,31 @@ public class HttpModule extends AbstractModule {
 
 						final String url;
 						final JSONObject data;
+						String file = null;
+						String accept = null;
+
 						if (a.getType() == JSONType.OBJECT) {
 							JSONObject obj = (JSONObject) a;
-							url = stringValue(obj.get("url"));
+							JSON p = obj.get("url");
+							if (p == null)
+								throw new ExecutionException("url missing in http operation", source);
+							url = stringValue(p);
 							data = (JSONObject) obj.get("data");
+							p = obj.get("file");
+							if (p != null) {
+								file = p.stringValue();
+							}
+							p = obj.get("accept");
+							if (p != null) {
+								accept = p.stringValue();
+							}
+
 						} else {
 							url = stringValue(a);
 							data = (JSONObject) b;
 						}
+						final String faccept = accept;
+						final String ffile = file;
 						return context.executor().submit(new Callable<JSON>() {
 							@Override
 							public JSON call() throws Exception {
@@ -299,33 +374,44 @@ public class HttpModule extends AbstractModule {
 								HttpClient client = new HttpClient();
 								HttpMethod mm = mf.method(url, data);
 								logger.info(mm.getName() + " " + url);
-								if(data !=null) logger.info(data.stringValue());
+								if (data != null)
+									logger.info(data.stringValue());
 								try {
-									mm.addRequestHeader("Accept", "application/json");
+									if (faccept != null) {
+										mm.addRequestHeader("Accept", faccept);
+									} else if (ffile != null) {
+										mm.addRequestHeader("Accept", "*/*");
+									} else {
+										mm.addRequestHeader("Accept", "application/json,text/json");
+									}
 									mm.addRequestHeader("Accept-Charset", "utf-8");
 									int n = client.executeMethod(mm);
 									Header ct = mm.getResponseHeader("Content-Type");
 									boolean json = false;
-									if(ct!=null) {
+									if (ct != null) {
 										String rtype = ct.getValue();
 										json = rtype.contains("/json");
 									}
-									if (json) {
-										JSON jj = read(mm, context.builder());
-										if (!(n >= 200 && n < 300)) {
-											if (jj instanceof JSONObject) {
-												((JSONObject) jj).put("__status", builder.value(n));
+									if (n == 200 && ffile != null) {
+										return builder.value(saveFile(ffile, mm.getResponseBodyAsStream()));
+									} else {
+										if (json) {
+											JSON jj = read(mm, context.builder());
+											if (!(n >= 200 && n < 300)) {
+												if (jj instanceof JSONObject) {
+													((JSONObject) jj).put("__status", builder.value(n));
+												}
 											}
+											return jj;
 										}
-										return jj;
+										if (!(n >= 200 && n < 300)) {
+											JSONObject oo = builder.object(null);
+											oo.put("status", builder.value(n));
+											oo.put("content", builder.value(mm.getResponseBodyAsString()));
+											return oo;
+										}
+										return read(mm, builder);
 									}
-									if (!(n >= 200 && n < 300)) {
-										JSONObject oo = builder.object(null);
-										oo.put("status", builder.value(n));
-										oo.put("content", builder.value(mm.getResponseBodyAsString()));
-										return oo;
-									}
-									return read(mm, builder);
 								} catch (Exception e) {
 									JSONObject oo = builder.object(null);
 									oo.put("status", builder.value(503));

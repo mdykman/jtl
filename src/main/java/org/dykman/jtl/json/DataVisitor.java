@@ -126,6 +126,7 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		}
 		String k = tn.getText();
 		k=k.substring(1,k.length()-1);
+		
 		k = StringEscapeUtils.unescapeJson(k);
 		return new DataValue<JSON>(k);
 		

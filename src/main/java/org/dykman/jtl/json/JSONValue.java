@@ -105,6 +105,7 @@ public class JSONValue extends AbstractJSON implements JSON {
 	public String stringValue() {
 		if (type == JSONType.BOOLEAN)
 			return (Boolean) o ? "true" : "false";
+		if(type == JSONType.STRING) return (String) o;
 		return o == null ? null : o.toString();
 	}
 

@@ -12,9 +12,16 @@ import org.antlr.v4.runtime.ANTLRErrorStrategy;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.InputMismatchException;
 import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.RuleContext;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.json.JSON;
@@ -90,7 +97,44 @@ public class JtlCompiler {
 			String file, jtlLexer lexer, boolean trace, boolean profile)
 			throws IOException {
 		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
-		BailErrorStrategy bstrat = new BailErrorStrategy();
+		BailErrorStrategy bstrat = new BailErrorStrategy() {
+			@Override
+			public void reportError(Parser recognizer, RecognitionException re) {
+System.err.println("ERROR HANDLER CALLED");
+				RuleContext rc = re.getCtx();
+				IntervalSet is = re.getExpectedTokens();
+				System.err.println("error text: " + rc.getText());
+				for(Interval iv  : is.getIntervals()) {
+				//	iv.
+				}
+			}
+			@Override
+			public void reportInputMismatch(Parser recognizer, InputMismatchException ime) {
+				System.err.println("MISMATCH HANDLER CALLED");
+				RuleContext rc = ime.getCtx();
+				System.err.println("error text: " + rc.getText());
+				ime.getExpectedTokens();
+			}
+		    @Override
+		    public Token recoverInline(Parser recognizer)
+		        throws RecognitionException
+		    {
+				InputMismatchException e = new InputMismatchException(recognizer);
+				for (ParserRuleContext context = recognizer.getContext(); context != null; context = context.getParent()) {
+					context.exception = e;
+				}
+				Token t = recognizer.getCurrentToken();
+				throw new JtlParseException(t);
+				/*
+				System.err.print("error : " + t.getLine() + ':' + t.getStartIndex());
+				System.err.println(t.getText());
+				System.err.flush();
+		        throw new ParseCancellationException(e);
+		        */
+		    }
+
+
+		};
 		parser.setErrorHandler(bstrat);
 		parser.setTrace(trace);
 		parser.setProfile(profile);
@@ -101,6 +145,8 @@ public class JtlCompiler {
 					new FutureInstructionVisitor(file, jsonBuilder, imported);
 			FutureInstructionValue<JSON> v = visitor.visit(tree);
 			return FutureInstructionFactory.fixContextData(v.inst);
+//		} catch(ParseCancellationException e) {
+			
 		} catch(Exception e) {
 			logger.error(e.getLocalizedMessage(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
