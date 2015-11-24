@@ -2502,6 +2502,28 @@ public class FutureInstructionFactory {
 	}
 
 	// rank: all
+	public static FutureInstruction<JSON> mkdir(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> arg = context.getdef("1");
+				return transform(arg.call(context, data), new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String s = input.stringValue();
+						File f = new File(s);
+						boolean result = f.mkdirs();
+						return immediateCheckedFuture(context.builder().value(result));
+					}
+					
+				});
+			}
+		};
+	}
+	// rank: all
 	public static FutureInstruction<JSON> dereference(SourceInfo meta, final FutureInstruction<JSON> a,
 			final List<FutureInstruction<JSON>> b) {
 		return new AbstractFutureInstruction(meta) {

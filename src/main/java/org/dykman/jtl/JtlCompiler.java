@@ -208,6 +208,7 @@ System.err.println("ERROR HANDLER CALLED");
 		define(context, "file", file(meta));
 		define(context, "url", url(meta));
 		define(context, "write", write(meta));
+		define(context, "mkdirs", mkdir(meta));
 
 		// string-oriented
 		define(context, "split", split(meta));
