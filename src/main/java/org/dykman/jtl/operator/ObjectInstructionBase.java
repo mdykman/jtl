@@ -109,9 +109,14 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 						// up, can be set in motion without directly caring about the outcome.
 						// they will leave a variable in the context for which they were declared
 						// in case anyone is interested in the outcome
-						imp.call(context, data);
+						ll.add(imp.call(context, data));
 					}
-					return immediateCheckedFuture(JSONBuilderImpl.ONE);
+					JSONArray arr = context.builder().array(null);
+					// force complete resolution for imperatives
+					for(JSON j:  allAsList(ll).get()) {
+						arr.add(j);
+					}
+					return immediateCheckedFuture(arr);
 				}
 			};
 

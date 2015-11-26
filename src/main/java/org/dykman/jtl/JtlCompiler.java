@@ -192,6 +192,9 @@ System.err.println("ERROR HANDLER CALLED");
 		define(context, "module", loadModule(meta, config));
 		define(context, "import", importInstruction(meta, config));
 
+		
+		define(context, "try", attempt(meta));
+
 		// general
 		define(context, "error", defaultError(meta));
 		define(context, "params", params(meta));
@@ -208,8 +211,8 @@ System.err.println("ERROR HANDLER CALLED");
 		define(context, "file", file(meta));
 		define(context, "url", url(meta));
 		define(context, "write", write(meta));
-		define(context, "mkdirs", mkdir(meta));
-
+		define(context, "mkdirs", mkdirs(meta));
+			
 		// string-oriented
 		define(context, "split", split(meta));
 		define(context, "join", join(meta));

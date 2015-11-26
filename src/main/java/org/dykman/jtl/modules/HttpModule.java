@@ -318,19 +318,23 @@ public class HttpModule extends AbstractModule {
 
 					protected int saveFile(String filename, InputStream toSave) throws Exception {
 						int n;
-						logger.info("saving stream to " + filename);
+						logger.info("saving input stream to " + filename);
 						File f = new File(filename);
 						File parent = f.getParentFile();
 						if (parent == null) {
 							parent = new File(".");
 						}
 						if (!parent.canWrite()) {
-							throw new ExecutionException("unable to save to file " + f.getAbsolutePath(), source);
+							logger.error("unable to write to " + parent.getAbsolutePath() + " for file " + f.getName());
+							return -2;
+							//throw new ExecutionException("unable to write to " + parent.getAbsolutePath(), source);
 						}
-						FileOutputStream os = new FileOutputStream(f);
-						n = IOUtils.copy(toSave, os);
-						os.close();
-
+						try(FileOutputStream os = new FileOutputStream(f)) {
+							n = IOUtils.copy(toSave, os);
+						} catch(IOException e) {
+							logger.error("while writing file " + f.getAbsolutePath() + ": " + e.getLocalizedMessage(),e);
+							return -1;
+						}
 						return n;
 					}
 
@@ -348,8 +352,10 @@ public class HttpModule extends AbstractModule {
 						if (a.getType() == JSONType.OBJECT) {
 							JSONObject obj = (JSONObject) a;
 							JSON p = obj.get("url");
-							if (p == null)
+							if (p == null) {
+								logger.error("url missing in http operation");
 								throw new ExecutionException("url missing in http operation", source);
+							}
 							url = stringValue(p);
 							data = (JSONObject) obj.get("data");
 							p = obj.get("file");
@@ -395,7 +401,7 @@ public class HttpModule extends AbstractModule {
 									if (n == 200 && ffile != null) {
 										return builder.value(saveFile(ffile, mm.getResponseBodyAsStream()));
 									} else {
-										if (json) {
+ 										if (json) {
 											JSON jj = read(mm, context.builder());
 											if (!(n >= 200 && n < 300)) {
 												if (jj instanceof JSONObject) {

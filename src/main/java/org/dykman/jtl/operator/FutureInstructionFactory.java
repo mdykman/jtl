@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1180,8 +1181,8 @@ public class FutureInstructionFactory {
 								return delegate().get();
 							} catch (Exception e) {
 								try {
-									return handleException(context,e).get();
-								} catch (java.util.concurrent.ExecutionException|InterruptedException e1) {
+									return handler.call(context, data).get();	
+								} catch (java.util.concurrent.ExecutionException|InterruptedException | ExecutionException e1) {
 									throw new RuntimeException("catastrophic error while error handling", e1);
 								}
 							}
@@ -1192,8 +1193,8 @@ public class FutureInstructionFactory {
 								return delegate().get(timeout,unit);
 							} catch (Exception e) {
 								try {
-									return handleException(context, e).get();
-								} catch (java.util.concurrent.ExecutionException|InterruptedException e1) {
+									return handler.call(context, data).get(timeout,unit);
+								} catch (java.util.concurrent.ExecutionException|InterruptedException | ExecutionException | TimeoutException e1) {
 									throw new RuntimeException("catastrophic error while error handling", e1);
 								}
 							}
@@ -2502,7 +2503,21 @@ public class FutureInstructionFactory {
 	}
 
 	// rank: all
-	public static FutureInstruction<JSON> mkdir(SourceInfo meta) {
+	public static FutureInstruction<JSON> attempt(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> arg1 = context.getdef("1");
+				FutureInstruction<JSON> arg2 = context.getdef("2");
+				if(arg2 ==null) throw new ExecutionException("try requires 2 arguments",SourceInfo.internal("try"));
+				return errorHandler(context, arg1, arg2, meta).call(context, data);
+			}
+		};
+	}
+	// rank: all
+	public static FutureInstruction<JSON> mkdirs(SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
 
 			@Override
@@ -2510,15 +2525,13 @@ public class FutureInstructionFactory {
 					throws ExecutionException {
 				FutureInstruction<JSON> arg = context.getdef("1");
 				return transform(arg.call(context, data), new AsyncFunction<JSON, JSON>() {
-
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						String s = input.stringValue();
 						File f = new File(s);
-						boolean result = f.mkdirs();
+						boolean result = f.isDirectory() || f.mkdirs();
 						return immediateCheckedFuture(context.builder().value(result));
 					}
-					
 				});
 			}
 		};

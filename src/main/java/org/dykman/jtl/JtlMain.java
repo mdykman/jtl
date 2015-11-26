@@ -1,4 +1,4 @@
-package org.dykman.jtl;
+package org.dykman.jtl;												
 
 //import gnu.getopt.Getopt;
 //import gnu.getopt.LongOpt;
@@ -53,7 +53,7 @@ public class JtlMain {
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();
 	JtlCompiler compiler;
-	ListeningExecutorService les = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+	static ListeningExecutorService les;	
 
 	JSONObject config;
 	File configFile = null;
@@ -154,7 +154,8 @@ public class JtlMain {
 			options.addOption(new Option("D", "dir", true, "specify base directory (default:.)"));
 			options.addOption(new Option("e", "expr", true, "evaluate an expression against input data"));
 			options.addOption(new Option("o", "output", true, "specify an output file (cli-only)"));
-			options.addOption(new Option("r", "repl", false, "open an interactive console (cli-only)"));
+			options.addOption(new Option("r", "repl", false, "open an interactive console (not impl)"));
+			options.addOption(new Option("t", "threads", true, "set the paralellism level (default:20)"));
 
 			options.addOption(new Option("s", "server", false, "run in server mode (default port:7718)"));
 			options.addOption(new Option("p", "port", true, "specify a port number (default:7718) * implies --server"));
@@ -162,9 +163,9 @@ public class JtlMain {
 			options.addOption(
 					new Option("b", "binding", true, "bind network address * implies --server (default:127.0.0.1)"));
 
-			options.addOption(new Option("k", "canon", false, "output canonical JSON (ordered keys)"));
-			options.addOption(new Option("n", "indent", true, "specify default indent level for output (default:3)"));
-			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (default:false)"));
+			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
+			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
+			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (cli default:false, server default: true)"));
 
 			options.addOption(
 					new Option("a", "array", false, "parse a sequence of json entities from the input stream, "
@@ -203,6 +204,7 @@ public class JtlMain {
 			String expr = null;
 			int port = 7718; // default port
 			String bindAddress = null;
+			int threads = 20;
 
 			CommandLineParser parser = new GnuParser();
 			CommandLine cli;
@@ -220,6 +222,9 @@ public class JtlMain {
 			if (cli.hasOption('v')) {
 				verbose = true;
 			}
+			if (cli.hasOption('t')) {
+				threads = Integer.parseInt(cli.getOptionValue('t'));
+			}
 
 			if (cli.hasOption('l')) {
 				logLevel = cli.getOptionValue('l');
@@ -227,20 +232,26 @@ public class JtlMain {
 				logLevel = "info";
 			}
 			ConsoleAppender console = new ConsoleAppender();
-			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+			String PATTERN = "%d [%p|%c|%C{1}] %n";
 			console.setLayout(new PatternLayout(PATTERN));
 			console.setThreshold(Level.toLevel(logLevel, Level.ERROR));
 			console.activateOptions();
 			console.setWriter(new OutputStreamWriter(System.err, "UTF-8"));
+
 			org.apache.log4j.Logger.getRootLogger().addAppender(console);
-
 			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel(logLevel));
-
+			
 			logger = LoggerFactory.getLogger(JtlMain.class);
+
+			
+			logger.info("starting thread-pool with a concurrency of " + threads);
+			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
 
 			String oo;
 
 			if (cli.hasOption('r')) {
+				
+				 // not yet supported
 				replMode = true;
 			}
 			if (cli.hasOption('p') || cli.hasOption("port")) {

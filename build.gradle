@@ -8,7 +8,7 @@
  */
 
 group='org.dykman'
-version='0.9.20'
+version='0.9.21'
 
 
 
@@ -155,6 +155,8 @@ dependencies {
 }
 
 compileJava.dependsOn antlr4
+distZip.dependsOn test
+build.dependsOn distZip
 
 sourceSets.main.java.srcDirs += "target/generated-sources/antlr4"
 
