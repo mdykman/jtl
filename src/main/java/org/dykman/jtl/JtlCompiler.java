@@ -146,7 +146,10 @@ System.err.println("ERROR HANDLER CALLED");
 			FutureInstructionValue<JSON> v = visitor.visit(tree);
 			return FutureInstructionFactory.fixContextData(v.inst);
 //		} catch(ParseCancellationException e) {
-			
+		} catch(JtlParseException e) {
+			logger.error(e.report(),e);
+			return FutureInstructionFactory.value(jsonBuilder.value(), 
+					SourceInfo.internal("parser"));
 		} catch(Exception e) {
 			logger.error(e.getLocalizedMessage(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
@@ -241,6 +244,7 @@ System.err.println("ERROR HANDLER CALLED");
 		define(context, "omap", omap(meta));
 		define(context, "amend", amend(meta));
 		define(context, "keys", keys(meta));
+		define(context, "rekey", rekey(meta));
 
 
 		// 0 args: return boolean type test

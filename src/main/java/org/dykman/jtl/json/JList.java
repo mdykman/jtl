@@ -26,7 +26,7 @@ public class JList extends JSONArray {
 	}
 
 	public void add(JSON j) {
-		add(j,false);
+		if(j!=null) add(j,false);
 	}
 	
 	public void add(JSON j,boolean dontclone) {

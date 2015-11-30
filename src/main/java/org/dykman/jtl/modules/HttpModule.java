@@ -65,6 +65,7 @@ public class HttpModule extends AbstractModule {
 		context.define("delete", _deleteInstruction(meta, context.builder()));
 		context.define("patch", _patchInstruction(meta, context.builder()));
 		context.define("form", _formInstruction(meta, context.builder()));
+
 		context.define("enc", new AbstractFutureInstruction(meta) {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -85,6 +86,7 @@ public class HttpModule extends AbstractModule {
 				});
 			}
 		});
+		
 		context.define("dec", new AbstractFutureInstruction(meta) {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -172,17 +174,20 @@ public class HttpModule extends AbstractModule {
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
-									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+//									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									String ss = av.stringValue();
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
-								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+//								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								String ss = pp.s.stringValue();
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}
-					} catch (UnsupportedEncodingException e) {
-						throw new RuntimeException(e);
-					}
+//					} catch (UnsupportedEncodingException e) {
+//						throw new RuntimeException(e);
+					} finally 
+					{}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
 				return get;
@@ -208,7 +213,8 @@ public class HttpModule extends AbstractModule {
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
-								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+//								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								String ss = pp.s.stringValue();
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}

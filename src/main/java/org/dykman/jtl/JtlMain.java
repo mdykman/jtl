@@ -232,7 +232,7 @@ public class JtlMain {
 				logLevel = "info";
 			}
 			ConsoleAppender console = new ConsoleAppender();
-			String PATTERN = "%d [%p|%c|%C{1}] %n";
+			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
 			console.setLayout(new PatternLayout(PATTERN));
 			console.setThreshold(Level.toLevel(logLevel, Level.ERROR));
 			console.activateOptions();
@@ -406,6 +406,7 @@ public class JtlMain {
 				server.join();
 
 			} else {
+				// cli
 				JtlMain.setVerbose(verbose);
 				if (jtl == null) {
 					// if not specified with a switch, the script must be the
@@ -437,13 +438,27 @@ public class JtlMain {
 						logger.info("evaluating file: " + jtl.getAbsolutePath());
 					}
 				}
-				FutureInstruction<JSON> inst = expr == null ? main.compile(jtl) : main.compile(expr);
-				String source = expr != null ? "--expr" : jtl.getPath();
+				FutureInstruction<JSON> inst = null;
 				PrintWriter pw;
-				if (output == null) {
-					pw = new PrintWriter(System.out);
-				} else {
-					pw = new PrintWriter(output, "UTF-8");
+				String source;
+				try {
+					inst = expr == null ? main.compile(jtl) : main.compile(expr);
+					source = expr != null ? "--expr" : jtl.getPath();
+					if (output == null) {
+						pw = new PrintWriter(System.out);
+					} else {
+						pw = new PrintWriter(output, "UTF-8");
+					}
+				} catch(JtlParseException e) {
+					System.err.println("----------------------------------------------");
+					System.err.println(e.report());
+					logger.error(e.report());
+					return;
+				}
+				catch(Exception e) {
+					System.err.println(e.getLocalizedMessage());
+					logger.error(e.getLocalizedMessage());
+					return; 
 				}
 				JSON result;
 				JSON data;
@@ -485,6 +500,9 @@ public class JtlMain {
 					}
 				}
 
+				// catch
+				
+				
 				if (replMode) {
 					logger.info("starting console");
 					AsyncExecutionContext<JSON> context = main.createInitialContext(data, cexddir, init);

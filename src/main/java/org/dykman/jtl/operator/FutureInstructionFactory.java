@@ -71,7 +71,7 @@ public class FutureInstructionFactory {
 	public static FutureInstruction<JSON> memo(SourceInfo meta, final FutureInstruction<JSON> inst) {
 		if (inst instanceof MemoInstructionFuture)
 			return inst;
-//		meta.name = "memo";
+		// meta.name = "memo";
 		return new MemoInstructionFuture(meta, inst);
 	}
 
@@ -881,9 +881,7 @@ public class FutureInstructionFactory {
 
 								@Override
 								public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
-									JSONArray f = isList ?  
-										context.builder().list() :  
-										context.builder().array(null);
+									JSONArray f = isList ? context.builder().list() : context.builder().array(null);
 									for (JSON j : input) {
 										f.add(j);
 									}
@@ -1162,13 +1160,9 @@ public class FutureInstructionFactory {
 
 	}
 
-	public static FutureInstruction<JSON> errorHandler(
-			final AsyncExecutionContext<JSON> context,
-			final FutureInstruction<JSON> inst,
-			final FutureInstruction<JSON> handler,
-			final SourceInfo meta) {
+	public static FutureInstruction<JSON> errorHandler(final AsyncExecutionContext<JSON> context,
+			final FutureInstruction<JSON> inst, final FutureInstruction<JSON> handler, final SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
-			
 
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
@@ -1181,20 +1175,23 @@ public class FutureInstructionFactory {
 								return delegate().get();
 							} catch (Exception e) {
 								try {
-									return handler.call(context, data).get();	
-								} catch (java.util.concurrent.ExecutionException|InterruptedException | ExecutionException e1) {
+									return handler.call(context, data).get();
+								} catch (java.util.concurrent.ExecutionException | InterruptedException
+										| ExecutionException e1) {
 									throw new RuntimeException("catastrophic error while error handling", e1);
 								}
 							}
 						}
+
 						@Override
-						public JSON get(long timeout,TimeUnit unit) {
+						public JSON get(long timeout, TimeUnit unit) {
 							try {
-								return delegate().get(timeout,unit);
+								return delegate().get(timeout, unit);
 							} catch (Exception e) {
 								try {
-									return handler.call(context, data).get(timeout,unit);
-								} catch (java.util.concurrent.ExecutionException|InterruptedException | ExecutionException | TimeoutException e1) {
+									return handler.call(context, data).get(timeout, unit);
+								} catch (java.util.concurrent.ExecutionException | InterruptedException
+										| ExecutionException | TimeoutException e1) {
 									throw new RuntimeException("catastrophic error while error handling", e1);
 								}
 							}
@@ -1214,26 +1211,23 @@ public class FutureInstructionFactory {
 					Throwable e) throws ExecutionException {
 				JSONBuilder builder = context.builder();
 				List<FutureInstruction<JSON>> iargs = new ArrayList<>(2);
-				iargs.add(FutureInstructionFactory.value(
-						builder.value(e.getLocalizedMessage()), source));
-				FutureInstruction<JSON> eh = new FunctionInvocationInstruction(
-						source, "error", iargs, handler);
+				iargs.add(FutureInstructionFactory.value(builder.value(e.getLocalizedMessage()), source));
+				FutureInstruction<JSON> eh = new FunctionInvocationInstruction(source, "error", iargs, handler);
 
 				return eh.call(context, immediateCheckedFuture(si.toJson(builder)));
 			}
-			
-			protected ListenableFuture<JSON> handleException(
-					AsyncExecutionContext<JSON> ctx,Exception e) {
+
+			protected ListenableFuture<JSON> handleException(AsyncExecutionContext<JSON> ctx, Exception e) {
 				ctx.exception(e);
 				Throwable t = e;
 				SourceInfo si;
 
-				if(!(t instanceof java.util.concurrent.ExecutionException)) {
+				if (!(t instanceof java.util.concurrent.ExecutionException)) {
 					t = t.getCause();
 				}
 
 				// TODO:: this exception digging could be more robust
-				if(!(t instanceof ExecutionException)) {
+				if (!(t instanceof ExecutionException)) {
 					t = t.getCause();
 				}
 				if (t instanceof ExecutionException) {
@@ -1423,13 +1417,16 @@ public class FutureInstructionFactory {
 			@Override
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> data) throws ExecutionException {
-				final FutureInstruction<JSON> arg = context.getdef("1");
+				FutureInstruction<JSON> arg = context.getdef("1");
 				if (arg == null)
 					return immediateFailedCheckedFuture(
 							new ExecutionException("write() requires a filename argument", meta));
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
 				ll.add(data);
 				ll.add(arg.call(context, data));
+				arg = context.getdef("2");
+				if (arg != null)
+					ll.add(arg.call(context, data));
 				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
 					@Override
@@ -1438,15 +1435,35 @@ public class FutureInstructionFactory {
 						final JSON d = jit.next();
 						JSON a = jit.next();
 						final String l = stringValue(a);
+						a = jit.hasNext() ? jit.next() : null;
+						int ind = 2;
+						boolean fq = true;
+						if (a != null) {
+							if (a instanceof JSONObject) {
+								JSONObject fc = (JSONObject) a;
+								JSON j = fc.get("indent");
+								if (j != null) {
+									ind = ((JSONValue) j).longValue().intValue();
+								}
+								j = fc.get("quote");
+								if (j != null) {
+									fq = ((JSONValue) j).booleanValue();
+								}
+							} else if (a instanceof JSONValue) {
+								ind = ((JSONValue) a).longValue().intValue();
+							}
+						}
+						final int indent = ind;
+						final boolean ffq = fq;
 						Callable<JSON> cc = new Callable<JSON>() {
-
 							@Override
 							public JSON call() throws Exception {
+								logger.info("writing json to file " + l);
 								FileWriter fw = new FileWriter(l);
-								d.write(fw, 3, true);
+								d.write(fw, indent, ffq);
 								fw.flush();
 								fw.close();
-								return context.builder().value(0);
+								return context.builder().value(true);
 							}
 						};
 						return context.executor().submit(cc);
@@ -1727,6 +1744,48 @@ public class FutureInstructionFactory {
 		};
 	}
 
+	public static FutureInstruction<JSON> rekey(SourceInfo meta) {
+		meta.name = "rekey";
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(
+					final AsyncExecutionContext<JSON> context, 
+					final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				List<ListenableFuture<JSON>> ll = new ArrayList<>();
+				ll.add(data);
+				FutureInstruction<JSON> inst = context.getdef("1");
+				ll.add(inst.call(context, data));
+				return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+						Iterator<JSON> jit = input.iterator();
+						JSON dat = jit.next();
+						if(dat instanceof JSONArray) {
+							JSON jkey = jit.hasNext() ? jit.next() : null;
+							if(jkey!=null) {
+								String k  = jkey.stringValue();
+								JSONObject obj = context.builder().object(null);
+								for(JSON j: (JSONArray) dat) {
+									if(j instanceof JSONObject) {
+										JSONObject jo = (JSONObject)j;
+										JSON jv = jo.get(k);
+										if(jv!=null) {
+											obj.put(jv.stringValue(), jo);
+										}
+									}
+								}
+								return immediateCheckedFuture(obj);
+							}
+						}
+						return data;
+					}
+				});
+			}
+		};
+	}
 	public static FutureInstruction<JSON> trace(SourceInfo meta) {
 		meta.name = "trace";
 		return new AbstractFutureInstruction(meta) {
@@ -1748,7 +1807,7 @@ public class FutureInstructionFactory {
 					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
 						Iterator<JSON> jit = input.iterator();
 						JSON d = jit.next();
-						System.err.println(si.toString());
+						System.err.println(si.toString(context));
 						/*
 						 * StringBuilder sb = new StringBuilder();
 						 * sb.append(si.name).append(" "
@@ -1758,7 +1817,7 @@ public class FutureInstructionFactory {
 						 */
 						while (jit.hasNext()) {
 							JSON pi = jit.next();
-							System.err.println("  " + pi.toString());
+							System.err.println("  " + pi.toString(2,true));
 						}
 						return immediateCheckedFuture(d);
 					}
@@ -2276,10 +2335,11 @@ public class FutureInstructionFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						JList frame = context.builder().list(null);
-						this.apply(input,frame);
+						this.apply(input, frame);
 						return immediateCheckedFuture(frame);
 					}
-					public void apply(JSON input,JList frame) throws Exception {	
+
+					public void apply(JSON input, JList frame) throws Exception {
 						switch (input.getType()) {
 						case LIST:
 							for (JSON j : (JSONArray) input) {
@@ -2511,11 +2571,13 @@ public class FutureInstructionFactory {
 					throws ExecutionException {
 				FutureInstruction<JSON> arg1 = context.getdef("1");
 				FutureInstruction<JSON> arg2 = context.getdef("2");
-				if(arg2 ==null) throw new ExecutionException("try requires 2 arguments",SourceInfo.internal("try"));
+				if (arg2 == null)
+					throw new ExecutionException("try requires 2 arguments", SourceInfo.internal("try"));
 				return errorHandler(context, arg1, arg2, meta).call(context, data);
 			}
 		};
 	}
+
 	// rank: all
 	public static FutureInstruction<JSON> mkdirs(SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
@@ -2536,6 +2598,7 @@ public class FutureInstructionFactory {
 			}
 		};
 	}
+
 	// rank: all
 	public static FutureInstruction<JSON> dereference(SourceInfo meta, final FutureInstruction<JSON> a,
 			final List<FutureInstruction<JSON>> b) {
@@ -2677,7 +2740,8 @@ public class FutureInstructionFactory {
 							break;
 						default:
 							return immediateCheckedFuture(context.builder().value());
-//							throw new ExecutionException("illegal reference expression", source);
+						// throw new ExecutionException("illegal reference
+						// expression", source);
 						}
 
 						List<ListenableFuture<JSON>> ll = new ArrayList<>();
@@ -2864,7 +2928,7 @@ public class FutureInstructionFactory {
 						if (kj != null) {
 							final String ks = stringValue(kj);
 							if (ai != null && jd.getType() == JSONType.OBJECT) {
-								context.define(":", value(immediateCheckedFuture(context.builder().value(ks)),source));
+								context.define(":", value(immediateCheckedFuture(context.builder().value(ks)), source));
 								return transform(ai.call(context, data),
 										new KeyedAsyncFunction<JSON, JSON, String>(ks) {
 									@Override
@@ -3177,7 +3241,7 @@ public class FutureInstructionFactory {
 			public Long op(AsyncExecutionContext<JSON> eng, Long l, Long r) {
 				return l % r;
 			}
-		},true);
+		}, true);
 	}
 
 	public static FutureInstruction<JSON> isValue(SourceInfo meta) {
@@ -3337,14 +3401,10 @@ public class FutureInstructionFactory {
 					return immediateCheckedFuture(input);
 
 				}
-/*				
-				boolean proceed = false;
-				for (JSONType t : types) {
-					if (t.equals(type)) {
-						proceed = true;
-					}
-				}
-				*/
+				/*
+				 * boolean proceed = false; for (JSONType t : types) { if
+				 * (t.equals(type)) { proceed = true; } }
+				 */
 				final JSONArray destarr = builder.array(input.getParent());
 				if (type == JSONType.LIST) {
 					for (JSON j : (JSONArray) input) {
