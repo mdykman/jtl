@@ -215,6 +215,7 @@ System.err.println("ERROR HANDLER CALLED");
 		define(context, "url", url(meta));
 		define(context, "write", write(meta));
 		define(context, "mkdirs", mkdirs(meta));
+		define(context, "fexists", fexists(meta));
 			
 		// string-oriented
 		define(context, "split", split(meta));

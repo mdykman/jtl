@@ -80,8 +80,11 @@ public class HttpModule extends AbstractModule {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						String s = input.stringValue();
-						return Futures.immediateCheckedFuture(context.builder().value(URLEncoder.encode(s, "UTF-8")));
+						if(input !=null) {
+							String s = input.stringValue();
+							if(s!=null) return Futures.immediateCheckedFuture(context.builder().value(URLEncoder.encode(s, "UTF-8")));
+						}
+						return Futures.immediateCheckedFuture(context.builder().value());
 					}
 				});
 			}

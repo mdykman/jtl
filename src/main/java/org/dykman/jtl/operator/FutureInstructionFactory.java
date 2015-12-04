@@ -1395,7 +1395,7 @@ public class FutureInstructionFactory {
 							JSONBuilder builder = context.builder();
 							String ds = stringValue(d);
 							String as = stringValue(a);
-							String[] sas = ds.split(as);
+							String[] sas = ds!=null ? ds.split(as) : new String[0];
 							JSONArray arr = builder.array(a.getParent());
 							for (String s : sas) {
 								arr.add(builder.value(s));
@@ -1744,6 +1744,27 @@ public class FutureInstructionFactory {
 		};
 	}
 
+	public static FutureInstruction<JSON> fexists(SourceInfo meta) {
+		meta.name = "fexists";
+		return new AbstractFutureInstruction(meta) {
+			@Override
+			public ListenableFuture<JSON> _call(
+					final AsyncExecutionContext<JSON> context, 
+					final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> f = context.getdef("1");
+				if(f == null) throw new ExecutionException("1 argument required for fexists",source);
+				return transform(f.call(context, data), new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String s = input.stringValue();
+						if(s == null) throw new ExecutionException("1 argument required for fexists",source);
+						return immediateCheckedFuture(context.builder().value(new File(s).exists()));
+					}
+				});
+			}
+		};
+	}
 	public static FutureInstruction<JSON> rekey(SourceInfo meta) {
 		meta.name = "rekey";
 		return new AbstractFutureInstruction(meta) {
@@ -1767,9 +1788,9 @@ public class FutureInstructionFactory {
 							JSON jkey = jit.hasNext() ? jit.next() : null;
 							if(jkey!=null) {
 								String k  = jkey.stringValue();
-								JSONObject obj = context.builder().object(null);
+								final JSONObject obj = context.builder().object(null);
 								for(JSON j: (JSONArray) dat) {
-									if(j instanceof JSONObject) {
+									if(j!=null && j instanceof JSONObject) {
 										JSONObject jo = (JSONObject)j;
 										JSON jv = jo.get(k);
 										if(jv!=null) {
@@ -2663,7 +2684,8 @@ public class FutureInstructionFactory {
 											if (jj.isNumber()) {
 												int n = ((JSONValue) jj).longValue().intValue();
 												if (n < 0)
-													n = (n + sourceSize) % sourceSize;
+													if(sourceSize > 0 ) n = (n + sourceSize) % sourceSize;
+													else n = 0;
 												if (n < 0 || n > sourceSize) {
 													arr.add(JSONBuilderImpl.NULL);
 													// throw new
