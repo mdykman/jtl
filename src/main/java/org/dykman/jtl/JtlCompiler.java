@@ -45,12 +45,10 @@ public class JtlCompiler {
 	
 	static Logger logger = LoggerFactory.getLogger(JtlCompiler.class);
 
-	
 	final JSONBuilder jsonBuilder;
 	boolean trace;
 	boolean profile;
 	boolean imported;
-
 	
 	public JtlCompiler(JSONBuilder jsonBuilder) {
 		this(jsonBuilder, false, false, false);
@@ -177,6 +175,7 @@ System.err.println("ERROR HANDLER CALLED");
 		ctx.define(s, inst);
 	}
 
+	
 	public AsyncExecutionContext<JSON> createInitialContext(
 			JSON data, JSONObject config, File scriptBase, File init,
 			JSONBuilder builder, ListeningExecutorService les) throws IOException, ExecutionException {
@@ -190,77 +189,82 @@ System.err.println("ERROR HANDLER CALLED");
 		meta.source = meta.code;
 		meta.line = meta.position = 0;
 		// configurable: import, extend
-		define(context, "_", FutureInstructionFactory.value(df, meta));
+		define(context, "_", FutureInstructionFactory.value(df, SourceInfo.internal("input")));
 
-		define(context, "module", loadModule(meta, config));
-		define(context, "import", importInstruction(meta, config));
+		define(context, "module", loadModule(SourceInfo.internal("module"), config));
+		define(context, "import", importInstruction(SourceInfo.internal("import"), config));
 
 		
-		define(context, "try", attempt(meta));
+		define(context, "try", attempt(SourceInfo.internal("try")));
 
 		// general
-		define(context, "error", defaultError(meta));
-		define(context, "params", params(meta));
-		define(context, "rand", rand(meta));
-		define(context, "switch", switchInst(meta));
-		define(context, "each", each(meta));
-		define(context, "defined", defined(meta));
-		define(context, "call", call(meta));
-		define(context, "thread", thread(meta));
-		define(context, "type", type(meta));
-		define(context, "trace", trace(meta));
+		define(context, "error", defaultError(SourceInfo.internal("error")));
+		define(context, "params", params(SourceInfo.internal("params")));
+		define(context, "rand", rand(SourceInfo.internal("rand")));
+		define(context, "switch", switchInst(SourceInfo.internal("switch")));
+		define(context, "each", each(SourceInfo.internal("each")));
+		define(context, "defined", defined(SourceInfo.internal("defined")));
+		define(context, "call", call(SourceInfo.internal("call")));
+		define(context, "thread", thread(SourceInfo.internal("thread")));
+		define(context, "type", type(SourceInfo.internal("type")));
+		define(context, "trace", trace(SourceInfo.internal("trace")));
+		define(context, "log", log(SourceInfo.internal("trace")));
+		define(context, "digest", digest(SourceInfo.internal("digest")));
 
 		// external data
-		define(context, "file", file(meta));
-		define(context, "url", url(meta));
-		define(context, "write", write(meta));
-		define(context, "mkdirs", mkdirs(meta));
-		define(context, "fexists", fexists(meta));
+		define(context, "file", file(SourceInfo.internal("file")));
+		define(context, "url", url(SourceInfo.internal("url")));
+		define(context, "write", write(SourceInfo.internal("write")));
+		define(context, "mkdirs", mkdirs(SourceInfo.internal("nkdirs")));
+		define(context, "fexists", fexists(SourceInfo.internal("fexists")));
 			
 		// string-oriented
-		define(context, "split", split(meta));
-		define(context, "join", join(meta));
-		define(context, "substr", substr(meta));
-		define(context, "sprintf", sprintf(meta));
+		define(context, "split", split(SourceInfo.internal("split")));
+		define(context, "join", join(SourceInfo.internal("join")));
+		define(context, "substr", substr(SourceInfo.internal("substr")));
+		define(context, "sprintf", sprintf(SourceInfo.internal("sprintf")));
+		define(context, "upper", tocase(SourceInfo.internal("sprintf"),true));
+		define(context, "lower", tocase(SourceInfo.internal("sprintf"),false));
+		
 
 		// list-oriented
-		define(context, "unique", unique(meta));
-		define(context, "count", count(meta));
-		define(context, "sort", sort(meta, false));
-		define(context, "rsort", sort(meta, true));
-		define(context, "filter", filter(meta));
-		define(context, "contains", contains(meta));
-		define(context, "copy", copy(meta));
-		define(context, "append", append(meta));
-		define(context, "sum", sum(meta));
-		define(context, "min", min(meta));
-		define(context, "max", max(meta));
-		define(context, "avg", avg(meta));
-		define(context, "pivot", pivot(meta));
+		define(context, "unique", unique(SourceInfo.internal("unique")));
+		define(context, "count", count(SourceInfo.internal("count")));
+		define(context, "sort", sort(SourceInfo.internal("sort"), false));
+		define(context, "rsort", sort(SourceInfo.internal("rsort"), true));
+		define(context, "filter", filter(SourceInfo.internal("filter")));
+		define(context, "contains", contains(SourceInfo.internal("contains")));
+		define(context, "copy", copy(SourceInfo.internal("copy")));
+		define(context, "append", append(SourceInfo.internal("append")));
+		define(context, "sum", sum(SourceInfo.internal("sum")));
+		define(context, "min", min(SourceInfo.internal("min")));
+		define(context, "max", max(SourceInfo.internal("max")));
+		define(context, "avg", avg(SourceInfo.internal("avg")));
+		define(context, "pivot", pivot(SourceInfo.internal("pivot")));
 
 		// object-oriented
-		define(context, "group", groupBy(meta));
-		define(context, "map", map(meta));
-		define(context, "collate", collate(meta));
-		define(context, "omap", omap(meta));
-		define(context, "amend", amend(meta));
-		define(context, "keys", keys(meta));
-		define(context, "rekey", rekey(meta));
+		define(context, "group", groupBy(SourceInfo.internal("group")));
+		define(context, "map", map(SourceInfo.internal("map")));
+		define(context, "collate", collate(SourceInfo.internal("collate")));
+		define(context, "omap", omap(SourceInfo.internal("omap")));
+		define(context, "amend", amend(SourceInfo.internal("amend")));
+		define(context, "keys", keys(SourceInfo.internal("keys")));
+		define(context, "rekey", rekey(SourceInfo.internal("rekey")));
 
 
 		// 0 args: return boolean type test
 		// 1 arg: attempts to coerce to the specified type
-		define(context, "array", isArray(meta));
-		define(context, "number", isNumber(meta));
-		define(context, "int", isInt(meta));
-		define(context, "real", isReal(meta));
-		define(context, "string", isString(meta));
-		define(context, "boolean", isBoolean(meta));
+		define(context, "array", isArray(SourceInfo.internal("array")));
+		define(context, "number", isNumber(SourceInfo.internal("number")));
+		define(context, "int", isInt(SourceInfo.internal("int")));
+		define(context, "real", isReal(SourceInfo.internal("real")));
+		define(context, "string", isString(SourceInfo.internal("string")));
+		define(context, "boolean", isBoolean(SourceInfo.internal("boolean")));
 
 		// 0 args: boolean type test only
-		define(context, "nil", isNull(meta));
-		define(context, "value", isValue(meta));
-		define(context, "object", isObject(meta));
+		define(context, "nil", isNull(SourceInfo.internal("nil")));
+		define(context, "value", isValue(SourceInfo.internal("value")));
+		define(context, "object", isObject(SourceInfo.internal("object")));
 
 		AsyncExecutionContext<JSON> ctx = context;
 		if (init != null) {
@@ -268,10 +272,9 @@ System.err.println("ERROR HANDLER CALLED");
 			ctx.setInit(true);
 			FutureInstruction<JSON> initf = parse(init);
 			ListenableFuture<JSON> initResult = initf.call(ctx, Futures.immediateCheckedFuture(config));
-			ctx.define("init", FutureInstructionFactory.value(initResult, meta));
+			ctx.define("init", FutureInstructionFactory.value(initResult, SourceInfo.internal("init")));
 		}
 		ctx.setInit(true);
 		return ctx;
 	}
-
 }

@@ -73,7 +73,7 @@ public class SourceInfo {
             sb.append("  ");
          }
       }
-      formatter.format("%8s %d:%d-%d:%d %s", name, line, position, endline, endposition, code);
+      formatter.format(" %12s %d:%d-%d:%d", name, line, position, endline, endposition);
       formatter.close();
       return sb.toString();
    }

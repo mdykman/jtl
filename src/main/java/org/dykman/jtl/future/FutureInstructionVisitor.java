@@ -335,7 +335,9 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			return visitTern_expr(tc);
 		FutureInstructionValue<JSON> a = visitRe_expr(ctx.re_expr());
 		String s = visitString(ctx.string()).string;
-		return new FutureInstructionValue<>(reMatch(getSource(ctx), s, a.inst));
+		SourceInfo si = getSource(ctx);
+		si.name="rematch";
+		return new FutureInstructionValue<>(reMatch(si, s, a.inst));
 	}
 
 	@Override

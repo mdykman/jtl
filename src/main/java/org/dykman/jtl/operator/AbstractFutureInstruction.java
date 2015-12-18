@@ -95,6 +95,22 @@ public abstract class AbstractFutureInstruction implements
       return r;
    }
 
+   protected List<FutureInstruction<JSON>> args(AsyncExecutionContext<JSON> context,int minArgs) 
+   	throws ExecutionException
+   {
+	   int cc = 1;
+	   List<FutureInstruction<JSON>> ll = new ArrayList<>();
+	   while(true) {
+		   FutureInstruction<JSON> inst = context.getdef(Integer.toString(cc++));
+		   if(inst == null) break;
+		   ll.add(inst);
+	   }
+	   if(ll.size()< minArgs) {
+		   throw new ExecutionException("too few arguments: required " + minArgs + 
+				   ", provided " + ll.size(),source);
+	   }
+	   return ll;
+   }
    public abstract ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
          throws ExecutionException;
 

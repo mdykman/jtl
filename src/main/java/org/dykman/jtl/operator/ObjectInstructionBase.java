@@ -76,7 +76,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 				fields.add(ii);
 			}
 		}
-		if(init != null || imperitives.size() > 0 || (isContextObject && (fields.size() > 0))) {
+		if(init != null || imperitives.size() > 0 || fields.size() > 0 || isContextObject) {
 			context = context.createChild(false, false, data, source);
 		}
 		final      AsyncExecutionContext<JSON> ctx = context;
