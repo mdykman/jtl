@@ -84,7 +84,8 @@ public abstract class AbstractFutureInstruction implements
                      }
                   });
                }
-               return _call(context, Futures.immediateCheckedFuture(input));
+//               return _call(context.createChild(false, false, null, source),
+               return _call(context,Futures.immediateCheckedFuture(input));
             }
          });
       }      

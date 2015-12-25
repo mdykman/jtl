@@ -66,6 +66,7 @@ public interface AsyncExecutionContext<T> {
 
 	public boolean isInclude();
 
+	public SourceInfo getSourceInfo();
 	public Object get(String key);
 
 	public void set(String key, Object o);

@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,8 +130,59 @@ public class FutureInstructionFactory {
 				});
 			}
 		};
-	}
 
+	
+	}
+	public static FutureInstruction<JSON> stack(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				
+				AsyncExecutionContext<JSON> c = context;
+				while(c!=null) {
+					SourceInfo si = c.getSourceInfo();
+					System.err.println("\t" + si.toString(null));
+					c=c.getParent();
+				}
+				// TODO Auto-generated method stub
+				return data;
+			}
+		};
+	}
+	
+	public static FutureInstruction<JSON> counter(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> inst = context.getdef("1");
+				if(inst==null) throw new ExecutionException("counter requires a name",source);
+				return transform(inst.call(context, data),new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						AsyncExecutionContext<JSON> rc = context.getRuntime();
+						AtomicLong lo = (AtomicLong) rc.get(input.stringValue());
+						if(lo == null) {
+							synchronized(this) {
+								lo = (AtomicLong) rc.get(input.stringValue());
+								if(lo == null) {
+									lo = new AtomicLong(0);
+									rc.set(input.stringValue(),lo);
+								}
+							}
+						}
+						return immediateCheckedFuture(context.builder().value(lo.incrementAndGet()));
+					}
+				});
+			}
+		};
+	}
+	
+	
 	static Random random = new Random();
 
 	public static FutureInstruction<JSON> rand(SourceInfo meta) {
@@ -870,7 +922,8 @@ public class FutureInstructionFactory {
 							final boolean isList = input instanceof JList;
 							List<ListenableFuture<JSON>> ll = new ArrayList<>();
 							for (JSON j : (JSONArray) input) {
-								ll.add(inst.call(context, immediateCheckedFuture(j)));
+//								ll.add(inst.call(context.createChild(false, false, null, source), 
+								ll.add(inst.call(context,immediateCheckedFuture(j)));
 							}
 							return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
 
@@ -1746,6 +1799,7 @@ public class FutureInstructionFactory {
 			}
 		};
 	}
+	
 	public static FutureInstruction<JSON> rekey(SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
 
@@ -1774,8 +1828,14 @@ public class FutureInstructionFactory {
 										JSONObject jo = (JSONObject)j;
 										JSON jv = jo.get(k);
 										if(jv!=null) {
-											obj.put(jv.stringValue(), jo);
+											String sk = jv.stringValue();
+											if(sk!=null) obj.put(sk, jo);
+											else {
+												logger.warn("dropping object during rekey(); key " + k + " not found");
+											}
 										}
+									} else {
+										logger.warn("dropping value during rekey(" + k + "), not an object");
 									}
 								}
 								return immediateCheckedFuture(obj);

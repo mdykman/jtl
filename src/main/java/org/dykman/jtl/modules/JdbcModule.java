@@ -44,8 +44,7 @@ public class JdbcModule extends AbstractModule {
 		JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException;
 	}
 
-	
-//	final JSONObject baseConfig;
+	// final JSONObject baseConfig;
 	final String key;
 	boolean debug = false;
 	static Logger logger = LoggerFactory.getLogger(JdbcModule.class);
@@ -53,9 +52,9 @@ public class JdbcModule extends AbstractModule {
 	final Executor queryExecutor;
 	final Executor insertExecutor;
 
-	public JdbcModule(String key,JSONObject config) {
-		super(key,config);
-//		this.baseConfig = config;
+	public JdbcModule(String key, JSONObject config) {
+		super(key, config);
+		// this.baseConfig = config;
 		JSON j = config.get("debug");
 		if (j != null)
 			debug = j.isTrue();
@@ -85,7 +84,7 @@ public class JdbcModule extends AbstractModule {
 
 			@Override
 			public JSON process(PreparedStatement stat, String query, JSONBuilder builder) throws SQLException {
-				
+
 				int res = stat.executeUpdate();
 				final String idstat;
 				if (insertIdExpr != null) {
@@ -129,7 +128,6 @@ public class JdbcModule extends AbstractModule {
 			}
 		};
 	}
-
 
 	class JdbcConnectionWrapper {
 		final JSONObject conf;
@@ -279,7 +277,7 @@ public class JdbcModule extends AbstractModule {
 			return connection;
 		}
 
-		public FutureInstruction<JSON> query(SourceInfo meta, Executor exec,boolean isInsert) {
+		public FutureInstruction<JSON> query(SourceInfo meta, Executor exec, boolean isInsert) {
 			// Connection c = getConnection();
 			return new AbstractFutureInstruction(meta) {
 				@Override
@@ -292,7 +290,7 @@ public class JdbcModule extends AbstractModule {
 					ll.add(q.call(context, data));
 					if (p != null) {
 						ll.add(p.call(context, data));
-						if(inp!=null)
+						if (inp != null)
 							ll.add(inp.call(context, data));
 					}
 					return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
@@ -311,13 +309,13 @@ public class JdbcModule extends AbstractModule {
 									Connection connection = getConnection(source, context);
 									synchronized (connection) {
 										PreparedStatement prep;
-										if(isInsert) {
-											if(pp!=null && jit.hasNext()) {
+										if (isInsert) {
+											if (pp != null && jit.hasNext()) {
 												JSON kf = jit.next();
 												ArrayList<String> kkf = new ArrayList<>();
-												if(kf instanceof JSONArray) {
+												if (kf instanceof JSONArray) {
 													JSONArray ja = (JSONArray) kf;
-													for(JSON jj : ja) {
+													for (JSON jj : ja) {
 														kkf.add(jj.stringValue());
 													}
 													prep = connection.prepareStatement(stringValue(qq),
@@ -325,10 +323,11 @@ public class JdbcModule extends AbstractModule {
 
 												} else {
 													prep = connection.prepareStatement(stringValue(qq),
-															kkf.toArray(new String[] {kf.stringValue()}));
+															kkf.toArray(new String[] { kf.stringValue() }));
 												}
 											} else {
-												prep = connection.prepareStatement(stringValue(qq),Statement.RETURN_GENERATED_KEYS);
+												prep = connection.prepareStatement(stringValue(qq),
+														Statement.RETURN_GENERATED_KEYS);
 											}
 										} else {
 											prep = connection.prepareStatement(stringValue(qq));
@@ -390,7 +389,7 @@ public class JdbcModule extends AbstractModule {
 		SourceInfo si = meta.clone();
 		si.name = "query";
 		si.code = "*internal*";
-		context.define("query", wrapper.query(si, queryExecutor,false));
+		context.define("query", wrapper.query(si, queryExecutor, false));
 
 		si = meta.clone();
 		si.name = "cquery";
@@ -415,7 +414,7 @@ public class JdbcModule extends AbstractModule {
 				}
 				return obj;
 			}
-		},false));
+		}, false));
 
 		si = meta.clone();
 		si.name = "execute";
@@ -426,8 +425,8 @@ public class JdbcModule extends AbstractModule {
 				stat.execute();
 				return builder.value(true);
 			}
-		},false));
-		context.define("insert", wrapper.query(si, insertExecutor,true));
+		}, false));
+		context.define("insert", wrapper.query(si, insertExecutor, true));
 		return context.builder().value(1);
 
 	}
