@@ -8,10 +8,7 @@ import json;
 
 options {
     language = Java;
-    tokenVocab=jtllex;
-}
-
-@header {
+//    tokenVocab=jtllex;
 }
 
 
@@ -174,7 +171,12 @@ ff
      | ident '(' value (',' value )* ')' 
      ;
 
-
+anonfunc
+     : '`'  value   '`' '(' ')'
+     | '`'  value   '`'  '(' value (',' value )* ')'
+     | '`'  value   '`'
+     ;
+     
 funcderef
      : '$' ident '(' ')'
      | '$' ident '(' value (',' value )* ')'

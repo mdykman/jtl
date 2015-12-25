@@ -79,10 +79,14 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	public static boolean isSpecial(String s) {
 		return SimpleExecutionContext.isSpecial(s);
 	}
-
 	@Override
-
 	public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
+			throws ExecutionException {
+		return _call(context, data,null);
+	}
+
+	public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data,
+			List<FutureInstruction<JSON>> vsargs)
 			throws ExecutionException {
 		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
 		String ns = null;

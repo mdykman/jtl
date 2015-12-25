@@ -923,7 +923,7 @@ public class FutureInstructionFactory {
 
 				FutureInstruction<JSON> inst = context.getdef(name);
 				if (inst == null) {
-					throw new ExecutionException(source);
+					throw new ExecutionException("no function found with name " + name + " in activate",source);
 				}
 				// inst = inst.unwrap(context);
 				// if(inst instanceof DeferredCall) {
