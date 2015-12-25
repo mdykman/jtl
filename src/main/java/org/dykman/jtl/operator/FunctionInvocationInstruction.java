@@ -52,12 +52,16 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 			for (FutureInstruction<JSON> inst : iargs) {
 				String key = Integer.toString(cc++);
 				context.define(key, FutureInstructionFactory.memo(source,
-						FutureInstructionFactory.deferred(source, inst, dctx.declaringContext(), data)));
+						FutureInstructionFactory.deferred(source, inst, dctx, data)));
+//				FutureInstructionFactory.deferred(source, inst, dctx.declaringContext(), data)));
 				insts.add(inst);
 			}
 
+		/// TODO:: EXTENSION PARAMETERS ARE DISABLED !!!! 
+		/* 
  		// dctx.isFunctionContext();
 		if ((!variable) && dctx.declaringContext()!= dctx && fc != null) {
+			logger.warn("adding extention parameters");
 			int ss = 1;
 			while (true) {
 				String skey = Integer.toString(ss++);
@@ -65,13 +69,12 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 				if (si == null)
 					break;
 				String key = Integer.toString(cc++);
-				// context.define(key, new DeferredCall(source, si, ctx,
-				// data));
 				context.define(key, si);
 				insts.add(si);
 			}
 
 		}
+		*/
 		context.define("@", FutureInstructionFactory.paramArray(source, insts));
 		return context;
 	}
@@ -90,6 +93,9 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 			throws ExecutionException {
 		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
 		String ns = null;
+		if("combos".equals(name)) {
+			ns = null;
+		}
 		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data);
 		FutureInstruction<JSON> func = instruction;
 		if(func == null) {

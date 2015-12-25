@@ -7,21 +7,23 @@ import static org.dykman.jtl.operator.FutureInstructionFactory.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.BitSet;
 
-import org.antlr.v4.runtime.ANTLRErrorStrategy;
+import org.antlr.v4.runtime.ANTLRErrorListener;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.InputMismatchException;
-import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.dykman.jtl.jtlLexer;
 import org.dykman.jtl.jtlParser;
 import org.dykman.jtl.json.JSON;
@@ -98,42 +100,88 @@ public class JtlCompiler {
 		BailErrorStrategy bstrat = new BailErrorStrategy() {
 			@Override
 			public void reportError(Parser recognizer, RecognitionException re) {
-System.err.println("ERROR HANDLER CALLED");
-				RuleContext rc = re.getCtx();
-				IntervalSet is = re.getExpectedTokens();
-				System.err.println("error text: " + rc.getText());
-				for(Interval iv  : is.getIntervals()) {
-				//	iv.
+				Token unrecognized = re.getOffendingToken();
+				if(unrecognized!=null) {
+					logError("error",re,unrecognized);
+				} else {
+					logger.error("parser error");
 				}
 			}
 			@Override
 			public void reportInputMismatch(Parser recognizer, InputMismatchException ime) {
-				System.err.println("MISMATCH HANDLER CALLED");
-				RuleContext rc = ime.getCtx();
-				System.err.println("error text: " + rc.getText());
-				ime.getExpectedTokens();
+				Token unrecognized = ime.getOffendingToken();
+				if(unrecognized!=null) {
+					logError("mismatch",ime,unrecognized);
+				} else {
+					logger.error("parser mismatch");
+				}
 			}
-		    @Override
+
+			protected void logError(String msg,RecognitionException re, Token unrecognized) {
+				int line = unrecognized.getLine();
+				int index = unrecognized.getCharPositionInLine();
+				String text = unrecognized.getText();
+				StringBuilder builder = new StringBuilder();
+				builder.append(msg).append(" `").append(text)
+					.append("' at line ").append(line).append(":").append(index);
+				IntervalSet is = re.getExpectedTokens();
+				is.size();
+				
+				builder.append("; expecting one of: ");
+				for(Interval iv  : is.getIntervals()) {
+					is.toString(true);
+					builder.append(iv.toString()).append(" ");
+				}
+				logger.error(builder.toString());				
+			}
+
+			@Override
 		    public Token recoverInline(Parser recognizer)
 		        throws RecognitionException
 		    {
 				InputMismatchException e = new InputMismatchException(recognizer);
-				for (ParserRuleContext context = recognizer.getContext(); context != null; context = context.getParent()) {
-					context.exception = e;
-				}
-				Token t = recognizer.getCurrentToken();
-				throw new JtlParseException(t);
-				/*
-				System.err.print("error : " + t.getLine() + ':' + t.getStartIndex());
-				System.err.println(t.getText());
-				System.err.flush();
-		        throw new ParseCancellationException(e);
-		        */
+				throw e;
 		    }
-
-
 		};
-		parser.setErrorHandler(bstrat);
+//		parser.setErrorHandler(bstrat);
+		parser.addErrorListener(new ANTLRErrorListener() {
+			
+			@Override
+			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine,
+					String msg, RecognitionException e) {
+				StringBuilder builder = new StringBuilder();
+				builder.append(msg).append(" `").append(offendingSymbol.toString())
+					.append("' at line ").append(line).append(": ").append(charPositionInLine);
+
+				logger.error(builder.toString());
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction,
+					ATNConfigSet configs) {
+				// TODO Auto-generated method stub
+				
+				if(logger.isDebugEnabled()) logger.debug("ContextSensitivity");
+			}
+			
+			@Override
+			public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex,
+					BitSet conflictingAlts, ATNConfigSet configs) {
+				// TODO Auto-generated method stub
+				
+				if(logger.isDebugEnabled()) logger.debug("AttemptingFullContext");
+			}
+			
+			@Override
+			public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact,
+					BitSet ambigAlts, ATNConfigSet configs) {
+				// TODO Auto-generated method stub
+				if(logger.isDebugEnabled()) logger.debug("ambiguity detected");
+				
+			}
+		});
 		parser.setTrace(trace);
 		parser.setProfile(profile);
 		try {
@@ -170,18 +218,19 @@ System.err.println("ERROR HANDLER CALLED");
 	public JSONBuilder getJsonBuilder() {
 		return jsonBuilder;
 	}
-
+/*
 	public static void define(AsyncExecutionContext<JSON> ctx, String s, FutureInstruction<JSON> inst) {
 		ctx.define(s, inst);
 	}
-
+*/
 	
 	public AsyncExecutionContext<JSON> createInitialContext(
 			JSON data, JSONObject config, File scriptBase, File init,
 			JSONBuilder builder, ListeningExecutorService les) throws IOException, ExecutionException {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
-		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, scriptBase);
+		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, scriptBase,
+				SourceInfo.internal("initial"));
 		context.setExecutionService(les);
 
 		SourceInfo meta = new SourceInfo();
@@ -189,82 +238,88 @@ System.err.println("ERROR HANDLER CALLED");
 		meta.source = meta.code;
 		meta.line = meta.position = 0;
 		// configurable: import, extend
-		define(context, "_", FutureInstructionFactory.value(df, SourceInfo.internal("input")));
+		context.define("_", FutureInstructionFactory.value(df, SourceInfo.internal("input")));
 
-		define(context, "module", loadModule(SourceInfo.internal("module"), config));
-		define(context, "import", importInstruction(SourceInfo.internal("import"), config));
+		context.define( "module", loadModule(SourceInfo.internal("module"), config));
+		context.define( "import", importInstruction(SourceInfo.internal("import"), config));
 
 		
-		define(context, "try", attempt(SourceInfo.internal("try")));
+		context.define( "try", attempt(SourceInfo.internal("try")));
 
 		// general
-		define(context, "error", defaultError(SourceInfo.internal("error")));
-		define(context, "params", params(SourceInfo.internal("params")));
-		define(context, "rand", rand(SourceInfo.internal("rand")));
-		define(context, "switch", switchInst(SourceInfo.internal("switch")));
-		define(context, "each", each(SourceInfo.internal("each")));
-		define(context, "defined", defined(SourceInfo.internal("defined")));
-		define(context, "call", call(SourceInfo.internal("call")));
-		define(context, "thread", thread(SourceInfo.internal("thread")));
-		define(context, "type", type(SourceInfo.internal("type")));
-		define(context, "trace", trace(SourceInfo.internal("trace")));
-		define(context, "log", log(SourceInfo.internal("trace")));
-		define(context, "digest", digest(SourceInfo.internal("digest")));
+		context.define( "error", defaultError(SourceInfo.internal("error")));
+		context.define( "params", params(SourceInfo.internal("params")));
+		context.define( "rand", rand(SourceInfo.internal("rand")));
+		context.define( "switch", switchInst(SourceInfo.internal("switch")));
+		context.define( "each", each(SourceInfo.internal("each")));
+		context.define("defined",defined(SourceInfo.internal("defined")));
+		context.define( "call", call(SourceInfo.internal("call")));
+		context.define( "thread", thread(SourceInfo.internal("thread")));
+		context.define( "type", type(SourceInfo.internal("type")));
+		
+		// debugging, stderr
+		context.define( "trace", trace(SourceInfo.internal("trace")));
+		context.define( "stack", stack(SourceInfo.internal("stack")));
+		context.define( "log", log(SourceInfo.internal("log")));
+
+		// misc.
+		context.define( "counter", stack(SourceInfo.internal("counter")));
+		context.define( "digest", digest(SourceInfo.internal("digest")));
 
 		// external data
-		define(context, "file", file(SourceInfo.internal("file")));
-		define(context, "url", url(SourceInfo.internal("url")));
-		define(context, "write", write(SourceInfo.internal("write")));
-		define(context, "mkdirs", mkdirs(SourceInfo.internal("nkdirs")));
-		define(context, "fexists", fexists(SourceInfo.internal("fexists")));
-			
+		context.define( "file", file(SourceInfo.internal("file")));
+		context.define( "url", url(SourceInfo.internal("url")));
+		context.define( "write", write(SourceInfo.internal("write")));
+		context.define( "mkdirs", mkdirs(SourceInfo.internal("mkdirs")));
+		context.define( "fexists", fexists(SourceInfo.internal("fexists")));
+
 		// string-oriented
-		define(context, "split", split(SourceInfo.internal("split")));
-		define(context, "join", join(SourceInfo.internal("join")));
-		define(context, "substr", substr(SourceInfo.internal("substr")));
-		define(context, "sprintf", sprintf(SourceInfo.internal("sprintf")));
-		define(context, "upper", tocase(SourceInfo.internal("sprintf"),true));
-		define(context, "lower", tocase(SourceInfo.internal("sprintf"),false));
+		context.define( "split", split(SourceInfo.internal("split")));
+		context.define( "join", join(SourceInfo.internal("join")));
+		context.define( "substr", substr(SourceInfo.internal("substr")));
+		context.define( "sprintf", sprintf(SourceInfo.internal("sprintf")));
+		context.define( "upper", tocase(SourceInfo.internal("upper"),true));
+		context.define( "lower", tocase(SourceInfo.internal("lower"),false));
 		
 
 		// list-oriented
-		define(context, "unique", unique(SourceInfo.internal("unique")));
-		define(context, "count", count(SourceInfo.internal("count")));
-		define(context, "sort", sort(SourceInfo.internal("sort"), false));
-		define(context, "rsort", sort(SourceInfo.internal("rsort"), true));
-		define(context, "filter", filter(SourceInfo.internal("filter")));
-		define(context, "contains", contains(SourceInfo.internal("contains")));
-		define(context, "copy", copy(SourceInfo.internal("copy")));
-		define(context, "append", append(SourceInfo.internal("append")));
-		define(context, "sum", sum(SourceInfo.internal("sum")));
-		define(context, "min", min(SourceInfo.internal("min")));
-		define(context, "max", max(SourceInfo.internal("max")));
-		define(context, "avg", avg(SourceInfo.internal("avg")));
-		define(context, "pivot", pivot(SourceInfo.internal("pivot")));
+		context.define( "unique", unique(SourceInfo.internal("unique")));
+		context.define( "count", count(SourceInfo.internal("count")));
+		context.define( "sort", sort(SourceInfo.internal("sort"), false));
+		context.define( "rsort", sort(SourceInfo.internal("rsort"), true));
+		context.define( "filter", filter(SourceInfo.internal("filter")));
+		context.define( "contains", contains(SourceInfo.internal("contains")));
+		context.define( "copy", copy(SourceInfo.internal("copy")));
+		context.define( "append", append(SourceInfo.internal("append")));
+		context.define( "sum", sum(SourceInfo.internal("sum")));
+		context.define( "min", min(SourceInfo.internal("min")));
+		context.define( "max", max(SourceInfo.internal("max")));
+		context.define( "avg", avg(SourceInfo.internal("avg")));
+		context.define( "pivot", pivot(SourceInfo.internal("pivot")));
 
 		// object-oriented
-		define(context, "group", groupBy(SourceInfo.internal("group")));
-		define(context, "map", map(SourceInfo.internal("map")));
-		define(context, "collate", collate(SourceInfo.internal("collate")));
-		define(context, "omap", omap(SourceInfo.internal("omap")));
-		define(context, "amend", amend(SourceInfo.internal("amend")));
-		define(context, "keys", keys(SourceInfo.internal("keys")));
-		define(context, "rekey", rekey(SourceInfo.internal("rekey")));
+		context.define( "group", groupBy(SourceInfo.internal("group")));
+		context.define( "map", map(SourceInfo.internal("map")));
+		context.define( "collate", collate(SourceInfo.internal("collate")));
+		context.define( "omap", omap(SourceInfo.internal("omap")));
+		context.define( "amend", amend(SourceInfo.internal("amend")));
+		context.define( "keys", keys(SourceInfo.internal("keys")));
+		context.define( "rekey", rekey(SourceInfo.internal("rekey")));
 
 
 		// 0 args: return boolean type test
 		// 1 arg: attempts to coerce to the specified type
-		define(context, "array", isArray(SourceInfo.internal("array")));
-		define(context, "number", isNumber(SourceInfo.internal("number")));
-		define(context, "int", isInt(SourceInfo.internal("int")));
-		define(context, "real", isReal(SourceInfo.internal("real")));
-		define(context, "string", isString(SourceInfo.internal("string")));
-		define(context, "boolean", isBoolean(SourceInfo.internal("boolean")));
+		context.define( "array", isArray(SourceInfo.internal("array")));
+		context.define( "number", isNumber(SourceInfo.internal("number")));
+		context.define( "int", isInt(SourceInfo.internal("int")));
+		context.define( "real", isReal(SourceInfo.internal("real")));
+		context.define( "string", isString(SourceInfo.internal("string")));
+		context.define( "boolean", isBoolean(SourceInfo.internal("boolean")));
 
 		// 0 args: boolean type test only
-		define(context, "nil", isNull(SourceInfo.internal("nil")));
-		define(context, "value", isValue(SourceInfo.internal("value")));
-		define(context, "object", isObject(SourceInfo.internal("object")));
+		context.define( "nil", isNull(SourceInfo.internal("nil")));
+		context.define( "value", isValue(SourceInfo.internal("value")));
+		context.define( "object", isObject(SourceInfo.internal("object")));
 
 		AsyncExecutionContext<JSON> ctx = context;
 		if (init != null) {

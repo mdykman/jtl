@@ -163,7 +163,7 @@ public class JtlExecutor {
 			if (prog == null) {
 				prog = compiler.parse(execFile);
 				// per-script init context
-				AsyncExecutionContext<JSON> ctx = baseContext.createChild(false, false, null, null);
+				AsyncExecutionContext<JSON> ctx = baseContext.createChild(false, false, null, SourceInfo.internal("internal-init"));
 				ctx.setInit(true);
 				JSON j = executeScript(req, res, ctx, execFile, prog, selector, path, data);
 				contexts.put(p, ctx);
@@ -210,7 +210,7 @@ public class JtlExecutor {
 			if (boundContext == null) {
 				synchronized (this) {
 					if (boundContext == null) {
-						boundContext = baseContext.createChild(false, false, null, null);
+						boundContext = baseContext.createChild(false, false, null, SourceInfo.internal("pre-exec"));
 						boundContext.setInit(true);
 					}
 					return executeScript(req, res, boundContext, this.boundScript, boundInst, "/", parts, data);
@@ -270,7 +270,7 @@ public class JtlExecutor {
 
 	public AsyncExecutionContext<JSON> httpContext(HttpServletRequest req, HttpServletResponse res,
 			AsyncExecutionContext<JSON> parent, File execFile, String selector, String[] path) throws IOException {
-		AsyncExecutionContext<JSON> ctx = parent.createChild(false, false, null, null);
+		AsyncExecutionContext<JSON> ctx = parent.createChild(false, false, null, SourceInfo.internal("http-context"));
 		ctx.setRuntime(true);
 		// map the request arguments
 		JSONObject jrq = builder.object(null);

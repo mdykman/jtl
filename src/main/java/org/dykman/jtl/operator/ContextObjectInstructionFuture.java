@@ -46,23 +46,24 @@ import com.google.common.util.concurrent.ListenableFuture;
             final FutureInstruction<JSON> inst = ii.s;
             if(notQuoted && k.equals("_")) {
                 defaultInstruction = fixContextData( inst);
-            } else {
-            	context.define(k,fixContextData(inst));
-            }
+            } 
+            else throw new ExecutionException("unexpected field defined in context object: `" + ii.f.label + "'",source);
+ //           else {
+ //           	context.define(k,fixContextData(inst));
+ //           }
          }
+         
          return defaultInstruction.call(context, data);
       }
 
       @Override
       public ListenableFuture<JSON> _callObject(
-//  			final FutureInstruction<JSON> init,
-//  			final List<FutureInstruction<JSON>> imperitives, 
   			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields,
     		  final AsyncExecutionContext<JSON> context,
             final ListenableFuture<JSON> data) throws ExecutionException {
-         final AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, source);
+ //        final AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, source);
  //        ctx.define("_", InstructionFutureFactory.value(data, source));
-         ListenableFuture<JSON> res = contextObject(ctx, data, fields);
+         ListenableFuture<JSON> res = contextObject(context, data, fields);
          return res;
       }
 

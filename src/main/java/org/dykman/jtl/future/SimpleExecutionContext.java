@@ -44,6 +44,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected JSON conf;
 	protected ListenableFuture<JSON> data;
 	protected AsyncExecutionContext<JSON> declarer;
+	
+	SourceInfo sourceInfo;
 
 	File currentDirectory = new File(".");
 	JSONBuilder builder = null;
@@ -58,6 +60,9 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	public boolean isInclude() {
 		return include;
+	}
+	public SourceInfo getSourceInfo() {
+		return sourceInfo;
 	}
 
 	public Map<String, AsyncExecutionContext<JSON>> getNamedContexts() {
@@ -75,7 +80,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
-			JSON conf, File f, boolean fc, boolean include, boolean debug) {
+			JSON conf, File f,SourceInfo sourceInfo, boolean fc, boolean include, boolean debug) {
 		this.parent = parent;
 		this.functionContext = fc;
 		this.builder = builder;
@@ -84,14 +89,12 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		this.currentDirectory = f;
 		this.debug = debug;
 		this.include = include;
-		if(builder == null) {
-			throw new RuntimeException("RIGHT HERE");
-		}
+		this.sourceInfo = sourceInfo;
 		compiler = parent != null ? parent.compiler() : new JtlCompiler(builder);
 	}
 
-	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f) {
-		this(null, builder, data, conf, f, false, false, false);
+	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f,SourceInfo sourceInfo) {
+		this(null, builder, data, conf, f,sourceInfo, false, false, false);
 	}
 
 	public void inject(AsyncExecutionContext<JSON> cc) {
@@ -249,7 +252,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data,
 			SourceInfo source) {
-		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, builder, data, conf, currentDirectory(), fc,
+		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, builder,
+				data == null ? this.data : data, conf, currentDirectory(),source, fc,
 				include, debug);
 
 		// if(fc && data!=null)
