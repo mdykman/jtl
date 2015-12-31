@@ -18,7 +18,6 @@ public class JList extends JSONArray {
 
 	public JSON cloneJSON() {
 		JList res = builder.list();
-		int i = 0;
 		for(JSON j:arr) {
 			res.add(j);
 		}

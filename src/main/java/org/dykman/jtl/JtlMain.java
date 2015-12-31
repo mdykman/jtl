@@ -93,6 +93,10 @@ public class JtlMain {
 	public static void setVerbose(boolean b) {
 		verbose = b;
 	}
+	
+	public void setSyntaxCheck(boolean b) {
+		compiler.setSyntaxCheck(b);
+	}
 
 	public JSONArray args(Iterator<String> sit) {
 		JSONArray a = builder.array(null);
@@ -167,6 +171,9 @@ public class JtlMain {
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
 			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (cli default:false, server default: true)"));
 
+			options.addOption(new Option("S", "syntax-check", false, "syntax check only, do not execute"));
+
+			
 			options.addOption(
 					new Option("a", "array", false, "parse a sequence of json entities from the input stream, "
 							+ "assemble them into an array and process"));
@@ -304,6 +311,9 @@ public class JtlMain {
 			}
 
 			main = new JtlMain(home, fconfig, canonical);
+			if (cli.hasOption('S')) {
+				main.setSyntaxCheck(true);
+			}
 			if (cli.hasOption('D') || cli.hasOption("dir")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)

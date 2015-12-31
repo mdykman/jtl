@@ -139,6 +139,7 @@ pathstep
    | recurs
    | func
    | funcderef
+   | anonfunc
    | variable
    | number
 //   | jstring

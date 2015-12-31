@@ -51,7 +51,16 @@ public class JtlCompiler {
 	boolean trace;
 	boolean profile;
 	boolean imported;
+	boolean syntaxCheck = false;
 	
+	public boolean isSyntaxCheck() {
+		return syntaxCheck;
+	}
+
+	public void setSyntaxCheck(boolean syntaxCheck) {
+		this.syntaxCheck = syntaxCheck;
+	}
+
 	public JtlCompiler(JSONBuilder jsonBuilder) {
 		this(jsonBuilder, false, false, false);
 	}
@@ -97,53 +106,7 @@ public class JtlCompiler {
 			String file, jtlLexer lexer, boolean trace, boolean profile)
 			throws IOException {
 		jtlParser parser = new jtlParser(new CommonTokenStream(lexer));
-		BailErrorStrategy bstrat = new BailErrorStrategy() {
-			@Override
-			public void reportError(Parser recognizer, RecognitionException re) {
-				Token unrecognized = re.getOffendingToken();
-				if(unrecognized!=null) {
-					logError("error",re,unrecognized);
-				} else {
-					logger.error("parser error");
-				}
-			}
-			@Override
-			public void reportInputMismatch(Parser recognizer, InputMismatchException ime) {
-				Token unrecognized = ime.getOffendingToken();
-				if(unrecognized!=null) {
-					logError("mismatch",ime,unrecognized);
-				} else {
-					logger.error("parser mismatch");
-				}
-			}
 
-			protected void logError(String msg,RecognitionException re, Token unrecognized) {
-				int line = unrecognized.getLine();
-				int index = unrecognized.getCharPositionInLine();
-				String text = unrecognized.getText();
-				StringBuilder builder = new StringBuilder();
-				builder.append(msg).append(" `").append(text)
-					.append("' at line ").append(line).append(":").append(index);
-				IntervalSet is = re.getExpectedTokens();
-				is.size();
-				
-				builder.append("; expecting one of: ");
-				for(Interval iv  : is.getIntervals()) {
-					is.toString(true);
-					builder.append(iv.toString()).append(" ");
-				}
-				logger.error(builder.toString());				
-			}
-
-			@Override
-		    public Token recoverInline(Parser recognizer)
-		        throws RecognitionException
-		    {
-				InputMismatchException e = new InputMismatchException(recognizer);
-				throw e;
-		    }
-		};
-//		parser.setErrorHandler(bstrat);
 		parser.addErrorListener(new ANTLRErrorListener() {
 			
 			@Override
@@ -154,8 +117,7 @@ public class JtlCompiler {
 					.append("' at line ").append(line).append(": ").append(charPositionInLine);
 
 				logger.error(builder.toString());
-				// TODO Auto-generated method stub
-				
+				System.exit(1);
 			}
 			
 			@Override
@@ -190,8 +152,11 @@ public class JtlCompiler {
 			FutureInstructionVisitor visitor = 
 					new FutureInstructionVisitor(file, jsonBuilder, imported);
 			FutureInstructionValue<JSON> v = visitor.visit(tree);
-			return FutureInstructionFactory.fixContextData(v.inst);
-//		} catch(ParseCancellationException e) {
+			if(syntaxCheck && v != null) {
+				return FutureInstructionFactory.value("syntax ok", jsonBuilder, SourceInfo.internal("syntax check"));
+			} else {
+				return FutureInstructionFactory.fixContextData(v.inst);
+			}
 		} catch(JtlParseException e) {
 			logger.error(e.report(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
