@@ -8,10 +8,7 @@ import json;
 
 options {
     language = Java;
-    tokenVocab=jtllex;
-}
-
-@header {
+//    tokenVocab=jtllex;
 }
 
 
@@ -142,6 +139,7 @@ pathstep
    | recurs
    | func
    | funcderef
+   | anonfunc
    | variable
    | number
 //   | jstring
@@ -174,7 +172,12 @@ ff
      | ident '(' value (',' value )* ')' 
      ;
 
-
+anonfunc
+     : '`'  value   '`' '(' ')'
+     | '`'  value   '`'  '(' value (',' value )* ')'
+     | '`'  value   '`'
+     ;
+     
 funcderef
      : '$' ident '(' ')'
      | '$' ident '(' value (',' value )* ')'

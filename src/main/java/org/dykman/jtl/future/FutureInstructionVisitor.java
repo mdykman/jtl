@@ -18,6 +18,7 @@ import org.dykman.jtl.jtlBaseVisitor;
 import org.dykman.jtl.jtlParser.Abs_pathContext;
 import org.dykman.jtl.jtlParser.Add_exprContext;
 import org.dykman.jtl.jtlParser.And_exprContext;
+import org.dykman.jtl.jtlParser.AnonfuncContext;
 import org.dykman.jtl.jtlParser.ArrayContext;
 import org.dykman.jtl.jtlParser.Eq_exprContext;
 import org.dykman.jtl.jtlParser.FfContext;
@@ -223,9 +224,22 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
 		for (ValueContext jc : ctx.value()) {
 			FutureInstructionValue<JSON> vv = visitValue(jc);
+			
 			ins.add(vv.inst);
 		}
 		return new FutureInstructionValue<JSON>(activate(getSource(ctx), name, ins));
+	}
+
+	@Override
+	public FutureInstructionValue<JSON> visitAnonfunc(AnonfuncContext afc) {
+		List<FutureInstruction<JSON>> ins = new ArrayList<>(afc.getChildCount());
+		Iterator<ValueContext> vcl = afc.value().iterator();
+		FutureInstruction<JSON> expr = visitValue(vcl.next()).inst;
+		while(vcl.hasNext()) {
+			FutureInstructionValue<JSON> vv = visitValue(vcl.next());
+			ins.add(vv.inst);
+		}
+		return new FutureInstructionValue<JSON>(function(getSource(afc),expr,ins));
 	}
 
 	@Override
@@ -592,6 +606,10 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		ValueContext xvc = ctx.value();
 		if (xvc != null)
 			return visitValue(xvc);
+		
+		AnonfuncContext afc = ctx.anonfunc();
+		if(afc != null)
+			return visitAnonfunc(afc);
 
 		ArrayContext ac = ctx.array();
 		if (ac != null) {

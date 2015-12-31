@@ -255,6 +255,8 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, builder,
 				data == null ? this.data : data, conf, currentDirectory(),source, fc,
 				include, debug);
+		
+		r.setNamespace(getNamespace());
 
 		// if(fc && data!=null)
 		// r.define("_",InstructionFutureFactory.value(data,source));

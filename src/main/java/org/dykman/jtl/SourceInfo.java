@@ -62,17 +62,10 @@ public class SourceInfo {
    // @Override
    public String toString(AsyncExecutionContext<JSON> context) {
       // System.err.print(System.identityHashCode(context));
+
       StringBuilder sb = new StringBuilder();
       Formatter formatter = new Formatter(sb, Locale.CANADA);
       formatter.format("%12h::", System.identityHashCode(context));
-      if(context != null) {
-         AsyncExecutionContext<JSON> master = context.getRuntime();
-         if(master == null) master = context.getInit();
-         int n = master.counter("trace", 1);
-         for(int i = 0; i < n; ++i) {
-            sb.append("  ");
-         }
-      }
       formatter.format(" %12s %d:%d-%d:%d", name, line, position, endline, endposition);
       formatter.close();
       return sb.toString();

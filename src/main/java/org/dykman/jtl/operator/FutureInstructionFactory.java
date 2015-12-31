@@ -41,6 +41,7 @@ import org.dykman.jtl.jsonVisitor;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.DeferredCall;
 import org.dykman.jtl.future.FixedContext;
+import org.dykman.jtl.future.FutureInstructionVisitor;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -976,33 +977,36 @@ public class FutureInstructionFactory {
 
 				FutureInstruction<JSON> inst = context.getdef(name);
 				if (inst == null) {
-					throw new ExecutionException(source);
+					throw new ExecutionException("no function found with name " + name + " in activate",source);
 				}
-				// inst = inst.unwrap(context);
-				// if(inst instanceof DeferredCall) {
-				inst = deref(context, data, inst, iargs);
-
-				// }
-				return inst.call(context, data);
+				return deref(context, data, inst, iargs);
 			}
 
-			public FutureInstruction<JSON> deref(AsyncExecutionContext<JSON> ctx, ListenableFuture<JSON> data,
-					FutureInstruction<JSON> inst, List<FutureInstruction<JSON>> ll) {
-				AsyncExecutionContext<JSON> cc = ctx.createChild(true, false, data, source);
-				int ctr = 1;
-				for (FutureInstruction<JSON> i : ll) {
-					FutureInstruction<JSON> ins = wrapArgument(source, ctx, i, data);
-					cc.define(Integer.toString(ctr++), ins);
-				}
-
-				DeferredCall dc = new DeferredCall(source, inst.getBareInstruction(), cc, null);
-				return dc;
-
+			protected FutureInstruction<JSON> wrapArgument(SourceInfo info, AsyncExecutionContext<JSON> ctx,
+					FutureInstruction<JSON> inst, final ListenableFuture<JSON> data) {
+				return memo(info, deferred(info, inst, ctx, data));
 			}
-
+			protected ListenableFuture<JSON> deref(AsyncExecutionContext<JSON> ctx, ListenableFuture<JSON> data,
+					FutureInstruction<JSON> inst, List<FutureInstruction<JSON>> ll)
+				throws ExecutionException {
+				
+				FutureInstruction<JSON> fi = inst.getBareInstruction();
+				if(fi instanceof FunctionInvocationInstruction) {
+					FunctionInvocationInstruction fii = (FunctionInvocationInstruction) fi; 
+					List<FutureInstruction<JSON>> lli = new ArrayList<>();
+					for(FutureInstruction<JSON> is: ll) {
+						lli.add(wrapArgument(source, ctx, is, data));
+					}
+					if(inst instanceof DeferredCall) {
+						ctx = ((DeferredCall) inst).getContext();
+					}
+					return fii.call(ctx, data,lli);
+				}
+				return inst.call(ctx, data);
+			}
 		};
 	}
-
+	
 	public static FutureInstruction<JSON> paramArray(SourceInfo meta, final List<FutureInstruction<JSON>> iargs) {
 		return new AbstractFutureInstruction(meta) {
 
@@ -1028,15 +1032,14 @@ public class FutureInstructionFactory {
 		};
 	}
 
-	static FutureInstruction<JSON> wrapArgument(SourceInfo info, AsyncExecutionContext<JSON> ctx,
-			FutureInstruction<JSON> inst, final ListenableFuture<JSON> data) {
-		return memo(info, deferred(info, inst, ctx.declaringContext(), data));
-
-	}
 
 	public static FunctionInvocationInstruction function(SourceInfo meta, final String name,
 			final List<FutureInstruction<JSON>> iargs) {
 		return new FunctionInvocationInstruction(meta, name, iargs);
+	}
+	public static FunctionInvocationInstruction function(SourceInfo meta, final FutureInstruction<JSON> expr,
+			final List<FutureInstruction<JSON>> iargs) {
+		return new FunctionInvocationInstruction(meta, iargs,expr);
 	}
 
 	// rank all
@@ -1934,7 +1937,7 @@ public class FutureInstructionFactory {
 						Iterator<JSON> jit = input.iterator();
 //						JSON d = jit.next();
 						StringBuilder sb = new StringBuilder();
-						sb.append(si.toString(null)).append(": ");
+						sb.append(context.getSourceInfo().toString(null)).append(": ");
 						/*
 						 * StringBuilder sb = new StringBuilder();
 						 * sb.append(si.name).append(" "
@@ -3180,7 +3183,11 @@ public class FutureInstructionFactory {
 			public String op(AsyncExecutionContext<JSON> eng, String l, String r) {
 				return l + r;
 			}
-
+			@Override
+			public JSON op(AsyncExecutionContext<JSON> eng, JSON l, JSON r)
+				throws ExecutionException {
+				return super.op(eng,l,r);
+			}
 			@Override
 			public JSONArray op(AsyncExecutionContext<JSON> eng, JSONArray l, JSONArray r) {
 				// Collection<JSON> cc = builder.collection();

@@ -22,7 +22,12 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	public FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs) {
 		this(info,name,iargs,null);
 	}
-	public FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs,
+	public FunctionInvocationInstruction(SourceInfo info, List<FutureInstruction<JSON>> iargs,
+			FutureInstruction<JSON> instruction) {
+		this(info,null,iargs,instruction);
+	}
+	
+	protected FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs,
 			FutureInstruction<JSON> instruction) {
 		super(info);
 		this.name = name;
@@ -36,27 +41,35 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 
 	protected AsyncExecutionContext<JSON> setupArguments(final AsyncExecutionContext<JSON> dctx,
 			final AsyncExecutionContext<JSON> fc, final String name, final List<FutureInstruction<JSON>> iargs,
-			final ListenableFuture<JSON> data) {
+			final ListenableFuture<JSON> data,
+			List<FutureInstruction<JSON>> vargs) {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
-		if(name.contains(".")) {
+		if(name == null) {
+			context.define("0", FutureInstructionFactory.value(context.builder().value("anonymous"), source));
+		}
+		else if(name.contains(".")) {
 			String pp[] = name.split("[.]",2);
 			context.define("0", FutureInstructionFactory.value(context.builder().value(pp[1]), source));
 		} else {
 			context.define("0", FutureInstructionFactory.value(context.builder().value(name), source));
 		}
-//		context.define("0", InstructionFutureFactory.value(context.builder().value(name), source));
 		int cc = 1;
-		// Iterator<InstructionFuture<JSON>> iit = iargs.iterator();
 		if (iargs != null)
 			for (FutureInstruction<JSON> inst : iargs) {
 				String key = Integer.toString(cc++);
 				context.define(key, FutureInstructionFactory.memo(source,
 						FutureInstructionFactory.deferred(source, inst, dctx, data)));
-//				FutureInstructionFactory.deferred(source, inst, dctx.declaringContext(), data)));
 				insts.add(inst);
 			}
 
+		if (vargs != null)
+			for (FutureInstruction<JSON> inst : vargs) {
+				String key = Integer.toString(cc++);
+				context.define(key, inst);
+				insts.add(inst);
+			}
+		
 		/// TODO:: EXTENSION PARAMETERS ARE DISABLED !!!! 
 		/* 
  		// dctx.isFunctionContext();
@@ -82,17 +95,22 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	public static boolean isSpecial(String s) {
 		return SimpleExecutionContext.isSpecial(s);
 	}
-
+	
 	@Override
-
 	public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
+			throws ExecutionException {
+		return call(context, data,null);
+	}
+
+	public ListenableFuture<JSON> call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data,
+			List<FutureInstruction<JSON>> vargs)
 			throws ExecutionException {
 		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
 		String ns = null;
 		if("combos".equals(name)) {
 			ns = null;
 		}
-		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data);
+		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data, vargs);
 		FutureInstruction<JSON> func = instruction;
 		if(func == null) {
 			Pair<String, FutureInstruction<JSON>> rr = context.getDefPair(name);
