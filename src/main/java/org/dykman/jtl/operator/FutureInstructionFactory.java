@@ -1952,7 +1952,7 @@ public class FutureInstructionFactory {
 								sb.append(", ");
 							}
 							first = false;
-							sb.append(pi.toString(2,true)).append(pi.stringValue());
+							sb.append(pi.toString(2,true));
 						}
 						System.err.println(sb.toString());
 						return data;

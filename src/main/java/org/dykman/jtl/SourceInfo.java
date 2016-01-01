@@ -65,8 +65,8 @@ public class SourceInfo {
 
       StringBuilder sb = new StringBuilder();
       Formatter formatter = new Formatter(sb, Locale.CANADA);
-      formatter.format("%12h::", System.identityHashCode(context));
-      formatter.format(" %12s %d:%d-%d:%d", name, line, position, endline, endposition);
+ //     formatter.format("%12h::", System.identityHashCode(context));
+      formatter.format(" %s:%s %d:%d-%d:%d",source, name, line, position, endline, endposition);
       formatter.close();
       return sb.toString();
    }
