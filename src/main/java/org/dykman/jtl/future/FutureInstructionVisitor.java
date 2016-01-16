@@ -173,6 +173,11 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 				// FutureInstructionValue<JSON>(ctx.getChild(0).getText() + s);
 			}
 			return new FutureInstructionValue<JSON>(new ObjectKey(s, false));
+		} 
+		ValueContext vc = ctx.value(); 
+		if(vc!=null) {
+			FutureInstruction<JSON> inst = visitValue(vc).inst;
+			return new FutureInstructionValue<JSON>(new ObjectKey(inst));
 		}
 		return new FutureInstructionValue<JSON>(new ObjectKey(visitString(ctx.string()).string, true));
 	}
@@ -239,7 +244,9 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			FutureInstructionValue<JSON> vv = visitValue(vcl.next());
 			ins.add(vv.inst);
 		}
-		return new FutureInstructionValue<JSON>(function(getSource(afc),expr,ins));
+		SourceInfo si = getSource(afc);
+		si.name = "*anon*";
+		return new FutureInstructionValue<JSON>(function(si,expr,ins));
 	}
 
 	@Override

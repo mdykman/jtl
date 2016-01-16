@@ -104,6 +104,7 @@ public class JtlMain {
 	}
 
 	public static void printHelp(Options cl) {
+		System.out.println("JSON Transformation Language " + JTL_VERSION);
 		System.out.println(" $ jtl " + " [options ...] [arg1 ... ]");
 		System.out.println();
 		System.out.println(
@@ -121,20 +122,6 @@ public class JtlMain {
 					.append(oo.getDescription());
 			System.out.println(builder.toString());
 		}
-		System.out.println();
-
-		System.out.println("  examples:");
-		System.out.println();
-
-		System.out.println("    $ jtl src/test/resources/group.jtl src/test/resources/generated.json");
-		System.out
-				.println("    $ jtl -x src/test/resources/group.jtl -o output.json src/test/resources/generated.json");
-		System.out.println("    $ jtl src/test/resources/re.jtl < src/test/resources/generated.json");
-		System.out.println("    $ cat src/test/resources/generated.json | jtl src/test/resources/group.jtl");
-		System.out.println("    $ jtl sample.jtl one.json two.json three.json");
-		System.out.println("    $ cat  one.json two.json three.json | jtl -a sample.jtl");
-		System.out.println("    $ jtl -e \"/people/count()\"  src/test/resources/generated.json");
-		System.out.println();
 	}
 
 	public static void main(String[] args) {
@@ -166,7 +153,7 @@ public class JtlMain {
 
 			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
-			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (cli default:false, server default: true)"));
+			options.addOption(new Option("Q", "dequote", false, "allow unquoted keys if they do not contain whitespace or puncutation"));
 
 			options.addOption(new Option("S", "syntax-check", false, "syntax check only, do not execute"));
 
@@ -178,6 +165,8 @@ public class JtlMain {
 					"gather n items from a sequence of JSON values from the input stream, processing them as an array"));
 
 			options.addOption(new Option("z", "null", false, "use null input data (cli-only)"));
+			
+			
 			String s = System.getProperty("jtl.home");
 			if (s == null)
 				s = System.getProperty("JTL_HOME");
@@ -198,7 +187,7 @@ public class JtlMain {
 
 			boolean verbose = false;
 			boolean array = false;
-			boolean enquote = false;
+			boolean enquote = true;
 			boolean useNull = false;
 			File cexddir = null;
 
@@ -212,6 +201,7 @@ public class JtlMain {
 
 			CommandLineParser parser = new GnuParser();
 			CommandLine cli;
+			
 			try {
 				cli = parser.parse(options, args);
 			} catch (ParseException e) {
@@ -226,17 +216,13 @@ public class JtlMain {
 			if (cli.hasOption('v')) {
 				verbose = true;
 			}
-			if (cli.hasOption('t')) {
-				threads = Integer.parseInt(cli.getOptionValue('t'));
-			}
-
 			if (cli.hasOption('l')) {
 				logLevel = cli.getOptionValue('l');
 			} else if (verbose) {
 				logLevel = "info";
 			}
 			ConsoleAppender console = new ConsoleAppender();
-			String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+			String PATTERN = "%d [%t|%p|%c{2}|%C{1}] %m%n";
 			console.setLayout(new PatternLayout(PATTERN));
 			console.setThreshold(Level.toLevel(logLevel, Level.ERROR));
 			console.activateOptions();
@@ -252,6 +238,11 @@ public class JtlMain {
 			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
 
 			String oo;
+
+			if (cli.hasOption('t')) {
+				threads = Integer.parseInt(cli.getOptionValue('t'));
+			}
+
 
 			if (cli.hasOption('r')) {
 				
@@ -344,9 +335,9 @@ public class JtlMain {
 				array = true;
 			}
 
-			if (cli.hasOption('q') || cli.hasOption("quote")) {
+			if (cli.hasOption('Q')) {
 				logger.info("force key enquoting ");
-				enquote = true;
+				enquote = false;
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
 				oo = cli.getOptionValue('c');
@@ -586,6 +577,7 @@ public class JtlMain {
 		les.shutdown();
 		les.awaitTermination(2, TimeUnit.SECONDS);
 		} catch(InterruptedException e) {
+			logger.warn("ExecutorService did not shutdown gracefully within 2 seconds.  Terminating.");
 			les.shutdownNow();
 		}
 	}
@@ -638,21 +630,22 @@ public class JtlMain {
 	public JSON execute(FutureInstruction<JSON> inst, AsyncExecutionContext<JSON> context, String source, File init, JSON data, File cwd, JSONArray args)
 			throws Exception {
 		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
-		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
+		context = context.createChild(false, false, dd, SourceInfo.internal("runtime"));
 		context.setRuntime(true);
-		context.define("0", FutureInstructionFactory.value(builder.value(source), SourceInfo.internal("cli")));
+		context.define("0", FutureInstructionFactory.value(builder.value(source), SourceInfo.internal("source")));
 		int cc = 1;
 		JSONArray arr = args;
 		if (arr != null)
 			for (JSON v : arr) {
-				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("cli")));
+				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("arg")));
 //				arr.add(v);
 			}
 
-		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("cli")));
-		context.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("cli")));
+		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("args")));
+		context.define("_", FutureInstructionFactory.value(data, SourceInfo.internal("input")));
 
 		ListenableFuture<JSON> j = inst.call(context, dd);
+		// wait for results to resolve
 		return j.get();
 	}
 }

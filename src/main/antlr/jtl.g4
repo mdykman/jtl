@@ -142,24 +142,22 @@ pathstep
    | anonfunc
    | variable
    | number
-//   | jstring
    | string
    | object 
    | array
    | '(' value ')'
-	| '.'
-	| '..'
-	| '*'
-    | 'true'  
-    | 'false' 
-    | 'null' 
-	
+   | '.'
+   | '..'
+   | '*'
+   | 'true'  
+   | 'false' 
+   | 'null' 
 	;
             
 recurs 
 	: '**'
-    | '...'
-    ;
+  | '...'
+  ;
 
 
 func
@@ -206,6 +204,7 @@ key
 	| '!' ident
 	| '$' ident
 	| string
+	| '(' value ')'
 	;
 	
 	

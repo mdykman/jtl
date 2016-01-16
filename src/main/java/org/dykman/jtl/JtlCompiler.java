@@ -12,7 +12,7 @@ import static org.dykman.jtl.operator.FutureInstructionFactory.count;
 import static org.dykman.jtl.operator.FutureInstructionFactory.defaultError;
 import static org.dykman.jtl.operator.FutureInstructionFactory.defined;
 import static org.dykman.jtl.operator.FutureInstructionFactory.digest;
-import static org.dykman.jtl.operator.FutureInstructionFactory.each;
+import static org.dykman.jtl.operator.FutureInstructionFactory.*;
 import static org.dykman.jtl.operator.FutureInstructionFactory.fexists;
 import static org.dykman.jtl.operator.FutureInstructionFactory.file;
 import static org.dykman.jtl.operator.FutureInstructionFactory.filter;
@@ -239,7 +239,7 @@ public class JtlCompiler {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
 		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, scriptBase,
-				SourceInfo.internal("initial"));
+				SourceInfo.internal("base-init"));
 		context.setExecutionService(les);
 
 		SourceInfo meta = new SourceInfo();
@@ -260,7 +260,9 @@ public class JtlCompiler {
 		context.define( "params", params(SourceInfo.internal("params")));
 		context.define( "rand", rand(SourceInfo.internal("rand")));
 		context.define( "switch", switchInst(SourceInfo.internal("switch")));
-		context.define( "each", each(SourceInfo.internal("each")));
+		context.define( "each", each(SourceInfo.internal("each"),true));
+		context.define( "reduce", reduce(SourceInfo.internal("reduce"),true));
+		
 		context.define("defined",defined(SourceInfo.internal("defined")));
 		context.define( "call", call(SourceInfo.internal("call")));
 		context.define( "thread", thread(SourceInfo.internal("thread")));
@@ -332,7 +334,7 @@ public class JtlCompiler {
 
 		AsyncExecutionContext<JSON> ctx = context;
 		if (init != null) {
-			ctx = ctx.createChild(false, false, df, SourceInfo.internal("compiler"));
+			ctx = ctx.createChild(false, false, df, SourceInfo.internal("user-init"));
 			ctx.setInit(true);
 			FutureInstruction<JSON> initf = parse(init);
 			ListenableFuture<JSON> initResult = initf.call(ctx, Futures.immediateCheckedFuture(config));

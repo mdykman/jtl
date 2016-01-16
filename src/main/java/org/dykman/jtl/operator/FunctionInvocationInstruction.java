@@ -24,7 +24,7 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	}
 	public FunctionInvocationInstruction(SourceInfo info, List<FutureInstruction<JSON>> iargs,
 			FutureInstruction<JSON> instruction) {
-		this(info,null,iargs,instruction);
+		this(info,"*anonymous*",iargs,instruction);
 	}
 	
 	protected FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs,
@@ -40,9 +40,11 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	}
 
 	protected AsyncExecutionContext<JSON> setupArguments(final AsyncExecutionContext<JSON> dctx,
-			final AsyncExecutionContext<JSON> fc, final String name, final List<FutureInstruction<JSON>> iargs,
+			final AsyncExecutionContext<JSON> fc, 
+			final String name, 
+			final List<FutureInstruction<JSON>> iargs,
 			final ListenableFuture<JSON> data,
-			List<FutureInstruction<JSON>> vargs) {
+			final List<FutureInstruction<JSON>> vargs) {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
 		if(name == null) {
@@ -58,8 +60,8 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 		if (iargs != null)
 			for (FutureInstruction<JSON> inst : iargs) {
 				String key = Integer.toString(cc++);
-				context.define(key, FutureInstructionFactory.memo(source,
-						FutureInstructionFactory.deferred(source, inst, dctx, data)));
+				context.define(key, FutureInstructionFactory.memo(
+						FutureInstructionFactory.deferred(inst, dctx, data)));
 				insts.add(inst);
 			}
 
@@ -70,25 +72,8 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 				insts.add(inst);
 			}
 		
-		/// TODO:: EXTENSION PARAMETERS ARE DISABLED !!!! 
-		/* 
- 		// dctx.isFunctionContext();
-		if ((!variable) && dctx.declaringContext()!= dctx && fc != null) {
-			logger.warn("adding extention parameters");
-			int ss = 1;
-			while (true) {
-				String skey = Integer.toString(ss++);
-				FutureInstruction<JSON> si = dctx.getdef(skey);
-				if (si == null)
-					break;
-				String key = Integer.toString(cc++);
-				context.define(key, si);
-				insts.add(si);
-			}
-
-		}
-		*/
 		context.define("@", FutureInstructionFactory.paramArray(source, insts));
+		context.define("_", FutureInstructionFactory.value(data, source));
 		return context;
 	}
 

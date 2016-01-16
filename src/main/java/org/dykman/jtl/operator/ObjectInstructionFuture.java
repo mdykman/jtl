@@ -34,14 +34,24 @@ import com.google.common.util.concurrent.ListenableFuture;
          final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(fields.size());
          for(Pair<ObjectKey, FutureInstruction<JSON>> ii : fields) {
             final String kk = ii.f.label;
-            FutureInstruction<JSON> ki = FutureInstructionFactory.value(kk, context.builder(), getSourceInfo());
+            FutureInstruction<JSON> ki = null;
+            if(kk == null) {
+            	ki = FutureInstructionFactory.memo(ii.f.expr);
+            } else {
+            	ki = FutureInstructionFactory.value(kk, context.builder(), getSourceInfo());
+            }
             context.define(":", ki);
-            ListenableFuture<Pair<String, JSON>> lf = transform(ii.s.call(context, data),
-                  new AsyncFunction<JSON, Pair<String, JSON>>() {
+            
+            ListenableFuture<Pair<String, JSON>> lf = transform(
+            		allAsList(ki.call(context, data), ii.s.call(context, data)),
+                  new AsyncFunction<List<JSON>, Pair<String, JSON>>() {
                      @Override
-                     public ListenableFuture<Pair<String, JSON>> apply(JSON input) throws Exception {
-                        input.setName(kk);
-                        return immediateCheckedFuture(new Pair<>(kk, input));
+                     public ListenableFuture<Pair<String, JSON>> apply(List<JSON> input) throws Exception {
+                    	 JSON keydata = input.get(0);
+                    	 JSON i = input.get(1);
+                    	 String kk = keydata.stringValue();
+                        i.setName(kk);
+                        return immediateCheckedFuture(new Pair<>(kk, i));
                      }
                   });
             insts.add(lf);
