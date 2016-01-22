@@ -14,8 +14,6 @@ public class MemoInstructionFuture extends AbstractFutureInstruction {
    public MemoInstructionFuture(FutureInstruction<JSON> inst) {
       super(inst.getSourceInfo());
       this.inst = inst;
-      System.err.println("MEMO for  " + inst.getClass().getName() + " " + System.identityHashCode(this));
-      // TODO a stronger key would be advisable
       this.key = "@memo-"+Long.toHexString(System.identityHashCode(this));
    }
    @Override

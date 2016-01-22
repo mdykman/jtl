@@ -122,7 +122,7 @@ public class JTLTest {
 		JSON jj = runExpression(".", res);
 		assertEquals(res, jj);
  		JSON expected = builder.parse("['c','d','e','f','g']");
-		jj=runExpression("children/children/name", res);
+ 		jj=runExpression("children/children/name", res);
 		assertEquals(expected, jj);
 		jj=runExpression("**/filter(id==10)[0]/name", res);
 		assertEquals("tracy rocks", jj.stringValue());

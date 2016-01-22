@@ -453,7 +453,7 @@ public class FutureInstructionFactory {
 									for (Pair<ObjectKey, FutureInstruction<JSON>> ip : prs) {
 										String k = ip.f.label;
 										boolean notquoted = !ip.f.quoted;
-										FutureInstruction<JSON> fii = fixContextData(ip.s);
+										FutureInstruction<JSON> fii = fixContextData(ip.s,mc);
 										if (notquoted && "!init".equals(k)) {
 											initInst = FutureInstructionFactory.memo(fii);
 											mc.define(k.substring(1), initInst);
@@ -1029,7 +1029,7 @@ public class FutureInstructionFactory {
 	}
 
 	public static FutureInstruction<JSON> variable(SourceInfo meta, final String name) {
-		final FunctionInvocationInstruction fi = function(meta, name, null);
+		final FunctionInvocationInstruction fi = functionCall(meta, name, null);
 		fi.setVariable(true);
 		return new AbstractFutureInstruction(fi.getSourceInfo()) {
 
@@ -1039,6 +1039,9 @@ public class FutureInstructionFactory {
 				try {
 					return fi.call(context, data);
 				} catch (ExecutionException e) {
+					if(logger.isInfoEnabled()) {
+						logger.info("no definition found for variable `" + name + "'");
+					}
 					// eat the access exception and quietly return null
 					return immediateCheckedFuture(JSONBuilderImpl.NULL);
 				}
@@ -1112,12 +1115,12 @@ public class FutureInstructionFactory {
 		};
 	}
 
-
-	public static FunctionInvocationInstruction function(SourceInfo meta, final String name,
+	public static FunctionInvocationInstruction functionCall(SourceInfo meta, final String name,
 			final List<FutureInstruction<JSON>> iargs) {
 		return new FunctionInvocationInstruction(meta, name, iargs);
 	}
-	public static FunctionInvocationInstruction function(SourceInfo meta, final FutureInstruction<JSON> expr,
+	
+	public static FunctionInvocationInstruction functionCall(SourceInfo meta, final FutureInstruction<JSON> expr,
 			final List<FutureInstruction<JSON>> iargs) {
 		return new FunctionInvocationInstruction(meta, iargs,expr);
 	}
@@ -2061,7 +2064,7 @@ public class FutureInstructionFactory {
 								break;
 							ll.add(i);
 						}
-						FutureInstruction<JSON> func = function(meta, name, ll);
+						FutureInstruction<JSON> func = functionCall(meta, name, ll);
 						return func.call(context.getParent(), data);
 					}
 				});
@@ -2143,6 +2146,10 @@ public class FutureInstructionFactory {
 		return new FixedContext(inst);
 	}
 
+	public static FutureInstruction<JSON> fixContextData(final FutureInstruction<JSON> inst,
+			AsyncExecutionContext<JSON> context) {
+		return new FixedContext(inst,context);
+	}
 	// rank all
 	public static FutureInstruction<JSON> object(SourceInfo meta,
 			final List<Pair<ObjectKey, FutureInstruction<JSON>>> ll, boolean forceContext) throws ExecutionException {

@@ -318,7 +318,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	public Pair<String, FutureInstruction<JSON>> getDefPair(String name) {
 		FutureInstruction<JSON> r = null;
 		String fns = null;
-System.err.println("defPair: " + System.identityHashCode(this) + " " + name);		
 		String[] parts = name.split("[.]", 2);
 		if(parts.length == 2) {
 			return getNamespacedDefinition(parts[0], parts[1]);

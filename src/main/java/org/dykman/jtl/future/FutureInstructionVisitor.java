@@ -246,7 +246,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		}
 		SourceInfo si = getSource(afc);
 		si.name = "*anon*";
-		return new FutureInstructionValue<JSON>(function(si,expr,ins));
+		return new FutureInstructionValue<JSON>(functionCall(si,expr,ins));
 	}
 
 	@Override
@@ -262,7 +262,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			FutureInstructionValue<JSON> vv = visitValue(jc);
 			ins.add(vv.inst);
 		}
-		return new FutureInstructionValue<JSON>(function(getSource(ctx), name, ins));
+		return new FutureInstructionValue<JSON>(functionCall(getSource(ctx), name, ins));
 	}
 
 	@Override

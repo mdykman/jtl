@@ -45,7 +45,7 @@ import com.google.common.util.concurrent.ListenableFuture;
             final boolean notQuoted = ! ii.f.quoted;
             final FutureInstruction<JSON> inst = ii.s;
             if(notQuoted && k.equals("_")) {
-                defaultInstruction = fixContextData( inst);
+                defaultInstruction = fixContextData(inst,ctx);
             } 
             else throw new ExecutionException("unexpected field defined in context object: `" + ii.f.label + "'",source);
  //           else {

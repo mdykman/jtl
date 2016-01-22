@@ -86,7 +86,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 				fields.add(ii);
 			} else {
 				functions.add(new Pair<ObjectInstructionBase.ObjectKey, FutureInstruction<JSON>>(
-						new ObjectKey(k, false), fixContextData(ii.s)));
+						new ObjectKey(k, false), fixContextData(ii.s,newContext)));
 			}
 		}
 		
@@ -109,7 +109,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 		}
 		
 		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : functions) {
-			context.define(ii.f.label,fixContextData(ii.s));
+			context.define(ii.f.label,fixContextData(ii.s,context));
 		}
 		
 		final AsyncExecutionContext<JSON> ctx = context;

@@ -8,10 +8,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class FixedContext extends AbstractFutureInstruction {
 	final FutureInstruction<JSON> inst;
-
+	final AsyncExecutionContext<JSON> context;
 	public FixedContext(final FutureInstruction<JSON> inst) {
+		this(inst,null);
+	}
+	
+	public FixedContext(final FutureInstruction<JSON> inst,AsyncExecutionContext<JSON> context) {
 		super(inst.getSourceInfo());
 		this.inst = inst;
+		this.context = context;
 	};
 	public FutureInstruction<JSON> getIntruction() {
 		return inst;
@@ -19,8 +24,11 @@ public class FixedContext extends AbstractFutureInstruction {
 	@Override
 	public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 			throws ExecutionException {
-		context.define("_", FutureInstructionFactory.value(data, inst.getSourceInfo()));
-		context.declaringContext(context);
+		AsyncExecutionContext<JSON> ctx = this.context !=null ? this.context : context;
+//		ctx=ctx.createChild(true, false, data, source);
+//		ctx.define("_", FutureInstructionFactory.value(data, inst.getSourceInfo()));
+		// ??
+		ctx.declaringContext(ctx);
 		return inst.call(context, data);
 	}
 }
