@@ -3095,8 +3095,13 @@ public class FutureInstructionFactory {
 						Iterator<JSON> jit = input.iterator();
 						final JSON jd = jit.next();
 						final JSON kj = jit.hasNext() ? jit.next() : null;
+						if(logger.isInfoEnabled()) {
+							if(kj.getType() != JSONType.STRING) {
+								logger.info("not a string type for key in amend: ");
+							}
+						}
 						if (kj != null) {
-							final String ks = stringValue(kj);
+							final String ks = kj.stringValue();
 							if (ai != null && jd.getType() == JSONType.OBJECT) {
 								context.define(":", value(immediateCheckedFuture(context.builder().value(ks)), source));
 								return transform(ai.call(context, data),
@@ -3104,11 +3109,17 @@ public class FutureInstructionFactory {
 									@Override
 									public ListenableFuture<JSON> apply(JSON input) throws Exception {
 										final JSONObject obj = context.builder().object(jd.getParent());
+										boolean added =false;
 										for (Pair<String, JSON> pp : (JSONObject) jd) {
 											if (!pp.f.equals(ks))
 												obj.put(pp.f, pp.s);
+											else {
+												added = true;
+												if (input.getType() != JSONType.NULL)
+													obj.put(k, input);
+											}
 										}
-										if (input.getType() != JSONType.NULL)
+										if ((!added) && input.getType() != JSONType.NULL)
 											obj.put(k, input);
 										return immediateCheckedFuture(obj);
 									}

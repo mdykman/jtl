@@ -9,6 +9,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class FixedContext extends AbstractFutureInstruction {
 	final FutureInstruction<JSON> inst;
 	final AsyncExecutionContext<JSON> context;
+	
+	public AsyncExecutionContext<JSON> getContext(){
+		return context;
+	}
+	
 	public FixedContext(final FutureInstruction<JSON> inst) {
 		this(inst,null);
 	}
@@ -17,6 +22,7 @@ public class FixedContext extends AbstractFutureInstruction {
 		super(inst.getSourceInfo());
 		this.inst = inst;
 		this.context = context;
+//		System.err.println("FixedContext contains a " + inst.getSourceInfo().toString(null));
 	};
 	public FutureInstruction<JSON> getIntruction() {
 		return inst;
@@ -28,7 +34,7 @@ public class FixedContext extends AbstractFutureInstruction {
 //		ctx=ctx.createChild(true, false, data, source);
 //		ctx.define("_", FutureInstructionFactory.value(data, inst.getSourceInfo()));
 		// ??
-		ctx.declaringContext(ctx);
+//		ctx.declaringContext(ctx);
 		return inst.call(context, data);
 	}
 }
