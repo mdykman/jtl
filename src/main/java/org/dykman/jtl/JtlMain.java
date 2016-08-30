@@ -1,4 +1,4 @@
-package org.dykman.jtl;												
+package org.dykman.jtl;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class JtlMain {
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();
 	JtlCompiler compiler;
-	static ListeningExecutorService les;	
+	static ListeningExecutorService les;
 
 	JSONObject config;
 	File configFile = null;
@@ -90,7 +90,7 @@ public class JtlMain {
 	public static void setVerbose(boolean b) {
 		verbose = b;
 	}
-	
+
 	public void setSyntaxCheck(boolean b) {
 		compiler.setSyntaxCheck(b);
 	}
@@ -165,12 +165,12 @@ public class JtlMain {
 					new Option("b", "bind", true, "bind network address * implies --server (default:0.0.0.0)"));
 
 			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
-			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
+			options.addOption(new Option("n", "indent", true,
+					"specify default indent level for output (cli default:3, server default:0)"));
 			options.addOption(new Option("Q", "dequote", true, "allow well formed keys to be unquoted"));
 
 			options.addOption(new Option("S", "syntax-check", false, "syntax check only, do not execute"));
 
-			
 			options.addOption(
 					new Option("a", "array", false, "parse a sequence of json entities from the input stream, "
 							+ "assemble them into an array and process"));
@@ -244,18 +244,17 @@ public class JtlMain {
 
 			org.apache.log4j.Logger.getRootLogger().addAppender(console);
 			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel(logLevel));
-			
+
 			logger = LoggerFactory.getLogger(JtlMain.class);
 
-			
 			logger.info("starting thread-pool with a concurrency of " + threads);
 			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
 
 			String oo;
 
 			if (cli.hasOption('r')) {
-				
-				 // not yet supported
+
+				// not yet supported
 				replMode = true;
 			}
 			if (cli.hasOption('p') || cli.hasOption("port")) {
@@ -456,16 +455,15 @@ public class JtlMain {
 					} else {
 						pw = new PrintWriter(output, "UTF-8");
 					}
-				} catch(JtlParseException e) {
+				} catch (JtlParseException e) {
 					System.err.println("----------------------------------------------");
 					System.err.println(e.report());
 					logger.error(e.report());
 					return;
-				}
-				catch(Exception e) {
+				} catch (Exception e) {
 					System.err.println(e.getLocalizedMessage());
 					logger.error(e.getLocalizedMessage());
-					return; 
+					return;
 				}
 				JSON result;
 				JSON data;
@@ -508,13 +506,11 @@ public class JtlMain {
 				}
 
 				// catch
-				
-				
+
 				if (replMode) {
 					logger.info("starting console");
 					AsyncExecutionContext<JSON> context = main.createInitialContext(data, cexddir, init);
-					ConsoleReader cons = 
-							new ConsoleReader(System.in, System.out);
+					ConsoleReader cons = new ConsoleReader(System.in, System.out);
 					cons.setPrompt("jtl>");
 					cons.addCompleter(new Completer() {
 						@Override
@@ -525,16 +521,16 @@ public class JtlMain {
 					cons.setCompletionHandler(new CandidateListCompletionHandler());
 					JSONArray aa = main.args(argIt);
 					String line = cons.readLine();
-					while(line !=null) {
+					while (line != null) {
 						try {
 							FutureInstruction<JSON> fit = main.compile(line);
-							JSON jres = main.execute(fit,context, source, init, data, cexddir,aa);
+							JSON jres = main.execute(fit, context, source, init, data, cexddir, aa);
 							jres.write(pw, indent, enquote);
-						} catch(Exception ee) {
+						} catch (Exception ee) {
 							pw.println("  error: " + ee.getLocalizedMessage());
 						}
 						line = cons.readLine();
-						if(line == null) {
+						if (line == null) {
 							break;
 						}
 					}
@@ -583,9 +579,9 @@ public class JtlMain {
 
 	public void shutdown() throws InterruptedException {
 		try {
-		les.shutdown();
-		les.awaitTermination(2, TimeUnit.SECONDS);
-		} catch(InterruptedException e) {
+			les.shutdown();
+			les.awaitTermination(2, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
 			les.shutdownNow();
 		}
 	}
@@ -622,11 +618,11 @@ public class JtlMain {
 		return JSONBuilderImpl.NULL;
 	}
 
-	
-	AsyncExecutionContext<JSON> createInitialContext(JSON data, File cwd,File init) throws ExecutionException, IOException {
+	AsyncExecutionContext<JSON> createInitialContext(JSON data, File cwd, File init)
+			throws ExecutionException, IOException {
 		return compiler.createInitialContext(data, config, cwd, init, builder, les);
 	}
-	
+
 	public JSON execute(FutureInstruction<JSON> inst, String source, File init, JSON data, File cwd, JSONArray args)
 			throws Exception {
 		AsyncExecutionContext<JSON> context = createInitialContext(data, cwd, init);
@@ -634,9 +630,9 @@ public class JtlMain {
 		ml.loadAuto(context, false);
 		return execute(inst, context, source, init, data, cwd, args);
 	}
-	
-	public JSON execute(FutureInstruction<JSON> inst, AsyncExecutionContext<JSON> context, String source, File init, JSON data, File cwd, JSONArray args)
-			throws Exception {
+
+	public JSON execute(FutureInstruction<JSON> inst, AsyncExecutionContext<JSON> context, String source, File init,
+			JSON data, File cwd, JSONArray args) throws Exception {
 		ListenableFuture<JSON> dd = Futures.immediateCheckedFuture(data);
 		context = context.createChild(false, false, dd, SourceInfo.internal("cli"));
 		context.setRuntime(true);
@@ -646,7 +642,7 @@ public class JtlMain {
 		if (arr != null)
 			for (JSON v : arr) {
 				context.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("cli")));
-//				arr.add(v);
+				// arr.add(v);
 			}
 
 		context.define("@", FutureInstructionFactory.value(arr, SourceInfo.internal("cli")));
