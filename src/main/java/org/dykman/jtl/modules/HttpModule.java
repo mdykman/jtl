@@ -357,7 +357,7 @@ public class HttpModule extends AbstractModule {
 						final JSONObject data;
 						String file = null;
 						String accept = null;
-
+						final List<String> metaOptions = new ArrayList<>();
 						if (a.getType() == JSONType.OBJECT) {
 							JSONObject obj = (JSONObject) a;
 							JSON p = obj.get("url");
@@ -375,7 +375,21 @@ public class HttpModule extends AbstractModule {
 							if (p != null) {
 								accept = p.stringValue();
 							}
-
+							p = obj.get("meta");
+							if (p != null) {
+								if(p instanceof JSONArray) {
+									JSONArray ja = (JSONArray) p;
+									if(ja.size() >= 0) {
+										for(JSON j: ja) {
+											metaOptions.add(j.stringValue());
+										}
+									}
+								} else {
+									String s = p.stringValue();
+									metaOptions.add(s);
+								}
+								
+							}
 						} else {
 							url = stringValue(a);
 							data = (JSONObject) b;
@@ -416,6 +430,24 @@ public class HttpModule extends AbstractModule {
 												if (jj instanceof JSONObject) {
 													((JSONObject) jj).put("__status", builder.value(n));
 												}
+											}
+											if(metaOptions.size() > 0) {
+												JSONObject metaObject = builder.object(null);
+												for(String s: metaOptions) {
+													switch(s) {
+													case "status":
+														metaObject.put("status",builder.value(n), true);
+													case "headers": {
+														JSONObject jh = builder.object(metaObject);
+														for(Header  header: mm.getResponseHeaders()) {
+															jh.put(header.getName(), builder.value(header.getValue()));
+														}
+														metaObject.put("headers",jh, true);
+													}
+													}
+												}
+												metaObject.put("content", jj);
+												jj = metaObject;
 											}
 											return jj;
 										}

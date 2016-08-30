@@ -162,11 +162,11 @@ public class JtlMain {
 			options.addOption(new Option("p", "port", true, "specify a port number (default:7718) * implies --server"));
 
 			options.addOption(
-					new Option("b", "binding", true, "bind network address * implies --server (default:127.0.0.1)"));
+					new Option("b", "bind", true, "bind network address * implies --server (default:0.0.0.0)"));
 
 			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
-			options.addOption(new Option("q", "quote", false, "enforce quoting of all object keys (cli default:false, server default: true)"));
+			options.addOption(new Option("Q", "dequote", true, "allow well formed keys to be unquoted"));
 
 			options.addOption(new Option("S", "syntax-check", false, "syntax check only, do not execute"));
 
@@ -198,7 +198,7 @@ public class JtlMain {
 
 			boolean verbose = false;
 			boolean array = false;
-			boolean enquote = false;
+			boolean enquote = true;
 			boolean useNull = false;
 			File cexddir = null;
 
@@ -274,7 +274,7 @@ public class JtlMain {
 				serverMode = true;
 			}
 
-			if (cli.hasOption('B') || cli.hasOption("binding")) {
+			if (cli.hasOption('b') || cli.hasOption("bind")) {
 				bindAddress = cli.getOptionValue('B');
 				logger.info("binding to interface " + bindAddress);
 				serverMode = true;
@@ -344,9 +344,9 @@ public class JtlMain {
 				array = true;
 			}
 
-			if (cli.hasOption('q') || cli.hasOption("quote")) {
-				logger.info("force key enquoting ");
-				enquote = true;
+			if (cli.hasOption('Q') || cli.hasOption("enquote")) {
+				logger.info("allow key enquoting ");
+				enquote = false;
 			}
 			if (cli.hasOption('x') || cli.hasOption("jtl")) {
 				oo = cli.getOptionValue('c');

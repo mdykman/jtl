@@ -1764,7 +1764,7 @@ public class FutureInstructionFactory {
 								if ("_".equals(pp.f.label) && pp.f.quoted) {
 									defi = pp.s;
 								}
-								if (str.equals(pp.f)) {
+								if (str.equals(pp.f.label)) {
 									return pp.s.call(pcontext, data);
 								}
 							}
