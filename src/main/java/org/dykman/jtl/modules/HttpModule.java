@@ -80,16 +80,28 @@ public class HttpModule extends AbstractModule {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						if(input !=null) {
+						if (input != null) {
+							// left to it's own intelligence, the standard
+							// encoder
+							// transforms spaces into '+' which is a dying
+							// convention
+							// here, we explicitly
 							String s = input.stringValue();
-							if(s!=null) return Futures.immediateCheckedFuture(context.builder().value(URLEncoder.encode(s, "UTF-8")));
+							if (s != null) {
+								String[] split = s.split(" ");
+								for (int i = 0; i < split.length; ++i) {
+									split[i] = URLEncoder.encode(split[i], "UTF-8");
+								}
+								s = String.join("%20", split);
+								return Futures.immediateCheckedFuture(context.builder().value(s));
+							}
 						}
 						return Futures.immediateCheckedFuture(context.builder().value());
 					}
 				});
 			}
 		});
-		
+
 		context.define("dec", new AbstractFutureInstruction(meta) {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
@@ -177,20 +189,24 @@ public class HttpModule extends AbstractModule {
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
-//									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									// String ss =
+									// URLEncoder.encode(av.stringValue(),
+									// "UTF-8");
 									String ss = av.stringValue();
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
-//								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								// String ss =
+								// URLEncoder.encode(pp.s.stringValue(),
+								// "UTF-8");
 								String ss = pp.s.stringValue();
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}
-//					} catch (UnsupportedEncodingException e) {
-//						throw new RuntimeException(e);
-					} finally 
-					{}
+						// } catch (UnsupportedEncodingException e) {
+						// throw new RuntimeException(e);
+					} finally {
+					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
 				}
 				return get;
@@ -216,7 +232,9 @@ public class HttpModule extends AbstractModule {
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
-//								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								// String ss =
+								// URLEncoder.encode(pp.s.stringValue(),
+								// "UTF-8");
 								String ss = pp.s.stringValue();
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
@@ -336,12 +354,14 @@ public class HttpModule extends AbstractModule {
 						if (!parent.canWrite()) {
 							logger.error("unable to write to " + parent.getAbsolutePath() + " for file " + f.getName());
 							return -2;
-							//throw new ExecutionException("unable to write to " + parent.getAbsolutePath(), source);
+							// throw new ExecutionException("unable to write to
+							// " + parent.getAbsolutePath(), source);
 						}
-						try(FileOutputStream os = new FileOutputStream(f)) {
+						try (FileOutputStream os = new FileOutputStream(f)) {
 							n = IOUtils.copy(toSave, os);
-						} catch(IOException e) {
-							logger.error("while writing file " + f.getAbsolutePath() + ": " + e.getLocalizedMessage(),e);
+						} catch (IOException e) {
+							logger.error("while writing file " + f.getAbsolutePath() + ": " + e.getLocalizedMessage(),
+									e);
 							return -1;
 						}
 						return n;
@@ -357,7 +377,7 @@ public class HttpModule extends AbstractModule {
 						final JSONObject data;
 						String file = null;
 						String accept = null;
-
+						final List<String> metaOptions = new ArrayList<>();
 						if (a.getType() == JSONType.OBJECT) {
 							JSONObject obj = (JSONObject) a;
 							JSON p = obj.get("url");
@@ -375,7 +395,21 @@ public class HttpModule extends AbstractModule {
 							if (p != null) {
 								accept = p.stringValue();
 							}
+							p = obj.get("meta");
+							if (p != null) {
+								if (p instanceof JSONArray) {
+									JSONArray ja = (JSONArray) p;
+									if (ja.size() >= 0) {
+										for (JSON j : ja) {
+											metaOptions.add(j.stringValue());
+										}
+									}
+								} else {
+									String s = p.stringValue();
+									metaOptions.add(s);
+								}
 
+							}
 						} else {
 							url = stringValue(a);
 							data = (JSONObject) b;
@@ -410,12 +444,30 @@ public class HttpModule extends AbstractModule {
 									if (n == 200 && ffile != null) {
 										return builder.value(saveFile(ffile, mm.getResponseBodyAsStream()));
 									} else {
- 										if (json) {
+										if (json) {
 											JSON jj = read(mm, context.builder());
 											if (!(n >= 200 && n < 300)) {
 												if (jj instanceof JSONObject) {
 													((JSONObject) jj).put("__status", builder.value(n));
 												}
+											}
+											if (metaOptions.size() > 0) {
+												JSONObject metaObject = builder.object(null);
+												for (String s : metaOptions) {
+													switch (s) {
+													case "status":
+														metaObject.put("status", builder.value(n), true);
+													case "headers": {
+														JSONObject jh = builder.object(metaObject);
+														for (Header header : mm.getResponseHeaders()) {
+															jh.put(header.getName(), builder.value(header.getValue()));
+														}
+														metaObject.put("headers", jh, true);
+													}
+													}
+												}
+												metaObject.put("content", jj);
+												jj = metaObject;
 											}
 											return jj;
 										}
