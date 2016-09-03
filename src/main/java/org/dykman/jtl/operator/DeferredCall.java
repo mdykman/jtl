@@ -1,9 +1,9 @@
-package org.dykman.jtl.future;
+package org.dykman.jtl.operator;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.SourceInfo;
+import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.operator.FutureInstruction;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -13,13 +13,13 @@ public class DeferredCall implements FutureInstruction<JSON> {
 	public AsyncExecutionContext<JSON> pcontext;
 	public final ListenableFuture<JSON> data;
 
-	public DeferredCall(SourceInfo source,FutureInstruction<JSON> inst,
+	public DeferredCall(FutureInstruction<JSON> inst,
 			AsyncExecutionContext<JSON> context,
 			ListenableFuture<JSON> t) {
 	   this.inst = inst;
 		this.pcontext = context;
 		this.data = t;
-		this.info = source;
+		this.info = inst.getSourceInfo();
 	}
 
 
@@ -38,11 +38,11 @@ public class DeferredCall implements FutureInstruction<JSON> {
 	}
 	
 	  public DeferredCall rebindContext(final AsyncExecutionContext<JSON> context) {
-	     return new DeferredCall(info, inst, context, data);
+	     return new DeferredCall(inst, context, data);
 	  }
 	@Override
 	public FutureInstruction<JSON> unwrap() {
-      return new DeferredCall(info,inst.unwrap(), pcontext, null);
+      return new DeferredCall(inst.unwrap(), pcontext, null);
 	}
 
 	@Override

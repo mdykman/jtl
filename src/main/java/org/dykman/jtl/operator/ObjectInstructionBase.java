@@ -44,59 +44,19 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	}
 
 	public abstract ListenableFuture<JSON> _callObject(
-			// final FutureInstruction<JSON> init,
-			// final List<FutureInstruction<JSON>> imperitives,
-			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, final AsyncExecutionContext<JSON> context,
+			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, 
+			final AsyncExecutionContext<JSON> context,
 			final ListenableFuture<JSON> data) throws ExecutionException;
 
 	public final ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
 			throws ExecutionException {
 
 		FutureInstruction<JSON> init = null;
-		List<Pair<ObjectKey, FutureInstruction<JSON>>> fields = new ArrayList<>(ll.size());
-		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ll.size());
-		List<Pair<ObjectKey, FutureInstruction<JSON>>> variables = new ArrayList<>(ll.size());
-		List<Pair<ObjectKey, FutureInstruction<JSON>>> functions = new ArrayList<>(ll.size());
-//		context = context.createChild(false, false, data, source);
-
-		/*
-		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : ll) {
-			String k = ii.f.label;
-			char ic = k.charAt(0);
-			boolean notquoted = !ii.f.quoted;
-			if (notquoted && ic == '!') {
-				if (k.length() < 2)
-					throw new ExecutionException("unnamed imperative: " + k, source);
-				String l = k.substring(1);
-				FutureInstruction<JSON> imp = FutureInstructionFactory.deferred(source, 
-								fixContextData(ii.s), context,data);
-				variables.add(ii);
-				if ("init".equals(l))
-					init = imp;
-				else
-					imperitives.add(imp);
-
-				variables.add(new Pair<ObjectInstructionBase.ObjectKey, 
-						FutureInstruction<JSON>>(new ObjectKey(l, false), imp));
-
-			} else if (notquoted && ic == '$') {
-				if (k.length() < 2)
-					throw new ExecutionException("unnamed variable: " + k, source);
-				String l = k.substring(1);
-				FutureInstruction<JSON> imp = FutureInstructionFactory.deferred(source, 
-						fixContextData(ii.s), context,data);
-				variables.add(new Pair<ObjectInstructionBase.ObjectKey,
-						FutureInstruction<JSON>>(new ObjectKey(l, false), imp));
-			} else if ((!isContextObject) || (isContextObject && notquoted && "_".equals(k))) {
-					fields.add(ii);
-			} else {
-				FutureInstruction<JSON> imp = FutureInstructionFactory.deferred(source, 
-						fixContextData(ii.s), context,data);
-				variables.add(new Pair<ObjectInstructionBase.ObjectKey, FutureInstruction<JSON>>(
-					new ObjectKey(k, false), imp));
-			}
-		}
-    */
+		int ss = ll.size();
+		List<Pair<ObjectKey, FutureInstruction<JSON>>> fields = new ArrayList<>(ss);
+		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ss);
+		List<Pair<ObjectKey, FutureInstruction<JSON>>> variables = new ArrayList<>(ss);
+		List<Pair<ObjectKey, FutureInstruction<JSON>>> functions = new ArrayList<>(ss);
 		AsyncExecutionContext<JSON> newContext = context.createChild(false, false, data, source);
 		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : ll) {
 			String k = ii.f.label;
@@ -107,9 +67,9 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 				if (k.length() < 2)
 					throw new ExecutionException("unnamed variable: " + k, source);
 				if("!init".equals(ii.f.label) && ii.f.quoted) {
-					fi = init = memo(source,deferred(source, ii.s, newContext, context.config()));
+					fi = init = memo(deferred(ii.s, newContext, context.config()));
 				} else {
-					fi = memo(source,deferred(source, ii.s, newContext, data));
+					fi = memo(deferred( ii.s, newContext, data));
 					if(ic == '!') {
 						imperitives.add(fi);
 					}
@@ -134,7 +94,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 			
 			if (notquoted && (ic == '!' || ic == '$')) {
 				k = k.substring(1);
-				FutureInstruction<JSON> imp = memo(source,ii.s);
+				FutureInstruction<JSON> imp = memo(ii.s);
 				context.define(k, imp);
 			} else {
 				throw new ExecutionException("unexpected variable " + k,source);
