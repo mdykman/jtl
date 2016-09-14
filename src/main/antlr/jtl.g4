@@ -1,6 +1,3 @@
-/** Taken from "The Definitive ANTLR 4 Reference" by Terence Parr */
-
-// Derived from http://json.org
 
 grammar jtl;
 
@@ -8,9 +5,7 @@ import json;
 
 options {
     language = Java;
-//    tokenVocab=jtllex;
 }
-
 
 jtl 
       : value EOF?
@@ -18,6 +13,7 @@ jtl
 
 value
     : jpath 
+    | functionReference
     ;
 
 
@@ -49,12 +45,12 @@ and_expr
 match_expr
    : eq_expr
    | match_expr '==' eq_expr
+   | match_expr '!=' match_expr
    ;
    
 eq_expr 
 	: rel_expr
     | eq_expr '=' rel_expr
-    | eq_expr '!=' rel_expr
     ;
         
 rel_expr
@@ -135,17 +131,15 @@ array
   ;
 
 pathstep 
-   : id
-   | recurs
-   | func
-   | funcderef
-   | anonfunc
-   | variable
-   | number
-   | string
-   | object 
+   : object 
    | array
    | '(' value ')'
+   | number
+   | string
+   | variable
+   | functionCall
+   | id
+   | recurs
    | '.'
    | '..'
    | '*'
@@ -160,27 +154,21 @@ recurs
   ;
 
 
-func
-	: ff
-	| ident '.' ff
-	;
-            
-ff
-     : ident '(' ')'
-     | ident '(' value (',' value )* ')' 
-     ;
+functionCall
+	: funcprefix '(' ')'
+  | funcprefix '(' value (',' value )* ')' 
+  ;
 
-anonfunc
-     : '`'  value   '`' '(' ')'
-     | '`'  value   '`'  '(' value (',' value )* ')'
-     | '`'  value   '`'
-     ;
-     
-funcderef
-     : '$' ident '(' ')'
-     | '$' ident '(' value (',' value )* ')'
-     | '$' INTEGER '(' ')' 
-     | '$' INTEGER '(' value (',' value )* ')'
+funcprefix 
+	: ident
+	| ident '.' ident
+	| INTEGER
+	;
+	
+functionReference
+     : '`'  value '`'
+     | ':' funcprefix
+     | ':' INTEGER
      ;
 	
 variable

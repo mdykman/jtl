@@ -25,7 +25,7 @@ public class JtlServer {
 	public JtlServer(File jtlBase,File serverBase, File init, File script, File config, String bindAddress, int port,boolean canonical) 
 			throws IOException {
 		this.serverBase = serverBase;
-		String host = bindAddress == null ? "127.0.0.1" : bindAddress;
+		String host = bindAddress == null ? "0.0.0.0" : bindAddress;
 		InetSocketAddress binding = new InetSocketAddress(host	, port);
 				
 		server = new Server(binding);

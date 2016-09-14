@@ -199,14 +199,15 @@ public class JtlCompiler {
 			if(syntaxCheck && v != null) {
 				return FutureInstructionFactory.value("syntax ok", jsonBuilder, SourceInfo.internal("syntax check"));
 			} else {
-				return FutureInstructionFactory.fixContextData(v.inst);
+				return v.inst;
+//				return FutureInstructionFactory.fixContextData(v.inst);
 			}
 		} catch(JtlParseException e) {
 			logger.error(e.report(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
 					SourceInfo.internal("parser"));
 		} catch(Exception e) {
-			logger.error(e.getLocalizedMessage(),e);
+			logger.info(e.getLocalizedMessage(),e);
 			return FutureInstructionFactory.value(jsonBuilder.value(), 
 					SourceInfo.internal("parser"));
 		}

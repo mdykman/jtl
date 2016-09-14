@@ -76,7 +76,7 @@ public class JTLTest {
 	protected JSON runExpression(String expr, JSON data) throws Exception {
 		FutureInstruction<JSON> inst = compiler.parse("test", expr);
 		AsyncExecutionContext<JSON> context = compiler.createInitialContext(data, getConfig(),
-				new File(".").getCanonicalFile(), null,builder, les);
+				new File(".").getCanonicalFile(), null, builder, les);
 		context.setInit(true);
 
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), getConfig());
@@ -87,44 +87,44 @@ public class JTLTest {
 		return j;
 	}
 
-	protected AsyncExecutionContext<JSON> setupContext(File code, JSON input, File init,JSONObject config) throws Exception {
-		AsyncExecutionContext<JSON> context = compiler.createInitialContext(input, config,
-				code.getCanonicalFile(), init,builder, les);
+	protected AsyncExecutionContext<JSON> setupContext(File code, JSON input, File init, JSONObject config)
+			throws Exception {
+		AsyncExecutionContext<JSON> context = compiler.createInitialContext(input, config, code.getCanonicalFile(),
+				init, builder, les);
 		config.put("server-mode", builder.value(false));
 
-		context = context.createChild(false, false, 
-				Futures.immediateCheckedFuture(input), SourceInfo.internal("test"));
+		context = context.createChild(false, false, Futures.immediateCheckedFuture(input), SourceInfo.internal("test"));
 		context.setRuntime(true);
 		ModuleLoader ml = ModuleLoader.getInstance(context.currentDirectory(), context.builder(), config);
 		ml.loadAuto(context, false);
 		return context;
 	}
-	
+
 	protected JSON runFile(File code, JSON input) throws Exception {
 		return runFile(code, input, null, getConfig());
 	}
-	
-	protected JSON runFile(File code, JSON input,File init,JSONObject config) throws Exception {
+
+	protected JSON runFile(File code, JSON input, File init, JSONObject config) throws Exception {
 		FutureInstruction<JSON> inst = compiler.parse(code);
 		ListenableFuture<JSON> inf = Futures.immediateCheckedFuture(input);
-		AsyncExecutionContext<JSON> context = setupContext(code, input,init,config);
+		AsyncExecutionContext<JSON> context = setupContext(code, input, init, config);
 
 		ListenableFuture<JSON> result = inst.call(context, inf);
 		JSON j = result.get();
 		return j;
 	}
 
-	@Test
+//	@Test
 	public void testJdbc() throws Exception {
 		JSON d = builder.parse(new File(base, "data2.json"));
 		File code = new File(base, "test-jdbc.jtl");
 		JSON res = runFile(code, d);
 		JSON jj = runExpression(".", res);
 		assertEquals(res, jj);
- 		JSON expected = builder.parse("['c','d','e','f','g']");
- 		jj=runExpression("children/children/name", res);
+		JSON expected = builder.parse("['c','d','e','f','g']");
+		jj = runExpression("children/children/name", res);
 		assertEquals(expected, jj);
-		jj=runExpression("**/filter(id==10)[0]/name", res);
+		jj = runExpression("**/filter(id==10)[0]/name", res);
 		assertEquals("tracy rocks", jj.stringValue());
 	}
 
@@ -133,9 +133,7 @@ public class JTLTest {
 		JSON data = getBaseData();
 		JSON j = runExpression("people/count()", data);
 		assertTrue(j.isNumber());
-		if (j.isNumber()) {
-			assertTrue(((JSONValue) j).longValue() == 7L);
-		}
+		assertTrue(((JSONValue) j).longValue() == 7L);
 	}
 
 	@Test
@@ -148,29 +146,32 @@ public class JTLTest {
 			assertEquals(j, expected);
 		}
 	}
-	
-	@Test public void testArrays() throws Exception {
+
+	@Test
+	public void testArrays() throws Exception {
 		JSON j = runExpression("[20..29]", JSONBuilderImpl.NULL);
 		assertTrue(j instanceof JSONArray);
 		JSONArray array = (JSONArray) j;
 		assertTrue(array.size() == 10);
 		j = runExpression(".[-1]", array);
 		assertTrue(j instanceof JSONValue);
-		assertEquals((Long)29L, (Long)((JSONValue)j).longValue());
-		
+		assertEquals((Long) 29L, (Long) ((JSONValue) j).longValue());
+
 	}
+
 	@Test
 	public void testDerefObject() throws Exception {
-//		JSON expected = builder.parse("['c','d','e','f','g']");
+		// JSON expected = builder.parse("['c','d','e','f','g']");
 		JSON data = builder.parse("{ foo:[2,4,6], bar: 'thing', fubar: true }");
 		JSON j = runExpression(".['bar']", data);
 		assertEquals("thing", j.stringValue());
 		j = runExpression(".['foo','bar'][0]", data);
 		assertTrue(j instanceof JSONArray);
-		
+
 		JSONArray array = (JSONArray) j;
-		assertEquals(3,array.size());
+		assertEquals(3, array.size());
 	}
+
 	@Test
 	public void testDerefString() throws Exception {
 		JSON data = builder.parse("\" abcdefghijklmnopqrstuvwxyz\"");
@@ -181,8 +182,9 @@ public class JTLTest {
 
 		j = runExpression(".[1..3]", data);
 		assertEquals("abc", j.stringValue());
-//		System.out.println(j.stringValue());
+		// System.out.println(j.stringValue());
 	}
+
 	@Test
 	public void testKeys() throws Exception {
 		JSON data = getBaseData();

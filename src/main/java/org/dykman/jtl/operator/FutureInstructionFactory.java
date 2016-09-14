@@ -981,7 +981,7 @@ public class FutureInstructionFactory {
 					final ListenableFuture<JSON> data) throws ExecutionException {
 				final FutureInstruction<JSON> inst = context.getdef("1").unwrap();
 				if(inst == null) {
-					throw new ExecutionException("eah requires one argument",this.source);
+					throw new ExecutionException("each requires one argument",this.source);
 				}
 				return transform(data, new AsyncFunction<JSON, JSON>() {
 
@@ -1115,16 +1115,16 @@ public class FutureInstructionFactory {
 		};
 	}
 
-	public static FunctionInvocationInstruction functionCall(SourceInfo meta, final String name,
+	public static FunctionInvocationInstruction functionCall(final SourceInfo meta, final String name,
 			final List<FutureInstruction<JSON>> iargs) {
 		return new FunctionInvocationInstruction(meta, name, iargs);
 	}
-	
+	/*
 	public static FunctionInvocationInstruction functionCall(SourceInfo meta, final FutureInstruction<JSON> expr,
 			final List<FutureInstruction<JSON>> iargs) {
 		return new FunctionInvocationInstruction(meta, iargs,expr);
 	}
-
+*/
 	// rank all
 	public static FutureInstruction<JSON> value(final ListenableFuture<JSON> o, SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
@@ -1132,7 +1132,7 @@ public class FutureInstructionFactory {
 			@Override
 			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
 					throws ExecutionException {
-				return o;
+				return o;	
 			}
 		};
 	}

@@ -149,7 +149,7 @@ public class JtlMain {
 			options.addOption(new Option("p", "port", true, "specify a port number (default:7718) * implies --server"));
 
 			options.addOption(
-					new Option("b", "binding", true, "bind network address * implies --server (default:127.0.0.1)"));
+					new Option("b", "binding", true, "bind network address * implies --server (default:0.0.0.0)"));
 
 			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
@@ -196,7 +196,7 @@ public class JtlMain {
 			boolean canonical = false;
 			String expr = null;
 			int port = 7718; // default port
-			String bindAddress = null;
+			String bindAddress = "0.0.0.0";
 			int threads = 20;
 
 			CommandLineParser parser = new GnuParser();

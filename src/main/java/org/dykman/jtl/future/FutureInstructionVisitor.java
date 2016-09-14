@@ -9,62 +9,21 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.jtlBaseVisitor;
-import org.dykman.jtl.jtlParser.Abs_pathContext;
-import org.dykman.jtl.jtlParser.Add_exprContext;
-import org.dykman.jtl.jtlParser.And_exprContext;
-import org.dykman.jtl.jtlParser.AnonfuncContext;
-import org.dykman.jtl.jtlParser.ArrayContext;
-import org.dykman.jtl.jtlParser.Eq_exprContext;
-import org.dykman.jtl.jtlParser.FfContext;
-import org.dykman.jtl.jtlParser.Filter_pathContext;
-import org.dykman.jtl.jtlParser.FuncContext;
-import org.dykman.jtl.jtlParser.FuncderefContext;
-import org.dykman.jtl.jtlParser.IdContext;
-import org.dykman.jtl.jtlParser.IdentContext;
-import org.dykman.jtl.jtlParser.IndexlContext;
-import org.dykman.jtl.jtlParser.Indexlist2Context;
-import org.dykman.jtl.jtlParser.IndexlistContext;
-import org.dykman.jtl.jtlParser.JpathContext;
-import org.dykman.jtl.jtlParser.JsonContext;
-import org.dykman.jtl.jtlParser.JtlContext;
-import org.dykman.jtl.jtlParser.KeyContext;
-import org.dykman.jtl.jtlParser.Match_exprContext;
-import org.dykman.jtl.jtlParser.Mul_exprContext;
-import org.dykman.jtl.jtlParser.NumberContext;
-import org.dykman.jtl.jtlParser.ObjectContext;
-import org.dykman.jtl.jtlParser.Or_exprContext;
-import org.dykman.jtl.jtlParser.PairContext;
-import org.dykman.jtl.jtlParser.PathContext;
-import org.dykman.jtl.jtlParser.PathelementContext;
-import org.dykman.jtl.jtlParser.PathindexContext;
-import org.dykman.jtl.jtlParser.PathstepContext;
-import org.dykman.jtl.jtlParser.PnumContext;
-import org.dykman.jtl.jtlParser.Re_exprContext;
-import org.dykman.jtl.jtlParser.RecursContext;
-import org.dykman.jtl.jtlParser.Rel_exprContext;
-import org.dykman.jtl.jtlParser.Rel_pathContext;
-import org.dykman.jtl.jtlParser.StringContext;
-import org.dykman.jtl.jtlParser.Tern_exprContext;
-import org.dykman.jtl.jtlParser.Unary_exprContext;
-import org.dykman.jtl.jtlParser.Union_exprContext;
-import org.dykman.jtl.jtlParser.ValueContext;
-import org.dykman.jtl.jtlParser.VariableContext;
-import org.dykman.jtl.operator.DyadicAsyncFunction;
-import org.dykman.jtl.operator.FutureInstruction;
-import org.dykman.jtl.operator.RangeInstruction;
-import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
-import org.dykman.jtl.json.JList;
-import org.dykman.jtl.json.JSON;
-import org.dykman.jtl.json.JSON.JSONType;
-import org.dykman.jtl.json.JSONArray;
+
+import org.dykman.jtl.jtlParser.*;
 import org.dykman.jtl.json.JSONBuilder;
-import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.operator.*;
+import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
+import org.dykman.jtl.json.*;
+
+import org.dykman.jtl.json.JSON.JSONType;
 
 public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionValue<JSON>> {
 
@@ -136,15 +95,10 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		}
 
 		try {
-			boolean _import = false;
-			if (imported) {
-				imported = false;
-				_import = true;
-			}
 			return new FutureInstructionValue<JSON>(object(getSource(ctx), ins, false));
 		} catch (ExecutionException e) {
 			return new FutureInstructionValue<JSON>(value(
-					"ExecutionException during visitObject: " + e.getLocalizedMessage(), builder, getSource(ctx)));
+				"ExecutionException during visitObject: " + e.getLocalizedMessage(), builder, getSource(ctx)));
 		}
 	}
 
@@ -218,52 +172,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		return new FutureInstructionValue<JSON>(s);
 	}
 
-	@Override
-	public FutureInstructionValue<JSON> visitFf(FfContext ctx) {
-		return super.visitFf(ctx);
-	}
 
-	@Override
-	public FutureInstructionValue<JSON> visitFuncderef(FuncderefContext ctx) {
-		String name = ctx.getChild(1).getText();
-		List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
-		for (ValueContext jc : ctx.value()) {
-			FutureInstructionValue<JSON> vv = visitValue(jc);
-			
-			ins.add(vv.inst);
-		}
-		return new FutureInstructionValue<JSON>(activate(getSource(ctx), name, ins));
-	}
-
-	@Override
-	public FutureInstructionValue<JSON> visitAnonfunc(AnonfuncContext afc) {
-		List<FutureInstruction<JSON>> ins = new ArrayList<>(afc.getChildCount());
-		Iterator<ValueContext> vcl = afc.value().iterator();
-		FutureInstruction<JSON> expr = visitValue(vcl.next()).inst;
-		while(vcl.hasNext()) {
-			FutureInstructionValue<JSON> vv = visitValue(vcl.next());
-			ins.add(vv.inst);
-		}
-		SourceInfo si = getSource(afc);
-		si.name = "*anon*";
-		return new FutureInstructionValue<JSON>(functionCall(si,expr,ins));
-	}
-
-	@Override
-	public FutureInstructionValue<JSON> visitFunc(FuncContext ctx) {
-		FfContext fc = ctx.ff();
-		String name = fc.getChild(0).getText();
-		IdentContext ic = ctx.ident();
-		if (ic != null) {
-			name = visitIdent(ic).string + '.' + name;
-		}
-		List<FutureInstruction<JSON>> ins = new ArrayList<>(ctx.getChildCount());
-		for (ValueContext jc : fc.value()) {
-			FutureInstructionValue<JSON> vv = visitValue(jc);
-			ins.add(vv.inst);
-		}
-		return new FutureInstructionValue<JSON>(functionCall(getSource(ctx), name, ins));
-	}
 
 	@Override
 	public FutureInstructionValue<JSON> visitPnum(PnumContext ctx) {
@@ -412,17 +321,6 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 							return builder.value(a.isTrue() && b.isTrue());
 						}
 					}, false));
-		} else {
-			return a;
-		}
-	}
-
-	@Override
-	public FutureInstructionValue<JSON> visitMatch_expr(Match_exprContext ctx) {
-		FutureInstructionValue<JSON> a = visitEq_expr(ctx.eq_expr());
-		Match_exprContext c = ctx.match_expr();
-		if (c != null) {
-			return new FutureInstructionValue<JSON>(match(getSource(ctx), visitMatch_expr(c).inst, a.inst));
 		} else {
 			return a;
 		}
@@ -592,6 +490,15 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	}
 
 	@Override
+	public FutureInstructionValue<JSON> visitFunctionCall(FunctionCallContext ctx) {
+		final FutureInstructionValue<JSON> a = visitFuncprefix(ctx.funcprefix());
+		List<FutureInstruction<JSON>> iargs = new ArrayList<>();
+		for(ValueContext vc : ctx.value()) {
+			iargs.add(visitValue(vc).inst);
+		}
+		return new FutureInstructionValue<JSON>(functionCall(getSource(ctx), a.string, iargs));
+	}
+	@Override
 	public FutureInstructionValue<JSON> visitPathelement(PathelementContext ctx) {
 		PathstepContext psc = ctx.pathstep();
 		if (psc != null) {
@@ -607,36 +514,16 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	@Override
 	public FutureInstructionValue<JSON> visitPathstep(PathstepContext ctx) {
 		ObjectContext oc = ctx.object();
-		if (oc != null) {
-			return visitObject(oc);
-		}
-		ValueContext xvc = ctx.value();
-		if (xvc != null)
-			return visitValue(xvc);
-		
-		AnonfuncContext afc = ctx.anonfunc();
-		if(afc != null)
-			return visitAnonfunc(afc);
+		if (oc != null) return visitObject(oc);
 
 		ArrayContext ac = ctx.array();
-		if (ac != null) {
-			return visitArray(ac);
-		}
-		VariableContext vc = ctx.variable();
-		if (vc != null)
-			return visitVariable(vc);
-
-		FuncContext fc = ctx.func();
-		if (fc != null)
-			return visitFunc(fc);
-
-		FuncderefContext fdc = ctx.funcderef();
-		if (fdc != null)
-			return visitFuncderef(fdc);
+		if (ac != null) return visitArray(ac);
+		
+		ValueContext xvc = ctx.value();
+		if (xvc != null) return visitValue(xvc);
 
 		NumberContext nc = ctx.number();
-		if (nc != null)
-			return visitNumber(nc);
+		if (nc != null)	return visitNumber(nc);
 
 		StringContext sc = ctx.string();
 		if (sc != null) {
@@ -644,13 +531,12 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			dd.inst = value(dd.string, builder, getSource(ctx));
 			return dd;
 		}
-		/*
-		 * JstringContext jc = ctx.jstring(); if (jc != null) return
-		 * visitJstring(jc);
-		 */
-		RecursContext rc = ctx.recurs();
-		if (rc != null)
-			return visitRecurs(rc);
+		
+		VariableContext vc = ctx.variable();
+		if (vc != null)	return visitVariable(vc);
+
+		FunctionCallContext fc = ctx.functionCall();
+		if (fc != null)	return visitFunctionCall(fc);
 
 		IdContext ic = ctx.id();
 		if (ic != null) {
@@ -658,11 +544,14 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			return new FutureInstructionValue<>(get(getSource(ctx), id));
 		}
 
+
+		RecursContext rc = ctx.recurs();
+		if (rc != null) return visitRecurs(rc);
+
+
 		String t = ctx.getText();
 		{
 			switch (t) {
-			// case "*:*" :
-			// return new InstructionFutureValue<>(mapChildren());
 			case "true":
 				return new FutureInstructionValue<>(value(true, builder, getSource(ctx)));
 			case "false":
