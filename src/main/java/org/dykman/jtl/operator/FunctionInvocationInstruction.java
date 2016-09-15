@@ -15,16 +15,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 	final String name;
+	final FutureInstruction<JSON> instruction;
 	final List<FutureInstruction<JSON>> iargs;
 	boolean variable = false;
 
-	final FutureInstruction<JSON> instruction;
 	public FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs) {
 		this(info,name,iargs,null);
 	}
 	public FunctionInvocationInstruction(SourceInfo info, List<FutureInstruction<JSON>> iargs,
 			FutureInstruction<JSON> instruction) {
-		this(info,null,iargs,instruction);
+		this(info,"*anonymous*",iargs,instruction);
 	}
 	
 	protected FunctionInvocationInstruction(SourceInfo info, String name, List<FutureInstruction<JSON>> iargs,
@@ -92,20 +92,21 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 			throws ExecutionException {
 		final AsyncExecutionContext<JSON> fc = context.getFunctionContext();
 		String ns = null;
-		if("combos".equals(name)) {
-			ns = null;
-		}
-		AsyncExecutionContext<JSON> childContext = setupArguments(context, fc, name, iargs, data, vargs);
 		FutureInstruction<JSON> func = instruction;
 		if(func == null) {
 			Pair<String, FutureInstruction<JSON>> rr = context.getDefPair(name);
 			if (rr != null) {
 				func = rr.s;
 				ns = rr.f;
-				childContext.define("$", FutureInstructionFactory.value(
-						context.builder().value(ns == null ? "" : ns), source));
 			}
 		}
+		AsyncExecutionContext<JSON> childContext = context;
+		if(func instanceof FixedContext) {
+			childContext = ((FixedContext) func).context;
+		}
+		childContext = setupArguments(childContext, fc, name, iargs, data, vargs);
+		childContext.define("$", FutureInstructionFactory.value(
+				context.builder().value(ns == null ? "" : ns), source));
 
 		if (func == null) {
 			throw new ExecutionException("no function found named " + name, source);

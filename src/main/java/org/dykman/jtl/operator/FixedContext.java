@@ -8,10 +8,14 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class FixedContext extends AbstractFutureInstruction {
 	final FutureInstruction<JSON> inst;
-
+	final AsyncExecutionContext<JSON> context;
 	public FixedContext(final FutureInstruction<JSON> inst) {
+		this(inst,null);
+	}
+	public FixedContext(final FutureInstruction<JSON> inst,AsyncExecutionContext<JSON> context) {
 		super(inst.getSourceInfo());
 		this.inst = inst;
+		this.context = context;
 	};
 	public FutureInstruction<JSON> getIntruction() {
 		return inst;

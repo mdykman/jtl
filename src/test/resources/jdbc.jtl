@@ -1,23 +1,13 @@
 {
-   !init: {
+	!init: {
       db: module("jdbc",{
-              uri:"jdbc:mysql://localhost:3306/vf_master",
-              driver:"com.mysql.jdbc.Driver",
-              user:"root",
-              password:"password"
+         url:"jdbc:sqlite:recurse.db",
+         driverClass:"org.sqlite.JDBC"
       })
-   },
-	$mydomain: /domain,
-   
-   _: {
-
-		users: users('viafoura.com')/filter(has_picture)/{
-			created:date_created,
-			email:email,
-			id:id,
-			name:name,
-			username:username
-		}/collate()
 	},
-   users: db.query("select * from Users where email like CONCAT('%@', ? )",/domain)  
+	_:  array(wanted)/*/px([.]),
+	px: $1/pq()/amend("children",id/ii() or null),
+	pq: db.query("select id,name from items where id = ?"/copy(count($_))/join(" UNION "),$_),
+	ii: cq(.)/amend("children",id/ii() or null),
+	cq: db.query("select id,parentid,name from items where parentid = ?",[$1])
 }

@@ -31,10 +31,17 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	public static class ObjectKey {
 		public final String label;
 		public final boolean quoted;
+		public final FutureInstruction<JSON> expr;
 
+		public ObjectKey(FutureInstruction<JSON> expr) {
+			this.expr = expr;
+			this.label = null;
+			this.quoted = false;
+		}
 		public ObjectKey(String l, boolean b) {
 			label = l;
 			quoted = b;
+			expr = null;
 		}
 	}
 
@@ -79,7 +86,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 				fields.add(ii);
 			} else {
 				functions.add(new Pair<ObjectInstructionBase.ObjectKey, FutureInstruction<JSON>>(
-						new ObjectKey(k, false), fixContextData(ii.s)));
+						new ObjectKey(k, false), fixContextData(ii.s,newContext)));
 			}
 		}
 		
@@ -102,7 +109,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 		}
 		
 		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : functions) {
-			context.define(ii.f.label,fixContextData(ii.s));
+			context.define(ii.f.label,fixContextData(ii.s,context));
 		}
 		
 		final AsyncExecutionContext<JSON> ctx = context;
@@ -157,7 +164,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 				throw new RuntimeException("WTF!!!!???? no error handler is defined!", e);
 			}
 			SourceInfo info = e instanceof ExecutionException ? ((ExecutionException) e).getSourceInfo()
-					: SourceInfo.internal("imperatives");
+					: SourceInfo.internal("error");
 
 			AsyncExecutionContext<JSON> ec = context.createChild(true, false, data, info);
 			ec.define("0", FutureInstructionFactory.value("error", context.builder(), info));

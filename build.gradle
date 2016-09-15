@@ -8,9 +8,8 @@
  */
 
 group='org.dykman'
-version='0.9.32'
+version='0.9.40'
 
-// In this section you declare where to find the dependencies of your project
 repositories {
 	 maven {
 		url "http://nexus.ailis.de/content/groups/public"
