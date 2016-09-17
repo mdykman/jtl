@@ -152,10 +152,6 @@ public class JSONBuilderImpl implements JSONBuilder {
 			return NULL;
 		if (o instanceof JSON) {
 			return (JSON) o;
-	//		System.err.println("value cloning path...  WTF???");
-	//		Exception ee = new Exception("value cloning??");
-	//		ee.printStackTrace();
-	//		return sign(((JSON) o).cloneJSON());
 		}
 		if (o instanceof Boolean)
 			return value((Boolean) o);
