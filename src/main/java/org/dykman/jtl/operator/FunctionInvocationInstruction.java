@@ -71,7 +71,8 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 				context.define(key, inst);
 				insts.add(inst);
 			}
-		
+		context.define("#", FutureInstructionFactory.value(
+				context.builder().value(insts.size()), source));
 		context.define("@", FutureInstructionFactory.paramArray(source, insts));
 		context.define("_", FutureInstructionFactory.value(data, source));
 		return context;

@@ -1187,6 +1187,7 @@ public class FutureInstructionFactory {
 		return value(immediateCheckedFuture(o), meta);
 	}
 
+	
 	// rank all
 	public static FutureInstruction<JSON> value(JSONBuilder builder, SourceInfo meta) {
 		return value(JSONBuilderImpl.NULL, meta);
