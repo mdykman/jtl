@@ -488,7 +488,25 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		}
 		return a;
 	}
-
+	@Override
+	public FutureInstructionValue<JSON> visitFuncprefix(FuncprefixContext ctx) {
+		List<IdentContext> ids = ctx.ident();
+		if(ids.size() == 0) {
+			TerminalNode ii = ctx.INTEGER();
+			return new FutureInstructionValue<JSON>(ii.getText());
+		}
+		if(ids.size() == 1) {
+			return new FutureInstructionValue<JSON>(ids.get(0).getText());
+		}
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for(IdentContext idc: ids) {
+			if(first) first = false;
+			else sb.append('.');
+			sb.append(idc.getText());
+		}
+		return new FutureInstructionValue<JSON>(sb.toString());
+	}
 	@Override
 	public FutureInstructionValue<JSON> visitFunctionCall(FunctionCallContext ctx) {
 		final FutureInstructionValue<JSON> a = visitFuncprefix(ctx.funcprefix());

@@ -150,7 +150,7 @@ public class JtlMain {
 			options.addOption(
 					new Option("b", "bind", true, "bind network address * implies --server (default:0.0.0.0)"));
 
-			options.addOption(new Option("k", "canon", false, "output canonical JSON (enforce ordered keys)"));
+			options.addOption(new Option("k", "canonical", false, "output 'canonical' JSON (enforce ordered keys)"));
 			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
 			options.addOption(new Option("Q", "dequote", false, "allow well formed keys to be unquoted"));
 
@@ -163,16 +163,7 @@ public class JtlMain {
 					"gather n items from a sequence of JSON values from the input stream, processing them as an array"));
 
 			options.addOption(new Option("z", "null", false, "use null input data (cli-only)"));
-			
-			
-			String s = System.getProperty("jtl.home");
-			if (s == null)
-				s = System.getProperty("JTL_HOME");
-			File home = s == null ? null : new File(s);
-			if (home == null) {
-				System.err.println("unable to to determine JTL_HOME, using current directory");
-				home = new File(".");
-			}
+
 
 			File fconfig = null;
 			File jtl = null;
@@ -230,27 +221,38 @@ public class JtlMain {
 			org.apache.log4j.Logger.getRootLogger().setLevel(Level.toLevel(logLevel));
 
 			logger = LoggerFactory.getLogger(JtlMain.class);
+			String s = System.getProperty("jtl.home");
+			if (s == null)
+				s = System.getProperty("JTL_HOME");
+			File home = s == null ? null : new File(s);
+			if (home == null) {
+				logger.warn("unable to to determine JTL_HOME, using current directory");
+				home = new File(".");
+			}
 
+			
 			logger.info("starting thread-pool with a concurrency of " + threads);
-			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
+			
 
 			String oo;
 
 			if (cli.hasOption('t')) {
 				threads = Integer.parseInt(cli.getOptionValue('t'));
 			}
+			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
 
 
 			if (cli.hasOption('r')) {
+				logger.error("repl is not implemented");
 
 				// not yet supported
 				replMode = true;
 			}
+			
 			if (cli.hasOption('p') || cli.hasOption("port")) {
 				oo = cli.getOptionValue('p');
 				oo = oo != null ? oo : cli.getOptionValue("port");
 				port = Integer.parseInt(oo);
-				logger.info("listening on port " + port);
 				serverMode = true;
 			}
 			if (cli.hasOption('V')) {
@@ -264,9 +266,18 @@ public class JtlMain {
 
 			if (cli.hasOption('b') || cli.hasOption("bind")) {
 				bindAddress = cli.getOptionValue('b');
-				logger.info("binding to interface " + bindAddress);
 				serverMode = true;
 			}
+			if(serverMode) {
+				logger.info(String.format("server enable. binding to interface %s:$d",bindAddress,port));	
+			}
+			if (cli.hasOption('D') || cli.hasOption("dir")) {
+				oo = cli.getOptionValue('D');
+				if (oo == null)
+					oo = cli.getOptionValue("directory");
+				cexddir = new File(oo);
+			} 
+
 			if (cli.hasOption('o') || cli.hasOption("output")) {
 				oo = cli.getOptionValue('o');
 				output = new File(oo);
@@ -280,7 +291,7 @@ public class JtlMain {
 				init = new File(cli.getOptionValue('i'));
 				logger.info("using init script: " + init.getPath());
 			}
-			if (cli.hasOption('k') || cli.hasOption("canon")) {
+			if (cli.hasOption('k') || cli.hasOption("canonical")) {
 				canonical = true;
 			}
 			if (cli.hasOption('c') || cli.hasOption("config")) {
@@ -298,12 +309,7 @@ public class JtlMain {
 			main = new JtlMain(home, fconfig, canonical);
 			if (cli.hasOption('S')) {
 				main.setSyntaxCheck(true);
-			}
-			if (cli.hasOption('D') || cli.hasOption("dir")) {
-				oo = cli.getOptionValue('D');
-				if (oo == null)
-					oo = cli.getOptionValue("directory");
-				cexddir = new File(oo);
+				useNull = true;
 			}
 			if (cli.hasOption('e') || cli.hasOption("expr")) {
 				expr = cli.getOptionValue('e');

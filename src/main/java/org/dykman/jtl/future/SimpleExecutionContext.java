@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,7 +41,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected final Map<String, Object> things = new ConcurrentHashMap<>();
 
 	protected String method = null;
-	protected final Map<String, FutureInstruction<JSON>> functions = new ConcurrentHashMap<>();
+	protected final Map<String, FutureInstruction<JSON>> functions;
 	protected ListeningExecutorService executorService = null;
 	protected JSON conf;
 	protected ListenableFuture<JSON> data;
@@ -56,6 +58,11 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 
 	public boolean isFunctionContext() {
 		return functionContext;
+	}
+
+	boolean isLocked = false;
+	public void lock(boolean b) {
+		isLocked = true;
 	}
 
 	public boolean isInclude() {
@@ -79,7 +86,7 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		things.put(key, o);
 	}
 
-	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent, JSONBuilder builder, ListenableFuture<JSON> data,
+	public SimpleExecutionContext(AsyncExecutionContext<JSON> parent,Map<String, FutureInstruction<JSON>> func, JSONBuilder builder, ListenableFuture<JSON> data,
 			JSON conf, File f,SourceInfo sourceInfo, boolean fc, boolean include, boolean debug) {
 		this.parent = parent;
 		this.functionContext = fc;
@@ -90,11 +97,12 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		this.debug = debug;
 		this.include = include;
 		this.sourceInfo = sourceInfo;
+		this.functions = func == null ?  new ConcurrentHashMap<>() : func;
 		compiler = parent != null ? parent.compiler() : new JtlCompiler(builder);
 	}
 
-	public SimpleExecutionContext(JSONBuilder builder, ListenableFuture<JSON> data, JSON conf, File f,SourceInfo sourceInfo) {
-		this(null, builder, data, conf, f,sourceInfo, false, false, false);
+	public SimpleExecutionContext(JSONBuilder builder, Map<String, FutureInstruction<JSON>> func,ListenableFuture<JSON> data, JSON conf, File f,SourceInfo sourceInfo) {
+		this(null, func,builder, data, conf, f,sourceInfo, false, false, false);
 	}
 
 	public void inject(AsyncExecutionContext<JSON> cc) {
@@ -244,15 +252,24 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 		return c;
 	}
 
-	@Override
-	public void define(String n, FutureInstruction<JSON> i) {
-		functions.put(n, i);
+	public void setParent(AsyncExecutionContext<JSON> c) {
+		
 	}
 
 	@Override
+	public void define(String n, FutureInstruction<JSON> i) {
+		if(isLocked) throw new RuntimeException(String.format("tried to modify a locked context: %s",n));
+		functions.put(n, i);
+	}
+	@Override
 	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, ListenableFuture<JSON> data,
 			SourceInfo source) {
-		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(this, builder,
+		return createChild(fc, include, null, data, source,false);
+	}
+	@Override
+	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, Map<String, FutureInstruction<JSON>> func,ListenableFuture<JSON> data,
+			SourceInfo source,boolean uncouple) {
+		AsyncExecutionContext<JSON> r = new SimpleExecutionContext(uncouple ? null : this, func,builder,
 				data == null ? this.data : data, conf, currentDirectory(),source, fc,
 				include, debug);
 		
@@ -475,20 +492,16 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	
-	static List SpecialSymbols;
+	static Set<String> SpecialSymbols;
 
 	static {
-		SpecialSymbols = Arrays.asList(new String[] { "?", ":", ";", "#", "!", "%", "^", "&", "*" });
+		SpecialSymbols = new HashSet<>(Arrays.asList(
+				new String[] {"$", "?", ":", ";", "#", "!", "%", "^", "&", "*" }));
 	}
 
-
 	public static boolean isSpecial(String s) {
-		if (SpecialSymbols.contains(s))
-			return true;
-		if (Character.isDigit(s.charAt(0)))
-			return true;
-		return false;
-	
+		return SpecialSymbols.contains(s)
+			|| Character.isDigit(s.charAt(0));
 	}
 
 }

@@ -35,7 +35,10 @@ public interface AsyncExecutionContext<T> {
 	public void setInit(boolean b);
 
 	public boolean isInit();
+	
 
+	public void lock(boolean b);
+//	public void setFunctions(Map<String,FutureInstruction<JSON>> funcs);
 	public AsyncExecutionContext<JSON> getFunctionContext();
 
 	public void setRuntime(boolean b);
@@ -94,6 +97,11 @@ public interface AsyncExecutionContext<T> {
 
 	public AsyncExecutionContext<T> createChild(boolean fc, boolean include, ListenableFuture<T> dataContext,
 			SourceInfo source);
+
+
+	public void setParent(AsyncExecutionContext<JSON> c);
+	public AsyncExecutionContext<JSON> createChild(boolean fc, boolean include, Map<String, FutureInstruction<JSON>> func,ListenableFuture<JSON> data,
+			SourceInfo source,boolean uncouple);
 
 	public String getNamespace();
 

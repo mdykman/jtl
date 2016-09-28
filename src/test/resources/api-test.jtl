@@ -1,0 +1,6 @@
+{
+	!init: {
+		a: import("api.jtl")
+	},
+	_: [ a.fA("one"),a.fB(2),a.fC("done","now") ]
+}

@@ -239,7 +239,7 @@ public class JtlCompiler {
 			JSONBuilder builder, ListeningExecutorService les) throws IOException, ExecutionException {
 
 		ListenableFuture<JSON> df = Futures.immediateCheckedFuture(data);
-		SimpleExecutionContext context = new SimpleExecutionContext(builder, df, config, scriptBase,
+		SimpleExecutionContext context = new SimpleExecutionContext(builder,null, df, config, scriptBase,
 				SourceInfo.internal("base-init"));
 		context.setExecutionService(les);
 

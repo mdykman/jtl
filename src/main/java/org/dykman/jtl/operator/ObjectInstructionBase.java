@@ -146,7 +146,7 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 						ll.add(imp.call(context, data));
 					}
 					JSONArray arr = context.builder().array(null);
-					// force complete resolution for imperatives
+					// force synchronous resolution for imperatives
 					for (JSON j : allAsList(ll).get()) {
 						arr.add(j);
 					}
