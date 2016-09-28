@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.JtlCompiler;
+import org.dykman.jtl.JtlMain;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONArray;
@@ -20,6 +21,8 @@ import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
 import org.dykman.jtl.operator.FutureInstruction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("serial")
 public class JtlServlet extends HttpServlet {
@@ -32,6 +35,9 @@ public class JtlServlet extends HttpServlet {
 	FutureInstruction<JSON> defInst = null;
 	FutureInstruction<JSON> initInst = null;
 	AsyncExecutionContext<JSON> initContext;
+	
+	Logger logger =
+			LoggerFactory.getLogger(JtlServlet.class);
 
 	JtlExecutor jtlExecutor = null;
 
@@ -116,7 +122,8 @@ public class JtlServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void service(HttpServletRequest req, HttpServletResponse resp) // throws ServletException, IOException 
+	{
 
 		String ss = req.getParameter("indent");
 		try {
@@ -125,8 +132,9 @@ public class JtlServlet extends HttpServlet {
 			int indent = ss == null ? 0 : Integer.parseInt(ss);
 			r.write(resp.getWriter(), indent, true);
 			resp.getWriter().flush();
-		} catch (ExecutionException e) {
+		} catch (ExecutionException|IOException e) {
 			reportError(500, e.getLocalizedMessage(), resp);
+			logger.error("request failed:", e);
 		}
 
 	}
