@@ -11,9 +11,10 @@
 		_: func("default")
 	}),
 	func: {
-		name: "func",
+		name: $0,
 		data: .,
 		nparams: $#,
-		params: $@
+		params: $@,
+		ns: $$
 	}
 }
