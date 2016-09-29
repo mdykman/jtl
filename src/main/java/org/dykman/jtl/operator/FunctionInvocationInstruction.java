@@ -44,11 +44,14 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 			final String name, 
 			final List<FutureInstruction<JSON>> iargs,
 			final ListenableFuture<JSON> data,
-			final List<FutureInstruction<JSON>> vargs) {
+			final List<FutureInstruction<JSON>> vargs,
+			final String ns) {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
+		
+		// define $0 as the curent function name
 		if(name == null) {
-			context.define("0", FutureInstructionFactory.value(context.builder().value("anonymous"), source));
+			context.define("0", FutureInstructionFactory.value(context.builder().value("<anonymous>"), source));
 		}
 		else if(name.contains(".")) {
 			String pp[] = name.split("[.]",2);
@@ -71,8 +74,16 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 				context.define(key, inst);
 				insts.add(inst);
 			}
-		
+		// namespace, if any
+		context.define("$", FutureInstructionFactory.value(
+				context.builder().value(ns), source));
+
+		// number of argument (int)
+		context.define("#", FutureInstructionFactory.value(
+				context.builder().value(insts.size()), source));
+		// array of function arguments
 		context.define("@", FutureInstructionFactory.paramArray(source, insts));
+		// function input data
 		context.define("_", FutureInstructionFactory.value(data, source));
 		return context;
 	}
@@ -104,9 +115,9 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 		if(func instanceof FixedContext) {
 			childContext = ((FixedContext) func).context;
 		}
-		childContext = setupArguments(childContext, fc, name, iargs, data, vargs);
-		childContext.define("$", FutureInstructionFactory.value(
-				context.builder().value(ns == null ? "" : ns), source));
+		childContext = setupArguments(childContext, fc, name, iargs, data, vargs,ns);
+//		childContext.define("$", FutureInstructionFactory.value(
+//				context.builder().value(ns == null ? "" : ns), source));
 
 		if (func == null) {
 			throw new ExecutionException("no function found named " + name, source);

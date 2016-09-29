@@ -1187,6 +1187,7 @@ public class FutureInstructionFactory {
 		return value(immediateCheckedFuture(o), meta);
 	}
 
+	
 	// rank all
 	public static FutureInstruction<JSON> value(JSONBuilder builder, SourceInfo meta) {
 		return value(JSONBuilderImpl.NULL, meta);
@@ -1890,7 +1891,7 @@ public class FutureInstructionFactory {
 							FutureInstruction<JSON> defi = null;
 							for (Pair<ObjectKey, FutureInstruction<JSON>> pp : base.pairs()) {
 
-								if ("_".equals(pp.f.label) && pp.f.quoted) {
+								if ("_".equals(pp.f.label) && !pp.f.quoted) {
 									defi = pp.s;
 								}
 								if (str.equals(pp.f.label)) {
