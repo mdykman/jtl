@@ -3,6 +3,6 @@
 		api2: import("api2.jtl")
 	},
 	fA: "fA param 1 = " + $1,
-	fB: "fB param 1 = " + $1,
+	fB: fA('fb'),
 	fC: api2.fA($1,$2)
 }
