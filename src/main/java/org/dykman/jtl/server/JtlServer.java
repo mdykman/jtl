@@ -32,7 +32,12 @@ public class JtlServer {
 		server.addLifeCycleListener(new AbstractLifeCycle.AbstractLifeCycleListener() {
 			@Override
 			public void lifeCycleStarting(LifeCycle event) {
-				System.err.println("starting jtl server serving directory " + serverBase.getPath());
+				if(script != null) {
+					System.err.println("starting jtl server serving directory " + serverBase.getPath());
+					
+				} else {
+					System.err.println("starting jtl server serving script " + script.getPath());
+				}
 			}
 
 			@Override

@@ -49,7 +49,7 @@ public class FunctionInvocationInstruction extends AbstractFutureInstruction {
 		AsyncExecutionContext<JSON> context = dctx.createChild(true, false, data, source);
 		List<FutureInstruction<JSON>> insts = new ArrayList<>();
 		
-		// define $0 as the curent function name
+		// define $0 as the current function name
 		if(name == null) {
 			context.define("0", FutureInstructionFactory.value(context.builder().value("<anonymous>"), source));
 		}

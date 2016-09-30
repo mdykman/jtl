@@ -151,7 +151,8 @@ public class JtlMain {
 					new Option("b", "bind", true, "bind network address * implies --server (default:0.0.0.0)"));
 
 			options.addOption(new Option("k", "canonical", false, "output 'canonical' JSON (enforce ordered keys)"));
-			options.addOption(new Option("n", "indent", true, "specify default indent level for output (cli default:3, server default:0)"));
+			options.addOption(new Option("n", "indent", true,
+					"specify default indent level for output (cli default:3, server default:0)"));
 			options.addOption(new Option("Q", "dequote", false, "allow well formed keys to be unquoted"));
 
 			options.addOption(new Option("S", "syntax-check", false, "syntax check only, do not execute"));
@@ -163,7 +164,6 @@ public class JtlMain {
 					"gather n items from a sequence of JSON values from the input stream, processing them as an array"));
 
 			options.addOption(new Option("z", "null", false, "use null input data (cli-only)"));
-
 
 			File fconfig = null;
 			File jtl = null;
@@ -190,7 +190,7 @@ public class JtlMain {
 
 			CommandLineParser parser = new GnuParser();
 			CommandLine cli;
-			
+
 			try {
 				cli = parser.parse(options, args);
 			} catch (ParseException e) {
@@ -226,13 +226,11 @@ public class JtlMain {
 				s = System.getProperty("JTL_HOME");
 			File home = s == null ? null : new File(s);
 			if (home == null) {
-				logger.warn("unable to to determine JTL_HOME, using current directory");
+				logger.info("unable to to determine JTL_HOME, using current directory");
 				home = new File(".");
 			}
 
-			
 			logger.info("starting thread-pool with a concurrency of " + threads);
-			
 
 			String oo;
 
@@ -241,14 +239,13 @@ public class JtlMain {
 			}
 			les = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(threads));
 
-
 			if (cli.hasOption('r')) {
 				logger.error("repl is not implemented");
 
 				// not yet supported
 				replMode = true;
 			}
-			
+
 			if (cli.hasOption('p') || cli.hasOption("port")) {
 				oo = cli.getOptionValue('p');
 				oo = oo != null ? oo : cli.getOptionValue("port");
@@ -268,15 +265,15 @@ public class JtlMain {
 				bindAddress = cli.getOptionValue('b');
 				serverMode = true;
 			}
-			if(serverMode) {
-				logger.info(String.format("server enable. binding to interface %s:$d",bindAddress,port));	
+			if (serverMode) {
+				logger.info(String.format("server enable. binding to interface %s:$d", bindAddress, port));
 			}
 			if (cli.hasOption('D') || cli.hasOption("dir")) {
 				oo = cli.getOptionValue('D');
 				if (oo == null)
 					oo = cli.getOptionValue("directory");
 				cexddir = new File(oo);
-			} 
+			}
 
 			if (cli.hasOption('o') || cli.hasOption("output")) {
 				oo = cli.getOptionValue('o');
@@ -385,14 +382,13 @@ public class JtlMain {
 				if (jtl == null) {
 					if (cexddir == null) {
 						if (!argIt.hasNext()) {
-							System.err.println("no base directory or jtl file specified.");
-							printHelp(options);
-							System.exit(-1);
+							cexddir = new File(".");
+						} else {
+							jtl = new File(argIt.next());
+							jtl = jtl.getAbsoluteFile();
+							if (cexddir == null)
+								cexddir = jtl.getParentFile();
 						}
-						jtl = new File(argIt.next());
-						jtl = jtl.getAbsoluteFile();
-						if (cexddir == null)
-							cexddir = jtl.getParentFile();
 					}
 				} else {
 					if (cexddir == null) {
@@ -400,7 +396,7 @@ public class JtlMain {
 					}
 				}
 				cexddir = cexddir.getCanonicalFile();
-				// logger.info("using base directory " + cexddir.getPath());
+				logger.info("using base directory " + cexddir.getPath());
 
 				JtlServer server = main.launchServer(home, cexddir, init, jtl, fconfig, bindAddress, port, canonical);
 				server.start();
@@ -576,7 +572,7 @@ public class JtlMain {
 		try {
 			les.shutdown();
 			les.awaitTermination(2, TimeUnit.SECONDS);
-		} catch(InterruptedException e) {
+		} catch (InterruptedException e) {
 			logger.warn("ExecutorService did not shutdown gracefully within 2 seconds.  Terminating.");
 			les.shutdownNow();
 		}
