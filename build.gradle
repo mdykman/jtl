@@ -8,7 +8,7 @@
  */
 
 group='org.dykman'
-version='0.9.43'
+version='0.9.44'
 
 repositories {
 	 maven {
@@ -102,19 +102,20 @@ dependencies {
 
 	compile 'log4j:log4j:1.2.7'
 
-	 runtime 'org.postgresql:postgresql:9.4-1203-jdbc42'
 
     
+	compile group: 'org.yaml', name: 'snakeyaml', version: '1.17'
+
     compile 'com.google.guava:guava:18.0'
-    runtime 'com.google.guava:guava:18.0'
     
     compile 'com.zaxxer:HikariCP:2.4.1'
-    runtime 'com.zaxxer:HikariCP:2.4.1'
+   // runtime 'com.zaxxer:HikariCP:2.4.1'
 
 	 // jdbc drivers
     runtime 'mysql:mysql-connector-java:5.1.35'
     runtime 'org.xerial:sqlite-jdbc:3.8.10.1'
-	runtime 'org.apache.phoenix:phoenix:4.5.2-HBase-1.1'
+//	 runtime 'org.postgresql:postgresql:9.4-1203-jdbc42'
+//	runtime 'org.apache.phoenix:phoenix:4.5.2-HBase-1.1'
 //	runtime 'org.apache.hive:hive-jdbc:1.2.1'
 //	runtime 'org.apache.drill.exec:drill-jdbc:1.1.0'
 //	runtime 'org.apache.solr:solr-solrj:5.2.1'
@@ -135,12 +136,9 @@ dependencies {
 	compile 'jline:jline:2.13'
 
 
-	// 9.3.1.v20150714
-   // 9.3.4.v20151007
-	// 9.3.5.v20151012
 	compile 'org.eclipse.jetty:jetty-server:9.3.5.v20151012'
 	compile 'org.eclipse.jetty:jetty-servlet:9.3.5.v20151012'
-    testCompile "junit:junit:4.12"
+	    testCompile "junit:junit:4.12"
 }
 
 compileJava.dependsOn antlr4

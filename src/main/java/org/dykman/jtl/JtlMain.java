@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.FileReader;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -41,11 +42,14 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jline.console.ConsoleReader;
 import jline.console.completer.CandidateListCompletionHandler;
 import jline.console.completer.Completer;
+import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("deprecation")
 public class JtlMain {
 
 	static final String JTL_VERSION = JtlVersion.JTL_VERSION;
+	boolean yamlIn;
+	boolean yamlOut;
 
 	final JSONBuilder builder;
 	FutureInstructionFactory factory = new FutureInstructionFactory();
@@ -56,8 +60,12 @@ public class JtlMain {
 	File configFile = null;
 	static boolean verbose = false;
 	static Logger logger;
+	Yaml yaml = null;
 
-	public JtlMain(File jtlBase, File conf, boolean canonical) throws IOException {
+	public JtlMain(File jtlBase, File conf, boolean canonical,boolean yamlIn, boolean yamlOut) throws IOException {
+		this.yamlIn = yamlIn;
+		this.yamlOut = yamlOut;
+		if(yamlIn || yamlOut) yaml = new Yaml();
 		builder = new JSONBuilderImpl(canonical);
 		compiler = new JtlCompiler(builder);
 
@@ -128,6 +136,7 @@ public class JtlMain {
 		try {
 
 			Options options = new Options();
+			options.addOption(new Option("Y", "yaml", true, "specify YAML input and/or output (cli-only)" ));
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
 			options.addOption(new Option("V", "version", false, "print jtl version"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));
@@ -178,6 +187,8 @@ public class JtlMain {
 			boolean array = false;
 			boolean enquote = true;
 			boolean useNull = false;
+			boolean yamlIn = false;
+			boolean yamlOut = false;
 			File cexddir = null;
 
 			boolean serverMode = false;
@@ -202,6 +213,12 @@ public class JtlMain {
 				throw new RuntimeException("exit didn't");
 			}
 
+			if (cli.hasOption('Y')) {
+				String y = cli.getOptionValue('Y');	
+				yamlIn = y.contains("i") || y.contains("I");
+				yamlOut = y.contains("o") || y.contains("O");
+				verbose = true;
+			}
 			if (cli.hasOption('v')) {
 				verbose = true;
 			}
@@ -303,7 +320,7 @@ public class JtlMain {
 				logger.info("using optional configuration " + fconfig.getPath());
 			}
 
-			main = new JtlMain(home, fconfig, canonical);
+			main = new JtlMain(home, fconfig, canonical,yamlIn,yamlOut);
 			if (cli.hasOption('S')) {
 				main.setSyntaxCheck(true);
 				useNull = true;
@@ -587,7 +604,15 @@ public class JtlMain {
 	}
 
 	public JSON parse(File f) throws IOException {
-		return builder.parse(f);
+		if(!f.exists()) {
+			throw new IOException(String.format("can not find input file %s",f.getAbsolutePath()));
+		}
+		if(yamlIn) {
+			Object o = yaml.load(new FileReader(f));
+			throw new UnsupportedOperationException("parsing data with YAML not yet supported");
+		} else {
+			return builder.parse(f);
+		}
 	}
 
 	public JSON parse(Reader f) throws IOException {
