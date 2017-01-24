@@ -68,6 +68,32 @@ public class FutureInstructionFactory {
 			throw new ExceptionInInitializerError("unable to load formatter");
 		}
 	}
+	
+	public static FutureInstruction<JSON> parseJson(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+			
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				AsyncFunction<JSON, JSON> func = new AsyncFunction<JSON, JSON>() {
+					
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String s = input.stringValue();
+						JSON val = context.builder().parse(s);
+						return immediateCheckedFuture(val);
+					}
+				};
+				FutureInstruction<JSON> pparam = context.getdef("1");
+				if(pparam == null) {
+					return transform(data, func);
+				} else {
+					return transform(pparam.call(context, data), func);
+				}
+				
+			}
+		};
+	}
 
 	// rank all
 	public static FutureInstruction<JSON> memo(final FutureInstruction<JSON> inst) {

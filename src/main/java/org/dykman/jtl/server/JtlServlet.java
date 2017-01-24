@@ -31,7 +31,8 @@ public class JtlServlet extends HttpServlet {
 	final JtlCompiler compiler;
 	File serverRoot = null;
 	File jtlRoot = null;
-	JSONObject config = null;
+	File resources = null;
+//	JSONObject config = null;
 	FutureInstruction<JSON> defInst = null;
 	FutureInstruction<JSON> initInst = null;
 	AsyncExecutionContext<JSON> initContext;
@@ -50,14 +51,20 @@ public class JtlServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		try {
 			String s = config.getInitParameter("jtlbase");
-			File jtlRoot = new File(s);
-
+			if(s == null) {	throw new ServletException("no JTL base specified"); }
+			jtlRoot = new File(s);
+			
 			s = config.getInitParameter("root");
-			File serverRoot = new File(s);
+			serverRoot = new File(s);
+			if(s == null) {	throw new ServletException("no server base specified"); }
 
 			s = config.getInitParameter("config");
 			File conf = s == null ? null : new File(s);
 
+			s = config.getInitParameter("resources");
+			resources = s == null ? null : new File(s);
+
+			
 			s = config.getInitParameter("script");
 			File defScript = s == null ? null : new File(s);
 
@@ -122,9 +129,21 @@ public class JtlServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp) // throws ServletException, IOException 
+	protected void service(HttpServletRequest req, HttpServletResponse resp) throws  IOException , ServletException
 	{
 
+		String path = req.getRequestURI();
+		if(resources != null && path!=null && path.length() > 0) {
+			File f = new File(resources,path.substring(1));
+			logger.debug(String.format("resources: testing for file %s",f.getCanonicalFile()));
+			if(f.exists()) {
+				logger.debug(String.format("resources: file %s found",f.getCanonicalFile()));
+				req.getRequestDispatcher("/resources" + path).forward(req, resp);
+				return;
+			} else {
+				logger.debug(String.format("resources: file %s not found",f.getCanonicalFile()));
+			}
+		}
 		String ss = req.getParameter("indent");
 		try {
 			JSON r = jtlExecutor.execute(req, resp, parseData(req));

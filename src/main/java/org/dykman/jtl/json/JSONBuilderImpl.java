@@ -168,13 +168,15 @@ public class JSONBuilderImpl implements JSONBuilder {
 			return value(((Number) o).doubleValue());
 
 		} else if (o instanceof byte[]) {
-			JSONArray arr = array(null);
-			for (Byte b : (byte[]) o) {
-				int ii = b.intValue();
-				arr.add(value((256 + ii) % 256));
-			}
-			arr.lock();
-			return arr;
+			return value(new String((byte[])o));
+//			JSONArray arr = array(null);
+//			for (Byte b : (byte[]) o) {
+//				int ii = b.intValue();
+//				arr.add(value((256 + ii) % 256));
+//			}
+//			return value(new String((byte[]o)));
+//			arr.lock();
+//			return arr;
 		} else {
 			return value(o.toString());
 		}
@@ -183,6 +185,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 	@Override
 	public JSONValue value(Number number) {
 		JSONValue v = new JSONValue(null, number);
+		
 		return (JSONValue) sign(v);
 	}
 
