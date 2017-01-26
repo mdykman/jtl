@@ -1,5 +1,5 @@
 group='org.dykman'
-version='0.9.45'
+version='0.9.46'
 
 repositories {
 	 maven {
