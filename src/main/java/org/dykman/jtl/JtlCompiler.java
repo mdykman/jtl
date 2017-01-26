@@ -268,6 +268,7 @@ public class JtlCompiler {
 		context.define( "call", call(SourceInfo.internal("call")));
 		context.define( "thread", thread(SourceInfo.internal("thread")));
 		context.define( "type", type(SourceInfo.internal("type")));
+		context.define( "json", parseJson(SourceInfo.internal("json")));
 		
 		// debugging, stderr
 		context.define( "trace", trace(SourceInfo.internal("trace")));

@@ -140,6 +140,7 @@ public class JtlMain {
 			options.addOption(new Option("d", "data", true, "specify an input json file"));
 			options.addOption(new Option("D", "dir", true, "specify base directory (default:.)"));
 			options.addOption(new Option("e", "expr", true, "evaluate an expression against input data"));
+			options.addOption(new Option("R", "resources", true, "specify a resource directory"));
 			options.addOption(new Option("o", "output", true, "specify an output file (cli-only)"));
 			options.addOption(new Option("r", "repl", false, "open an interactive console (not impl)"));
 			options.addOption(new Option("t", "threads", true, "set the paralellism level (default:20)"));
@@ -166,6 +167,7 @@ public class JtlMain {
 			options.addOption(new Option("z", "null", false, "use null input data (cli-only)"));
 
 			File fconfig = null;
+			File resources = null;
 			File jtl = null;
 			File fdata = null;
 			File init = null;
@@ -244,6 +246,14 @@ public class JtlMain {
 
 				// not yet supported
 				replMode = true;
+			}
+			
+			if(cli.hasOption('R')) {
+				resources = new File(cli.getOptionValue('R'));
+				if(!resources.canRead()) {
+					logger.error(String.format("unable to read resources directory %s",resources.getCanonicalFile()));
+					System.exit(1);
+				}
 			}
 
 			if (cli.hasOption('p') || cli.hasOption("port")) {
@@ -398,7 +408,7 @@ public class JtlMain {
 				cexddir = cexddir.getCanonicalFile();
 				logger.info("using base directory " + cexddir.getPath());
 
-				JtlServer server = main.launchServer(home, cexddir, init, jtl, fconfig, bindAddress, port, canonical);
+				JtlServer server = main.launchServer(home, cexddir,resources, init, jtl, fconfig, bindAddress, port, canonical);
 				server.start();
 				server.join();
 
@@ -561,10 +571,10 @@ public class JtlMain {
 		}
 	}
 
-	public JtlServer launchServer(File jtlBase, File serverBase, File init, File script, File config,
+	public JtlServer launchServer(File jtlBase, File serverBase, File resources,File init, File script, File config,
 			String bindAddress, int port, boolean canonical) throws IOException {
 
-		JtlServer server = new JtlServer(jtlBase, serverBase, init, script, config, bindAddress, port, canonical);
+		JtlServer server = new JtlServer(jtlBase, serverBase,resources, init, script, config, bindAddress, port, canonical);
 		return server;
 	}
 
