@@ -79,9 +79,7 @@ public class FutureInstructionFactory {
 					
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						String s = input.stringValue();
-						JSON val = context.builder().parse(s);
-						return immediateCheckedFuture(val);
+						return immediateCheckedFuture(context.builder().parse(input.stringValue()));
 					}
 				};
 				FutureInstruction<JSON> pparam = context.getdef("1");

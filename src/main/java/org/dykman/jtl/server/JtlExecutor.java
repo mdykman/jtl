@@ -205,7 +205,9 @@ public class JtlExecutor {
 			JSON data) throws IOException, ExecutionException {
 		JSON j = null;
 		String uri = req.getRequestURI();
-		String[] parts = uri.substring(1).split("[/]");
+		String pp = uri.substring(1);
+		String[] parts = pp.length() == 0 ? new String[] {} : pp.split("[/]");
+		//System.err.println(String.format("path has %d parts in %s", parts.length, uri));
 		if (boundScript != null) {
 			if (boundContext == null) {
 				synchronized (this) {
@@ -240,7 +242,6 @@ public class JtlExecutor {
 				}
 			}
 			return notfound(uri);
-
 		}
 	}
 
@@ -298,6 +299,7 @@ public class JtlExecutor {
 				SourceInfo.internal("http")));
 		int cc = 1;
 		JSONArray arr = builder.array(null);
+//		System.err.println("path length = " + path.length);
 		for (String s : path) {
 			JSON v = builder.value(s);
 			ctx.define(Integer.toString(cc++), FutureInstructionFactory.value(v, SourceInfo.internal("http")));
