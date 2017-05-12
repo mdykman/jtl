@@ -86,7 +86,7 @@ public class HttpModule extends AbstractModule {
 							// transforms spaces into '+' which is a dying
 							// convention
 							// here, we explicitly
-							String s = input.stringValue();
+							String s = input.toString(true);
 							if (s != null) {
 								String[] split = s.split(" ");
 								for (int i = 0; i < split.length; ++i) {
@@ -137,7 +137,7 @@ public class HttpModule extends AbstractModule {
 			case STRING:
 			case DOUBLE:
 			case LONG:
-				return ((JSONValue) j).stringValue();
+				return ((JSONValue) j).toString(true);
 			default:
 				return null;
 			}
@@ -157,11 +157,11 @@ public class HttpModule extends AbstractModule {
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
-									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									String ss = URLEncoder.encode(av.toString(true), "UTF-8");
 									post.addParameter(pp.f, ss);
 								}
 							} else {
-								String ss = URLEncoder.encode(pp.s.stringValue(), "UTF-8");
+								String ss = URLEncoder.encode(pp.s.toString(true), "UTF-8");
 								post.addParameter(pp.f, ss);
 							}
 						}
@@ -192,14 +192,14 @@ public class HttpModule extends AbstractModule {
 									// String ss =
 									// URLEncoder.encode(av.stringValue(),
 									// "UTF-8");
-									String ss = av.stringValue();
+									String ss = av.toString(true);
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
 								// String ss =
 								// URLEncoder.encode(pp.s.stringValue(),
 								// "UTF-8");
-								String ss = pp.s.stringValue();
+								String ss = pp.s.toString(true);
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}
@@ -228,14 +228,14 @@ public class HttpModule extends AbstractModule {
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
-									String ss = URLEncoder.encode(av.stringValue(), "UTF-8");
+									String ss = URLEncoder.encode(av.toString(true), "UTF-8");
 									nvps.add(new NameValuePair(pp.f, ss));
 								}
 							} else {
 								// String ss =
 								// URLEncoder.encode(pp.s.stringValue(),
 								// "UTF-8");
-								String ss = pp.s.stringValue();
+								String ss = pp.s.toString(true);
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}
