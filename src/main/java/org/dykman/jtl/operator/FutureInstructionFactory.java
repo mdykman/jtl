@@ -5,10 +5,10 @@ import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import static com.google.common.util.concurrent.Futures.immediateFailedCheckedFuture;
 import static com.google.common.util.concurrent.Futures.transform;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -34,11 +34,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.IOUtils;
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
-import org.dykman.jtl.future.FutureInstructionVisitor;
 import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
@@ -100,6 +100,47 @@ public class FutureInstructionFactory {
 		return new MemoInstructionFuture(inst);
 	}
 
+	public static FutureInstruction<JSON> exec(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data) throws ExecutionException {
+				FutureInstruction<JSON> f = context.getdef("1");
+				if (f == null)
+					throw new ExecutionException("file() requires at least 1 parameter", source);
+				return transform(f.call(context, data), new AsyncFunction<JSON, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						String cmd = stringValue(input);
+						Callable<JSON> cc = new Callable<JSON>() {
+							@Override
+							public JSON call() throws Exception {
+								Runtime rt = Runtime.getRuntime();
+								Process p = rt.exec(cmd);
+								String output = IOUtils.toString(p.getInputStream());
+								if(output != null) {
+									InputStream inb = new ByteArrayInputStream(output.getBytes());
+									try {
+										return context.builder().parse(inb);
+									} catch(Exception e) {
+										return context.builder().value(output);
+									}
+								}
+								return context.builder().value();
+							}
+						};
+						return context.executor().submit(cc);
+					}
+				});
+			}
+		};
+
+	}
+
+	
+	
 	public static FutureInstruction<JSON> file(SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
 

@@ -280,6 +280,7 @@ public class JtlCompiler {
 		context.define( "digest", digest(SourceInfo.internal("digest")));
 
 		// external data
+		context.define( "exec", exec(SourceInfo.internal("exec")));
 		context.define( "file", file(SourceInfo.internal("file")));
 		context.define( "url", url(SourceInfo.internal("url")));
 		context.define( "write", write(SourceInfo.internal("write")));
