@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -154,6 +156,9 @@ public class HttpModule extends AbstractModule {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
 					try {
+						URL uurl = new URL(url);
+						post.addRequestHeader("Host", uurl.getHost());
+
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
@@ -165,7 +170,7 @@ public class HttpModule extends AbstractModule {
 								post.addParameter(pp.f, ss);
 							}
 						}
-					} catch (UnsupportedEncodingException e) {
+					} catch (UnsupportedEncodingException | MalformedURLException e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -186,6 +191,10 @@ public class HttpModule extends AbstractModule {
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					try {
+						
+						URL uurl = new URL(url);
+						get.addRequestHeader("Host", uurl.getHost());
+
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
@@ -205,6 +214,8 @@ public class HttpModule extends AbstractModule {
 						}
 						// } catch (UnsupportedEncodingException e) {
 						// throw new RuntimeException(e);
+					} catch (MalformedURLException e) {
+						throw new RuntimeException(e);
 					} finally {
 					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
@@ -225,6 +236,9 @@ public class HttpModule extends AbstractModule {
 				if (p != null) {
 					List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 					try {
+						URL uurl = new URL(url);
+						get.addRequestHeader("Host", uurl.getHost());
+
 						for (Pair<String, JSON> pp : p) {
 							if (pp.s instanceof JSONArray) {
 								for (JSON av : (JSONArray) pp.s) {
@@ -239,7 +253,7 @@ public class HttpModule extends AbstractModule {
 								nvps.add(new NameValuePair(pp.f, ss));
 							}
 						}
-					} catch (UnsupportedEncodingException e) {
+					} catch (UnsupportedEncodingException | MalformedURLException e) {
 						throw new RuntimeException(e);
 					}
 					get.setQueryString(nvps.toArray(new NameValuePair[nvps.size()]));
@@ -259,8 +273,10 @@ public class HttpModule extends AbstractModule {
 				PostMethod post = new PostMethod(url);
 				if (p != null) {
 					try {
+						URL uurl = new URL(url);
+						post.addRequestHeader("Host", uurl.getHost());
 						post.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
+					} catch (UnsupportedEncodingException | MalformedURLException e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -280,8 +296,11 @@ public class HttpModule extends AbstractModule {
 				PutMethod put = new PutMethod(url);
 				if (p != null) {
 					try {
+						URL uurl = new URL(url);
+						put.addRequestHeader("Host", uurl.getHost());
+
 						put.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
+					} catch (UnsupportedEncodingException | MalformedURLException e) {
 						throw new RuntimeException(e);
 					}
 				}
@@ -312,8 +331,10 @@ public class HttpModule extends AbstractModule {
 				PatchMethod patch = new PatchMethod(url);
 				if (p != null) {
 					try {
+						URL uurl = new URL(url);
+						patch.addRequestHeader("Host", uurl.getHost());
 						patch.setRequestEntity(new StringRequestEntity(p.toString(true), "application/json", "UTF-8"));
-					} catch (UnsupportedEncodingException e) {
+					} catch (UnsupportedEncodingException | MalformedURLException e) {
 						throw new RuntimeException(e);
 					}
 				}
