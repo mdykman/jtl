@@ -1,0 +1,12 @@
+{
+	script: $0,
+	path: $@,
+	method: $method,
+	headers: $headers,
+	params: $req,
+	url: $url,
+	uri: $uri,
+	input: .,
+	useragent: $headers/User_Agent,
+	ua: $headers/.["User_Agent"]
+}
