@@ -24,6 +24,8 @@ import org.dykman.jtl.operator.FutureInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.net.MediaType;
+
 @SuppressWarnings("serial")
 public class JtlServlet extends HttpServlet {
 
@@ -104,7 +106,9 @@ public class JtlServlet extends HttpServlet {
 		case "PUT":
 		case "PATCH": {
 			String type = req.getContentType();
-			if ("application/json".equals(type) || "text/json".equals(type)) {
+			MediaType basetype = MediaType.parse(type);
+
+			if (basetype.is(MediaType.JSON_UTF_8) || basetype.is(MediaType.ANY_TEXT_TYPE) || "application/json".equals(type) ||   "text/json".equals(type)) {
 				Reader reader = req.getReader();
 				data = builder.parse(reader);
 			} else if ("application/x-www-form-urlencoded".equals(type)) {
