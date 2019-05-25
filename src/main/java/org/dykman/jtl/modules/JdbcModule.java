@@ -203,7 +203,7 @@ public class JdbcModule extends AbstractModule {
 				props.put("jdbcUrl", jdbcUrl);
 			else {
 				if (databaseName != null)
-					props.put("databaseName", databaseName);
+					props.put("catalog", databaseName);
 				if (host != null)
 					props.put("serverName", host);
 				if (port != null)

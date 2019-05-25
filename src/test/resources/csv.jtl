@@ -7,14 +7,15 @@
 	},
 	$pdata: csv.pread($1),
 	$rdata:rand(10,csv.read($1))/sort(Date)/collate(),
-	$cleaned : $rdata/map(*/tonum()),
-	$kleaned : $rdata/map(array(*/tonum())),
+	cleaned : $rdata/map(*/tonum()),
+	kleaned : $rdata/map(array(*/tonum())),
 	tonum: number(.)/(number() ? . : $_),
 	_: {
-		cc: $cleaned(),
+        pp: $pdata
+//		cc: cleaned()
 		// if the first elemnt of the arry is a umber, assume the whole array is
-		ss: $kleaned()/map("ID " + string(.)),
+//		ss: kleaned()/map("ID " + string(.)),
 //		ss: $cleaned()/array(.)/map("ID " + string(.)),
-		summary: $cleaned()/array(.)/map((.[0]/number()) ? sum() : .)
+//		summary: cleaned()/array(.)/map((.[0]/number()) ? sum() : .)
 	}
 }

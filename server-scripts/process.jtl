@@ -1,6 +1,13 @@
 {
-//    _: keys()/count() == 0 ? "expecting an object with at least 1 key" : "hello",
-    _: keys()/count() = 0 ? {
-        msg: "expecting an object with at least 1 key" 
-    } : .
+    !init: {
+        db: module("jdbc", {
+			datasourceClass : 'com.mysql.jdbc.jdbc2.optional.MysqlDataSource',
+            database: "ats_rules",
+            jdbcUri:"jdbc:mysql://localhost",
+            username: "root",
+            password: "password"
+        })
+    },
+
+    _: db.query("select * from rule")
 }
