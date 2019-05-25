@@ -1,0 +1,12 @@
+{
+    !init: {
+        curl: module("http")
+    },
+    $urlbase: "http://localhost:7718/http-profile",
+    _: {
+        get: curl.get($urlbase),
+        post: curl.post($urlbase, {
+            foo:"bar"
+        })
+    }
+}
