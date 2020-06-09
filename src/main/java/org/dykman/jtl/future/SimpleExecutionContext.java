@@ -14,6 +14,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
@@ -46,6 +49,11 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	protected JSON conf;
 	protected ListenableFuture<JSON> data;
 	protected AsyncExecutionContext<JSON> declarer;
+	
+	
+	HttpServletRequest requestObject;
+	HttpServletResponse responseObject;
+
 	
 	SourceInfo sourceInfo;
 
@@ -492,16 +500,48 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 
 	
-	static Set<String> SpecialSymbols;
+	static Set<String> SpecialSymbols = new HashSet<>(Arrays.asList(
+			new String[] {"$", "?", ":", ";", "#", "!", "%", "^", "&", "*" }));
 
-	static {
-		SpecialSymbols = new HashSet<>(Arrays.asList(
-				new String[] {"$", "?", ":", ";", "#", "!", "%", "^", "&", "*" }));
-	}
 
 	public static boolean isSpecial(String s) {
 		return SpecialSymbols.contains(s)
 			|| Character.isDigit(s.charAt(0));
+	}
+
+
+	@Override
+	public HttpServletRequest getRequest() {
+		HttpServletRequest r = requestObject;
+		AsyncExecutionContext<JSON> p = this.getParent();
+		while (r == null && p != null) {
+			r = p.getRequest();
+			p = p.getParent();
+		}
+		return r;
+		
+	}
+
+	@Override
+	public HttpServletResponse getResponse() {
+		HttpServletResponse r = responseObject;
+		AsyncExecutionContext<JSON> p = this.getParent();
+		while (r == null && p != null) {
+			r = p.getResponse();
+			p = p.getParent();
+		}
+		return r;
+		
+	}
+
+	@Override
+	public void setRequest(HttpServletRequest request) {
+		this.requestObject = request;
+	}
+
+	@Override
+	public void setResponse(HttpServletResponse response) {
+		this.responseObject = response;
 	}
 
 }

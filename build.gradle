@@ -43,6 +43,7 @@ buildscript {
 }
 
 apply plugin: 'java'
+apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'application'
 apply plugin: 'maven'
@@ -177,9 +178,10 @@ public class JtlVersion {
 
 }
 
-clean.dependsOn cleanGenerateVersion
 
 sourceSets.main.java.srcDirs += "target/generated"
+
+clean.dependsOn cleanGenerateVersion
 compileJava.dependsOn generateVersion
 
 startScripts {

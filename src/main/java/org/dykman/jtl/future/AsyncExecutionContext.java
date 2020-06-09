@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.dykman.jtl.JtlCompiler;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
@@ -36,7 +39,16 @@ public interface AsyncExecutionContext<T> {
 
 	public boolean isInit();
 	
+	public HttpServletRequest getRequest();
+	
+	public HttpServletResponse getResponse();
 
+	
+	public void setRequest(HttpServletRequest request);
+	
+	public void setResponse(HttpServletResponse response);
+
+	
 	public void lock(boolean b);
 //	public void setFunctions(Map<String,FutureInstruction<JSON>> funcs);
 	public AsyncExecutionContext<JSON> getFunctionContext();

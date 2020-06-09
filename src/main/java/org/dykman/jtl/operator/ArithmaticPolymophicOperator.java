@@ -78,7 +78,7 @@ public abstract class ArithmaticPolymophicOperator extends DefaultPolymorphicOpe
 		if(r instanceof JSONArray) {
 			return op(context,l,(JSONArray) r);
 		} else {
-		return JSONBuilderImpl.NULL;
+			return JSONBuilderImpl.NULL;
 		}
 	}
 

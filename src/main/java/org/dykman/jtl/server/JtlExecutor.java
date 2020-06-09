@@ -195,6 +195,8 @@ public class JtlExecutor {
 				prog = programs.get(execFile.getPath());;
 			}
 			AsyncExecutionContext<JSON> ctx = contexts.get(execFile.getPath());
+			
+			// per-file base context
 			return executeScript(req, res, ctx, execFile, prog, sel, path, data);
 
 		}
@@ -207,6 +209,8 @@ public class JtlExecutor {
 		String uri = req.getRequestURI();
 		String pp = uri.substring(1);
 		String[] parts = pp.length() == 0 ? new String[] {} : pp.split("[/]");
+		
+		// this branch assumes we are bound to a singke script, so there is one common base context
 		//System.err.println(String.format("path has %d parts in %s", parts.length, uri));
 		if (boundScript != null) {
 			if (boundContext == null) {
@@ -235,10 +239,7 @@ public class JtlExecutor {
 					j = tryFile(req, res, baseContext, f, data, parts, cc);
 					if (j != null)
 						return j;
-					// else return notfound(uri);
 					++cc;
-				} else {
-					return notfound(uri);
 				}
 			}
 			return notfound(uri);
@@ -272,7 +273,11 @@ public class JtlExecutor {
 	public AsyncExecutionContext<JSON> httpContext(HttpServletRequest req, HttpServletResponse res,
 			AsyncExecutionContext<JSON> parent, File execFile, String selector, String[] path) throws IOException {
 		AsyncExecutionContext<JSON> ctx = parent.createChild(false, false, null, SourceInfo.internal("http-context"));
+		
 		ctx.setRuntime(true);
+		ctx.setRequest(req);
+		ctx.setResponse(res);
+		
 		// map the request arguments
 		JSONObject jrq = builder.object(null);
 		for (Map.Entry<String, String[]> kk : req.getParameterMap().entrySet()) {

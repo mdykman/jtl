@@ -75,6 +75,7 @@ import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.future.FutureInstructionValue;
 import org.dykman.jtl.future.FutureInstructionVisitor;
 import org.dykman.jtl.future.SimpleExecutionContext;
+import org.dykman.jtl.instruction.ContextualInstructionFactory;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
@@ -243,10 +244,6 @@ public class JtlCompiler {
 				SourceInfo.internal("base-init"));
 		context.setExecutionService(les);
 
-		SourceInfo meta = new SourceInfo();
-		meta.code = "*internal*";
-		meta.source = meta.code;
-		meta.line = meta.position = 0;
 		// configurable: import, extend
 		context.define("_", FutureInstructionFactory.value(df, SourceInfo.internal("input")));
 
@@ -286,12 +283,16 @@ public class JtlCompiler {
 		context.define( "write", write(SourceInfo.internal("write")));
 		context.define( "mkdirs", mkdirs(SourceInfo.internal("mkdirs")));
 		context.define( "fexists", fexists(SourceInfo.internal("fexists")));
+		
+		// http-specific
+		context.define("header",ContextualInstructionFactory.responseHeader());
+		context.define("status",ContextualInstructionFactory.httpStatus());
 
 		// string-oriented
 		context.define( "split", split(SourceInfo.internal("split")));
 		context.define( "join", join(SourceInfo.internal("join")));
 		context.define( "substr", substr(SourceInfo.internal("substr")));
-		context.define( "sprintf", sprintf(SourceInfo.internal("sprintf")));
+		context.define( "sprintf",ContextualInstructionFactory.sprintf());
 		context.define( "upper", tocase(SourceInfo.internal("upper"),true));
 		context.define( "lower", tocase(SourceInfo.internal("lower"),false));
 		
