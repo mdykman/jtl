@@ -23,8 +23,8 @@ generates ./build/distributions/jtl-\<`version`\>.zip
 
 unzip in the directory of your choice.  You may then either
 * add JTL\_HOME/bin to your PATH
-* add a softlink in a directory already under your path to `JTL\_HOME/bin/jtl`
-* access the jtl script directly via `JTL\_HOME/bin/jtl`
+* add a softlink in a directory already under your path to `JTL_HOME/bin/jtl`
+* access the jtl script directly via `JTL_HOME/bin/jtl`
 
 ## library 
 To use JTL as an embedded library, it may be accessed via a maven repository.
