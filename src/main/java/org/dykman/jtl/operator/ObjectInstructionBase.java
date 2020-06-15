@@ -53,7 +53,8 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 	public abstract ListenableFuture<JSON> _callObject(
 			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, 
 			final AsyncExecutionContext<JSON> context,
-			final ListenableFuture<JSON> data) throws ExecutionException;
+			final ListenableFuture<JSON> data,
+			List<Pair<ObjectKey, FutureInstruction<JSON>>> deferred) throws ExecutionException;
 
 	public final ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
 			throws ExecutionException {
@@ -64,9 +65,14 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 		List<FutureInstruction<JSON>> imperitives = new ArrayList<>(ss);
 		List<Pair<ObjectKey, FutureInstruction<JSON>>> variables = new ArrayList<>(ss);
 		List<Pair<ObjectKey, FutureInstruction<JSON>>> functions = new ArrayList<>(ss);
+		final List<Pair<ObjectKey, FutureInstruction<JSON>>> deferred = new ArrayList<>(ss);
 		AsyncExecutionContext<JSON> newContext = context.createChild(false, false, data, source);
 		for (Pair<ObjectKey, FutureInstruction<JSON>> ii : ll) {
 			String k = ii.f.label;
+			if(k == null && ii.f.expr != null) {
+				deferred.add(ii);
+				continue;
+			}
 			char ic = k.charAt(0);
 			boolean notquoted = !ii.f.quoted;
 			if (notquoted && (ic == '!' || ic == '$')) {
@@ -118,7 +124,9 @@ public abstract class ObjectInstructionBase extends AbstractFutureInstruction {
 			public ListenableFuture<JSON> apply(JSON input) throws Exception {
 
 				// init and imperatives ignored by dataobject
-				return _callObject(fields, ctx, data);
+				//List<ListenableFuture<JSON>> list = new ArrayList<>();
+				
+				return _callObject(fields, ctx, data, deferred);
 			}
 		});
 

@@ -62,7 +62,6 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 	
 	@Override
 	public DataValue<JSON> visitArray(ArrayContext ctx) {
-		int cc = ctx.getChildCount();
 		JSONArray arr = builder.array(null);
 		for(ValueContext v: ctx.value()) {
 			DataValue<JSON> dv = visitValue(v);
@@ -82,12 +81,14 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		if(nc!=null) return visitNumber(nc);
 		
 		StringContext sc = ctx.string();
-		if(sc!=null) return  new DataValue(builder.value(visitString(sc).str));
+		if(sc!=null) return  new DataValue<JSON>(builder.value(visitString(sc).str));
 		
 		ParseTree pt = ctx.getChild(0);
-		switch(pt.getText()) {
-		case "true": return new DataValue<JSON>(builder.value(true));
-		case "false": return new DataValue<JSON>(builder.value(false));
+		String nodeText = pt.getText();
+		if(nodeText == null) nodeText = "null";
+		switch(nodeText) {
+		case "true": return new DataValue<JSON>(JSONBuilderImpl.TRUE);
+		case "false": return new DataValue<JSON>(JSONBuilderImpl.FALSE);
 		case "null": return new DataValue<JSON>(JSONBuilderImpl.NULL);
 		default: return new  DataValue<JSON>(builder.value(pt.getText()));
 		}

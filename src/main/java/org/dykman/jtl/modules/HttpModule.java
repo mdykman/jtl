@@ -468,7 +468,7 @@ public class HttpModule extends AbstractModule {
 										if (json) {
 											JSON jj = read(mm, context.builder());
 											if (!(n >= 200 && n < 300)) {
-												if (jj instanceof JSONObject) {
+												if (jj instanceof JSONObject && !metaOptions.contains("status")) {
 													((JSONObject) jj).put("__status", builder.value(n));
 												}
 											}

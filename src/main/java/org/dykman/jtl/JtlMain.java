@@ -575,7 +575,7 @@ public class JtlMain {
 				System.err.println(((ExecutionException) e.getCause()).report());
 			} else {
 				Throwable ee = e.getCause() == null ? e : e.getCause();
-				logger.error(ee.getClass().getName() + " - an error occured: " + ee.getLocalizedMessage());
+				logger.error(ee.getClass().getName() + " - an error occured: " + ee.getLocalizedMessage(),ee);
 			}
 			if (verbose)
 				e.printStackTrace();

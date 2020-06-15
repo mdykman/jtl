@@ -16,6 +16,7 @@ import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
+import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -60,7 +61,7 @@ import com.google.common.util.concurrent.ListenableFuture;
       public ListenableFuture<JSON> _callObject(
   			final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields,
     		  final AsyncExecutionContext<JSON> context,
-            final ListenableFuture<JSON> data) throws ExecutionException {
+            final ListenableFuture<JSON> data,List<Pair<ObjectKey, FutureInstruction<JSON>>> deferred) throws ExecutionException {
  //        final AsyncExecutionContext<JSON> ctx = context.createChild(false, false, data, source);
  //        ctx.define("_", InstructionFutureFactory.value(data, source));
          ListenableFuture<JSON> res = contextObject(context, data, fields);

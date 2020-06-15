@@ -14,6 +14,7 @@ import org.dykman.jtl.future.AsyncExecutionContext;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.json.JSONObject;
+import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
 
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -29,7 +30,8 @@ import com.google.common.util.concurrent.ListenableFuture;
       protected ListenableFuture<JSON> dataObject(
     		  final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields,
     		  final AsyncExecutionContext<JSON> context,
-            final ListenableFuture<JSON> data) throws ExecutionException {
+            final ListenableFuture<JSON> data,
+            final List<Pair<ObjectKey, FutureInstruction<JSON>>> deferred) throws ExecutionException {
 
          final List<ListenableFuture<Pair<String, JSON>>> insts = new ArrayList<>(fields.size());
          for(Pair<ObjectKey, FutureInstruction<JSON>> ii : fields) {
@@ -60,12 +62,25 @@ import com.google.common.util.concurrent.ListenableFuture;
          return transform(allAsList(insts), new AsyncFunction<List<Pair<String, JSON>>, JSON>() {
             @Override
             public ListenableFuture<JSON> apply(List<Pair<String, JSON>> input) throws Exception {
-               JSONObject obj = context.builder().object(null, input.size());
+               final JSONObject obj = context.builder().object(null, input.size());
 
                for(Pair<String, JSON> d : input) {
                   obj.put(d.f, d.s != null ? d.s : JSONBuilderImpl.NULL);
                }
-               return immediateCheckedFuture(obj);
+               List<ListenableFuture<JSON>> defs = new ArrayList<>();
+               for(Pair<ObjectKey, FutureInstruction<JSON>> pp:deferred) {
+            	   defs.add(pp.f.expr.call(context, data));
+            	   defs.add(pp.s.call(context, data));
+               }
+               return transform(allAsList(defs),new AsyncFunction<List<JSON>,JSON>() {
+            	   @Override
+            	   public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+            		   for(int i = 0; i < input.size();i+=2) {
+            			   obj.put(input.get(i).stringValue(), input.get(i+1));
+            		   }
+                       return immediateCheckedFuture(obj);
+            	   }
+               });
             }
          });
       }
@@ -74,8 +89,8 @@ import com.google.common.util.concurrent.ListenableFuture;
       public ListenableFuture<JSON> _callObject(
     		  final List<Pair<ObjectKey, FutureInstruction<JSON>>> fields, 
     		  final AsyncExecutionContext<JSON> context,
-            final ListenableFuture<JSON> data) throws ExecutionException {
-         return dataObject(fields,context, data);
+            final ListenableFuture<JSON> data,List<Pair<ObjectKey, FutureInstruction<JSON>>> deferred) throws ExecutionException {
+         return dataObject(fields,context, data,deferred);
       }
 
    }

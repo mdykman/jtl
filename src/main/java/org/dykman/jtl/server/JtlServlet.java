@@ -76,7 +76,7 @@ public class JtlServlet extends HttpServlet {
 			s = config.getInitParameter("canonical");
 			boolean canon = "true".equalsIgnoreCase(s);
 
-			jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript, "default.json", canon);
+			jtlExecutor = JtlExecutor.getInstance(jtlRoot, serverRoot, conf, init, defScript, "default.jtl", canon);
 			
 		} catch (IOException e) {
 			throw new ServletException(e);
@@ -136,7 +136,10 @@ public class JtlServlet extends HttpServlet {
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws  IOException , ServletException
 	{
 
-		String path = req.getRequestURI();
+	//	String path = req.getRequestURI();
+		
+		// why am I even trying to serve resources?
+		/*
 		if(resources != null && path!=null && path.length() > 0) {
 			File f = new File(resources,path.substring(1));
 			logger.debug(String.format("resources: testing for file %s",f.getCanonicalFile()));
@@ -148,6 +151,7 @@ public class JtlServlet extends HttpServlet {
 				logger.debug(String.format("resources: file %s not found",f.getCanonicalFile()));
 			}
 		}
+		*/
 		String ss = req.getParameter("indent");
 		try {
 			JSON r = jtlExecutor.execute(req, resp, parseData(req));

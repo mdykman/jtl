@@ -9,8 +9,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
@@ -20,7 +18,6 @@ import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONObject;
-import org.dykman.jtl.json.JSONValue;
 import org.dykman.jtl.operator.AbstractFutureInstruction;
 import org.dykman.jtl.operator.FutureInstruction;
 
@@ -28,99 +25,6 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public abstract class ContextualInstructionFactory {
-
-	public static FutureInstruction<JSON> responseHeader() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::responseHeader");
-
-		PassiveObjectPairs rop = new PassiveObjectPairs() {
-
-			@Override
-			public void pair(AsyncExecutionContext<JSON> context, JSON f, JSON s) {
-				HttpServletResponse response = context.getResponse();
-				if (response == null) {
-					System.err.println(String.format("http: %s:%s", f.stringValue(), s.stringValue()));
-				} else
-					response.addHeader(f.stringValue(), s.stringValue());
-
-			}
-		};
-		return contextualPassthroughVarArgInstruction(info, rop);
-	}
-
-	public static FutureInstruction<JSON> httpStatus() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::httpStatus");
-
-		VoidNop<JSON> rop = new VoidNop<JSON>() {
-
-			@Override
-			public void apply(AsyncExecutionContext<JSON> context, JSON... vargs) {
-				if (vargs.length == 0) {
-					System.err.println(String.format("status requires 1 argument"));
-				} else {
-					HttpServletResponse response = context.getResponse();
-					if (response == null) {
-						System.err.println(String.format("error retrieving response object"));
-					} else {
-						JSON j = vargs[0];
-						if (j.isValue()) {
-							JSONValue jv = (JSONValue) j;
-							if (vargs.length == 1) {
-								response.setStatus(jv.longValue().intValue());
-							} else {
-								// deprecated before it's impemented... oh,well, someone will watt this
-								response.setStatus(jv.longValue().intValue(), vargs[1].stringValue());
-								System.err.println(String.format("setting http status text is deprecated"));
-							}
-						}
-						;
-					}
-				}
-
-			}
-		};
-		return contextualPassthroughVarArgInstruction(info, rop);
-
-	}
-
-	public static FutureInstruction<JSON> sprintf() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::sprintf");
-		return contextualVarArgInstruction(info, (context, args) -> {
-			int length = args.length;
-			if (length > 0) {
-				String format = args[0].stringValue();
-				Object[] objs = new Object[length - 1];
-				for (int i = 1; i < length; ++i) {
-					JSON j = args[i];
-					switch (j.getType()) {
-					case BOOLEAN:
-						objs[i - 1] = ((JSONValue) j).booleanValue();
-						break;
-					case LONG:
-						objs[i - 1] = ((JSONValue) j).longValue();
-						break;
-					case DOUBLE:
-						objs[i - 1] = ((JSONValue) j).doubleValue();
-						break;
-					case STRING:
-						objs[i - 1] = ((JSONValue) j).stringValue();
-						break;
-					case OBJECT:
-					case ARRAY:
-					case LIST:
-						objs[i - 1] = "(illegal value)";
-						break;
-					case NULL:
-						objs[i - 1] = "(null)";
-						break;
-					}
-				}
-				return context.builder().value(String.format(format, objs));
-
-			}
-			return context.builder().value("");
-		});
-
-	}
 
 	public static interface Op<T> {
 		public T apply(AsyncExecutionContext<T> context, T data, T... vargs);
@@ -198,6 +102,44 @@ public abstract class ContextualInstructionFactory {
 		// FutureInstruction<JSON>
 	}
 
+	public static FutureInstruction<JSON> trueNot(final SourceInfo meta,
+			final FutureInstruction<JSON> arg) {
+		return new AbstractFutureInstruction(meta) {
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
+					throws ExecutionException {
+				return transform(arg.call(context, data),new AsyncFunction<JSON,JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						Boolean b = !input.isTrue();
+						return immediateCheckedFuture(context.builder().value(!b));
+					}
+				});
+			
+			}
+		};
+		
+	}
+	public static FutureInstruction<JSON> trueOr(final SourceInfo meta,
+			final FutureInstruction<JSON> lhs, final FutureInstruction<JSON>rhs) {
+		return new AbstractFutureInstruction(meta) {
+			
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
+					throws ExecutionException {
+					return transform(rhs.call(context, data),new AsyncFunction<JSON, JSON>() {
+						@Override
+						public ListenableFuture<JSON> apply(JSON input) throws Exception {
+							if(input.isTrue()) {
+								return immediateCheckedFuture(input);
+							} else {
+								return lhs.call(context, data);							}
+							
+						}
+					});
+			}
+		};
+	}
+	
 	public static FutureInstruction<JSON> contextualDataAwareVarArgInstruction(final SourceInfo meta,
 			final Op<JSON> vp) {
 		return new AbstractFutureInstruction(meta) {

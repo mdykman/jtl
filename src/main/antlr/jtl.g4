@@ -38,21 +38,22 @@ or_expr
     ;
 
 and_expr 
-    : match_expr 
-    | and_expr 'and' match_expr
+    : eq_expr 
+    | and_expr 'and' eq_expr
     ;
 
-match_expr
-   : eq_expr
-   | match_expr '==' eq_expr
-   | match_expr '!=' match_expr
-   ;
-   
 eq_expr 
 	: rel_expr
-    | eq_expr '=' rel_expr
+    | eq_expr '=' not_expr
+    | eq_expr '!=' not_expr
     ;
-        
+    
+    
+not_expr 
+    : rel_expr
+    | '!' not_expr
+    ;
+            
 rel_expr
 	: add_expr
     | rel_expr '<' add_expr

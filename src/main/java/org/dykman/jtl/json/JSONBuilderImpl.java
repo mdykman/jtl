@@ -10,11 +10,10 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
+
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -42,6 +41,10 @@ public class JSONBuilderImpl implements JSONBuilder {
 	public static JSON NULL = new JSONValue(null);
 	public static JSON ZERO = new JSONValue(null,0L);
 	public static JSON ONE = new JSONValue(null,1L);
+
+	
+	public static JSON TRUE = new JSONValue(null,true);
+	public static JSON FALSE = new JSONValue(null,false);
 
 	private static Map<String, JSON> mapBuilder(Locale locale) {
 		return new TreeMap<>(localeComparator(locale));

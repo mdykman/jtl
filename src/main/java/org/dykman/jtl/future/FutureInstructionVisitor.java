@@ -18,6 +18,7 @@ import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.jtlBaseVisitor;
 
 import org.dykman.jtl.jtlParser.*;
+import org.dykman.jtl.instruction.ContextualInstructionFactory;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.operator.*;
 import org.dykman.jtl.operator.ObjectInstructionBase.ObjectKey;
@@ -288,17 +289,9 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 		FutureInstructionValue<JSON> a = visitAnd_expr(ctx.and_expr());
 		Or_exprContext c = ctx.or_expr();
 		if (c != null) {
-			final boolean or = ctx.getChild(1).getText().equals("or");
+	//		final boolean or = ctx.getChild(1).getText().equals("or");
 			return new FutureInstructionValue<JSON>(
-					dyadic(getSource(ctx), visitOr_expr(c).inst, a.inst, new DyadicAsyncFunction<JSON>() {
-						@Override
-						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
-
-							JSON result = or == a.isTrue() ? a : b;
-							return result;
-							// return or == a.isTrue() ? a : b;
-						}
-					}, false));
+					ContextualInstructionFactory.trueOr(SourceInfo.internal("<or>"), visitOr_expr(c).inst, a.inst));
 		} else {
 			return a;
 		}
@@ -306,7 +299,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
 	@Override
 	public FutureInstructionValue<JSON> visitAnd_expr(And_exprContext ctx) {
-		FutureInstructionValue<JSON> a = visitMatch_expr(ctx.match_expr());
+		FutureInstructionValue<JSON> a = visitEq_expr(ctx.eq_expr());
 		And_exprContext c = ctx.and_expr();
 		if (c != null) {
 			return new FutureInstructionValue<JSON>(
@@ -314,7 +307,6 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 						@Override
 						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
 							if (a.getType() == JSONType.LIST) {
-								JList newf = ((JList) a.cloneJSON());
 								if (b.isTrue())
 									((JList) a).add(b);
 							}
@@ -329,6 +321,31 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	@Override
 	public FutureInstructionValue<JSON> visitEq_expr(Eq_exprContext ctx) {
 		FutureInstructionValue<JSON> a = visitRel_expr(ctx.rel_expr());
+		Eq_exprContext c = ctx.eq_expr();
+
+		if (c != null) {
+			final boolean inv = ctx.getChild(1).getText().equals("!=");
+			return new FutureInstructionValue<JSON>(
+					dyadic(getSource(ctx), visitEq_expr(c).inst, a.inst, new DyadicAsyncFunction<JSON>() {
+						@Override
+						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
+							boolean e = a.equals(b);
+							return builder.value(inv ^ e);
+						}
+					}, false));
+
+		} else {
+			return a;
+		}
+	}
+
+	@Override
+	public FutureInstructionValue<JSON> visitNot_expr(Not_exprContext ctx) {
+		FutureInstructionValue<JSON> a = visitRel_expr(ctx.rel_expr());
+		if(a == null) {
+			a = new FutureInstructionValue<JSON>(t)
+		}
+		return a;
 		Eq_exprContext c = ctx.eq_expr();
 
 		if (c != null) {
