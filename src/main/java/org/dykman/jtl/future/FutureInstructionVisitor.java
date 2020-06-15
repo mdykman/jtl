@@ -343,22 +343,10 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 	public FutureInstructionValue<JSON> visitNot_expr(Not_exprContext ctx) {
 		FutureInstructionValue<JSON> a = visitRel_expr(ctx.rel_expr());
 		if(a == null) {
-			a = new FutureInstructionValue<JSON>(t)
-		}
-		return a;
-		Eq_exprContext c = ctx.eq_expr();
-
-		if (c != null) {
+		Not_exprContext c = ctx.not_expr();
 			final boolean inv = ctx.getChild(1).getText().equals("!=");
 			return new FutureInstructionValue<JSON>(
-					dyadic(getSource(ctx), visitEq_expr(c).inst, a.inst, new DyadicAsyncFunction<JSON>() {
-						@Override
-						public JSON invoke(AsyncExecutionContext<JSON> eng, JSON a, JSON b) {
-							boolean e = a.equals(b);
-							return builder.value(inv ^ e);
-						}
-					}, false));
-
+					ContextualInstructionFactory.trueNot(SourceInfo.internal("not"), visitNot_expr(c).inst));
 		} else {
 			return a;
 		}
