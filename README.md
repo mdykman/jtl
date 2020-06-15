@@ -12,11 +12,14 @@ An extensible Module System provides to JDBC, CSV datasources, caching and an em
 
 ## installation
 
-	to create the command line tool,
+	to create the command line tool, ensure that you have Java 8 available on the path.
 
 `./gradlew distZip`
 
 generates ./build/distributions/jtl-\<`version`\>.zip
+
+ ** If you are building from behind a VPN: I have observed a certificate mismatch when accessing the well-known maven repository https://oss.jfrog.org. I have worked around this by disconnecting from the VPN and running the gradle-wrapper command again.  Once the required artifact has been retreived (gradle integration for antlr), subsequent builds may be run with the --offline switch to avoid this error. **
+
 
 unzip in the directory of your choice.  You may then either
 * add JTL\_HOME/bin to your PATH
