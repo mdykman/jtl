@@ -43,8 +43,8 @@ and_expr
     ;
 
 eq_expr 
-	: rel_expr
-    | eq_expr '=' not_expr
+	: not_expr
+    | eq_expr '='  not_expr
     | eq_expr '!=' not_expr
     ;
     

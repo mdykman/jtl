@@ -121,8 +121,7 @@ public abstract class ContextualInstructionFactory {
 	}
 	public static FutureInstruction<JSON> trueOr(final SourceInfo meta,
 			final FutureInstruction<JSON> lhs, final FutureInstruction<JSON>rhs) {
-		return new AbstractFutureInstruction(meta) {
-			
+		return new AbstractFutureInstruction(meta) {	
 			@Override
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
 					throws ExecutionException {

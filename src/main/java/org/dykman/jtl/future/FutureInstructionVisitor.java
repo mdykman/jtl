@@ -320,7 +320,7 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 
 	@Override
 	public FutureInstructionValue<JSON> visitEq_expr(Eq_exprContext ctx) {
-		FutureInstructionValue<JSON> a = visitRel_expr(ctx.rel_expr());
+		FutureInstructionValue<JSON> a = visitNot_expr(ctx.not_expr());
 		Eq_exprContext c = ctx.eq_expr();
 
 		if (c != null) {
