@@ -136,7 +136,7 @@ public class JtlMain {
 		try {
 
 			Options options = new Options();
-			options.addOption(new Option("Y", "yaml", true, "specify YAML input and/or output (cli-only)" ));
+			options.addOption(new Option("Y", "yaml", true, "specify YAML input and/or output (cli-only) *not implemented" ));
 			options.addOption(new Option("h", "help", false, "print this help message and exit"));
 			options.addOption(new Option("V", "version", false, "print jtl version"));
 			options.addOption(new Option("c", "config", true, "specify a configuration file"));

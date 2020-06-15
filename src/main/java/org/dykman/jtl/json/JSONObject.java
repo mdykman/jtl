@@ -148,6 +148,9 @@ public class JSONObject extends AbstractJSON implements
 	public void put(String k, JSON v, boolean dontclone) {
 		if (locked)
 			raise("container is locked");
+		if(k == null) {
+			logger.warn("cannot use a null key, ignore insert");
+		}
 		if(!dontclone) v = v.cloneJSON();
 		hash ^= k.hashCode();
 		hash ^= v.hashCode();

@@ -126,13 +126,13 @@ public abstract class ContextualInstructionFactory {
 			@Override
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
 					throws ExecutionException {
-					return transform(rhs.call(context, data),new AsyncFunction<JSON, JSON>() {
+					return transform(lhs.call(context, data),new AsyncFunction<JSON, JSON>() {
 						@Override
 						public ListenableFuture<JSON> apply(JSON input) throws Exception {
 							if(input.isTrue()) {
 								return immediateCheckedFuture(input);
 							} else {
-								return lhs.call(context, data);							}
+								return rhs.call(context, data);							}
 							
 						}
 					});
