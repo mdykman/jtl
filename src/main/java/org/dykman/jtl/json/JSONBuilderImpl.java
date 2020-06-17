@@ -237,7 +237,7 @@ public class JSONBuilderImpl implements JSONBuilder {
 	}
 
 	@Override
-	public JList frame(JSON parent, Collection<JSON> col) {
+	public JList list(JSON parent, Collection<JSON> col) {
 		return (JList) sign(new JList(parent, col));
 	}
 

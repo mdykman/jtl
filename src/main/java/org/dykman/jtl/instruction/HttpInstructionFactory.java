@@ -11,7 +11,7 @@ import org.dykman.jtl.operator.FutureInstruction;
 public abstract class HttpInstructionFactory extends ContextualInstructionFactory {
 
 	public static FutureInstruction<JSON> responseHeader() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::responseHeader");
+		SourceInfo info = SourceInfo.internal("HttpInstructionFactory::responseHeader");
 	
 		ContextualInstructionFactory.PassiveObjectPairs rop = new ContextualInstructionFactory.PassiveObjectPairs() {
 	
@@ -29,7 +29,7 @@ public abstract class HttpInstructionFactory extends ContextualInstructionFactor
 	}
 
 	public static FutureInstruction<JSON> httpStatus() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::httpStatus");
+		SourceInfo info = SourceInfo.internal("HttpInstructionFactory::httpStatus");
 	
 		ContextualInstructionFactory.VoidNop<JSON> rop = new ContextualInstructionFactory.VoidNop<JSON>() {
 	

@@ -11,7 +11,7 @@ import org.dykman.jtl.operator.FutureInstruction;
 public abstract class TextInstructionFactory extends ContextualInstructionFactory {
 
 	public static FutureInstruction<JSON> sprintf() {
-		SourceInfo info = SourceInfo.internal("ContextualInstructionFactory::sprintf");
+		SourceInfo info = SourceInfo.internal("TextInstructionFactory::sprintf");
 		return ContextualInstructionFactory.contextualVarArgInstruction(info, (context, args) -> {
 			int length = args.length;
 			if (length > 0) {

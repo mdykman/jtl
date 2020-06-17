@@ -13,6 +13,7 @@ import org.dykman.jtl.ExecutionException;
 import org.dykman.jtl.Pair;
 import org.dykman.jtl.SourceInfo;
 import org.dykman.jtl.future.AsyncExecutionContext;
+import org.dykman.jtl.json.JList;
 import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSON.JSONType;
 import org.dykman.jtl.json.JSONArray;
@@ -42,7 +43,7 @@ public abstract class ContextualInstructionFactory {
 		public void apply(AsyncExecutionContext<T> context, T... vargs);
 	}
 
-	public static abstract class OpportunisticIterator implements Op<JSON> {
+	public static abstract class OpportunisticOpIterator implements Op<JSON> {
 
 		@Override
 		public JSON apply(AsyncExecutionContext<JSON> context, JSON data, JSON... vargs) {
@@ -51,7 +52,8 @@ public abstract class ContextualInstructionFactory {
 
 		public JSON _apply(AsyncExecutionContext<JSON> context, JSON data, boolean recurse, JSON... vargs) {
 			JSONType type = data.getType();
-			if (type == JSON.JSONType.ARRAY || type == JSON.JSONType.LIST) {
+			if (type == JSON.JSONType.LIST) {
+//			if (type == JSON.JSONType.ARRAY || type == JSON.JSONType.LIST) {
 				JSONArray array = context.builder().array(null);
 				for (JSON j : ((JSONArray) data)) {
 					array.add(f(context, j, vargs));
@@ -59,11 +61,35 @@ public abstract class ContextualInstructionFactory {
 				return array;
 			} else {
 				return f(context, data, vargs);
-
 			}
 		}
 
 		public abstract JSON f(AsyncExecutionContext<JSON> context, JSON data, JSON... vargs);
+	}
+
+	public static abstract class OpportunisticNopIterator implements Op<JSON> {
+
+		@Override
+		public JSON apply(AsyncExecutionContext<JSON> context, JSON data, JSON... vargs) {
+			return _apply(context, data, true, vargs);
+		}
+
+		public JSON _apply(AsyncExecutionContext<JSON> context, JSON data, boolean recurse, JSON... vargs) {
+			JSONType type = data.getType();
+			if (type == JSON.JSONType.LIST) {
+//			if (type == JSON.JSONType.ARRAY || type == JSON.JSONType.LIST) {
+				JSONArray array = context.builder().array(null);
+				for (JSON j : ((JSONArray) data)) {
+					array.add(f(context, vargs));
+				}
+				return array;
+			} else {
+				return f(context, vargs);
+
+			}
+		}
+
+		public abstract JSON f(AsyncExecutionContext<JSON> context, JSON... vargs);
 	}
 
 	public static abstract class PassiveObjectPairs implements VoidNop<JSON> {
@@ -102,43 +128,105 @@ public abstract class ContextualInstructionFactory {
 		// FutureInstruction<JSON>
 	}
 
-	public static FutureInstruction<JSON> trueNot(final SourceInfo meta,
-			final FutureInstruction<JSON> arg) {
+	public static FutureInstruction<JSON> trueNot(final SourceInfo meta, final FutureInstruction<JSON> arg) {
 		return new AbstractFutureInstruction(meta) {
-			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-					throws ExecutionException {
-				return transform(arg.call(context, data),new AsyncFunction<JSON,JSON>() {
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data) throws ExecutionException {
+				return transform(arg.call(context, data), new AsyncFunction<JSON, JSON>() {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						Boolean b = !input.isTrue();
 						return immediateCheckedFuture(context.builder().value(!b));
 					}
 				});
-			
+
 			}
 		};
-		
+
 	}
-	public static FutureInstruction<JSON> trueOr(final SourceInfo meta,
-			final FutureInstruction<JSON> lhs, final FutureInstruction<JSON>rhs) {
-		return new AbstractFutureInstruction(meta) {	
+
+	public static FutureInstruction<JSON> trueOr(final SourceInfo meta, final FutureInstruction<JSON> lhs,
+			final FutureInstruction<JSON> rhs) {
+		return new AbstractFutureInstruction(meta) {
 			@Override
-			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context, final ListenableFuture<JSON> data)
-					throws ExecutionException {
-					return transform(lhs.call(context, data),new AsyncFunction<JSON, JSON>() {
-						@Override
-						public ListenableFuture<JSON> apply(JSON input) throws Exception {
-							if(input.isTrue()) {
-								return immediateCheckedFuture(input);
-							} else {
-								return rhs.call(context, data);							}
-							
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data) throws ExecutionException {
+				return transform(lhs.call(context, data), new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						if (input.isTrue()) {
+							return immediateCheckedFuture(input);
+						} else {
+							return rhs.call(context, data);
 						}
-					});
+
+					}
+				});
 			}
 		};
 	}
-	
+
+	public static FutureInstruction<JSON> contextualDataIteratorVarArgInstruction(final SourceInfo meta,
+			final Op<JSON> vp) {
+		return new AbstractFutureInstruction(meta) {
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+					final ListenableFuture<JSON> data) throws ExecutionException {
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(final JSON _data) throws Exception {
+						List<ListenableFuture<JSON>> ll = new ArrayList<>();
+						if (_data.getType() == JSON.JSONType.LIST) {
+							List<ListenableFuture<JSON>> items = new ArrayList<>();
+							JSONArray dataArray = (JSONArray) _data;
+							for (JSON _d : dataArray) {
+								int cc = 1;
+								FutureInstruction<JSON> arg = context.getdef(Integer.toString(cc));
+								while (arg != null) {
+									ll.add(arg.call(context, immediateCheckedFuture(_d)));
+									arg = context.getdef(Integer.toString(++cc));
+								}
+								if (ll.size() > 0) {
+									items.add(transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+										@Override
+										public ListenableFuture<JSON> apply(List<JSON> __args) throws Exception {
+											return immediateCheckedFuture(
+													vp.apply(context, _d, __args.toArray(new JSON[0])));
+										}
+									}));
+									ll = new ArrayList<>();
+									arg = context.getdef(Integer.toString(1));
+								} else {
+									items.add(immediateCheckedFuture(vp.apply(context, _d, new JSON[0])));									
+								}
+							}
+							return transform(allAsList(items), new AsyncFunction<List<JSON>, JSON>() {
+								@Override
+								public ListenableFuture<JSON> apply(List<JSON> __args) throws Exception {
+									return immediateCheckedFuture(context.builder().list(null, __args));
+								}
+							});
+						} else {
+							int cc = 1;
+							FutureInstruction<JSON> arg = context.getdef(Integer.toString(cc));
+							while (arg != null) {
+								ll.add(arg.call(context, data));
+								arg = context.getdef(Integer.toString(++cc));
+							}
+							if(ll.size() > 0) return transform(allAsList(ll), new AsyncFunction<List<JSON>, JSON>() {
+								@Override
+								public ListenableFuture<JSON> apply(List<JSON> __args) throws Exception {
+									return immediateCheckedFuture(vp.apply(context, _data, __args.toArray(new JSON[0])));
+								}
+							});
+							return immediateCheckedFuture(vp.apply(context, _data, new JSON[0]));
+						}
+					}
+				});
+			};
+		};
+	}
+
 	public static FutureInstruction<JSON> contextualDataAwareVarArgInstruction(final SourceInfo meta,
 			final Op<JSON> vp) {
 		return new AbstractFutureInstruction(meta) {
@@ -202,6 +290,7 @@ public abstract class ContextualInstructionFactory {
 			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
 					final ListenableFuture<JSON> data) throws ExecutionException {
 				List<ListenableFuture<JSON>> ll = new ArrayList<>();
+
 				{
 					int cc = 1;
 					FutureInstruction<JSON> arg = context.getdef(Integer.toString(cc));

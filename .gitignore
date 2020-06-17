@@ -6,5 +6,8 @@
 bin/
 target/
 build/
+html/
 jtl-*
 *.iml
+.idea
+

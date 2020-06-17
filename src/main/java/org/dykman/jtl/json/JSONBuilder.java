@@ -32,7 +32,7 @@ public interface JSONBuilder {
 	public JList list();
 //	public Frame frame(Frame f);
 	public JList list(JSON parent);
-	public JList frame(JSON parent,Collection<JSON> col);
+	public JList list(JSON parent,Collection<JSON> col);
 
 	public JSON parse(File in) throws IOException;
 	public JSON parse(InputStream in) throws IOException;
