@@ -58,6 +58,7 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
 
 public class FutureInstructionFactory {
 
@@ -111,7 +112,7 @@ public class FutureInstructionFactory {
 					final ListenableFuture<JSON> data) throws ExecutionException {
 				FutureInstruction<JSON> f = context.getdef("1");
 				if (f == null)
-					throw new ExecutionException("file() requires at least 1 parameter", source);
+					throw new ExecutionException("exec() requires at least 1 parameter", source);
 				return transform(f.call(context, data), new AsyncFunction<JSON, JSON>() {
 
 					@Override
@@ -202,6 +203,49 @@ public class FutureInstructionFactory {
 					c = c.getParent();
 				}
 				return data;
+			}
+		};
+	}
+
+
+	public static FutureInstruction<JSON> cli(SourceInfo meta) {
+		meta.name = "cli";
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+												final ListenableFuture<JSON> data) throws ExecutionException {
+				List<ListenableFuture<JSON>> instList = new ArrayList<>();
+				int index=1;
+				FutureInstruction<JSON> inst = context.getdef("1");
+				while(inst != null) {
+					instList.add(inst.call(context,data));
+					String is = Integer.toString(++index);
+					inst = context.getdef(is);
+				}
+				return transform(allAsList(instList), new AsyncFunction<List<JSON>, JSON>() {
+
+					@Override
+					public ListenableFuture<JSON> apply(List<JSON> input) throws Exception {
+						StringBuilder builder = new StringBuilder();
+						for(JSON j:input) {
+							builder.append(j.stringValue());
+							builder.append(" ");
+						}
+						final String command = builder.toString();
+						ListenableFutureTask<JSON> task = ListenableFutureTask.create(
+							new Callable<JSON>() {
+								public JSON call() throws Exception {
+									Runtime runtime = Runtime.getRuntime();
+									Process process = runtime.exec(command);
+									return context.builder().parse(process.getInputStream());
+								}
+							}
+						);
+						context.executor().submit(task);
+						return task;
+					}
+				});
 			}
 		};
 	}
@@ -441,7 +485,6 @@ public class FutureInstructionFactory {
 
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
-						// JSONObject obj = builder.object(null);
 						JSONType type = input.getType();
 						if (type != JSONType.ARRAY && type != JSONType.LIST)
 							return immediateCheckedFuture(context.builder().object(null));
@@ -463,7 +506,7 @@ public class FutureInstructionFactory {
 							public ListenableFuture<JSON> apply(List<Pair<JSON, JSON>> input) throws Exception {
 								JSONObject obj = context.builder().object(null);
 								for (Pair<JSON, JSON> pp : input) {
-									String s = stringValue(pp.s);
+									String s = pp.s.stringValue();
 									JSONArray a = (JSONArray) obj.get(s);
 									if (a == null) {
 										a = context.builder().array(obj);
@@ -3360,6 +3403,7 @@ public class FutureInstructionFactory {
 					@Override
 					public ListenableFuture<JSON> apply(JSON input) throws Exception {
 						if (input instanceof JSONArray) {
+						System.err.println("processing an array");
 							List<ListenableFuture<Pair<JSON, JSON>>> ll = new ArrayList<>();
 							for (JSON j : (JSONArray) input) {
 								AsyncExecutionContext<JSON> cc = context.createChild(false, false,
@@ -3370,7 +3414,6 @@ public class FutureInstructionFactory {
 								ListenableFuture<JSON> jif = immediateCheckedFuture(j);
 								ll.add(transform(allAsList(jif, mf.call(cc, data)),
 										new AsyncFunction<List<JSON>, Pair<JSON, JSON>>() {
-
 											@Override
 											public ListenableFuture<Pair<JSON, JSON>> apply(List<JSON> input)
 													throws Exception {
@@ -3393,7 +3436,7 @@ public class FutureInstructionFactory {
 									return immediateCheckedFuture(obj);
 								}
 							});
-						}
+						} 
 
 						return immediateCheckedFuture(JSONBuilderImpl.NULL);
 					};

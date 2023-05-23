@@ -4,6 +4,7 @@ import static org.dykman.jtl.operator.FutureInstructionFactory.amend;
 import static org.dykman.jtl.operator.FutureInstructionFactory.append;
 import static org.dykman.jtl.operator.FutureInstructionFactory.attempt;
 import static org.dykman.jtl.operator.FutureInstructionFactory.avg;
+import static org.dykman.jtl.operator.FutureInstructionFactory.cli;
 import static org.dykman.jtl.operator.FutureInstructionFactory.call;
 import static org.dykman.jtl.operator.FutureInstructionFactory.collate;
 import static org.dykman.jtl.operator.FutureInstructionFactory.contains;
@@ -278,6 +279,7 @@ public class JtlCompiler {
 		context.define( "digest", digest(SourceInfo.internal("digest")));
 
 		// external data
+		context.define( "cli", cli(SourceInfo.internal("cli")));
 		context.define( "exec", exec(SourceInfo.internal("exec")));
 		context.define( "file", file(SourceInfo.internal("file")));
 		context.define( "url", url(SourceInfo.internal("url")));
