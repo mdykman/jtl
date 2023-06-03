@@ -513,10 +513,13 @@ public class JtlMain {
 				} else {
 					if (useNull) {
 						data = main.empty();
-
 					} else if (!argIt.hasNext()) {
-						logger.info("reading std input");
-						data = main.parse(System.in);
+						try {
+							logger.info("reading std input");
+							data = main.parse(System.in);
+						} catch(Exception e) {
+							throw new RuntimeException("failed to read stdin");
+						}
 					} else {
 						File f = new File(argIt.next());
 						data = main.parse(f);
@@ -575,7 +578,7 @@ public class JtlMain {
 				System.err.println(((ExecutionException) e.getCause()).report());
 			} else {
 				Throwable ee = e.getCause() == null ? e : e.getCause();
-				logger.error(ee.getClass().getName() + " - an error occured: " + ee.getLocalizedMessage(),ee);
+				logger.error(ee.getClass().getName() + " - an error occured: " + ee.getLocalizedMessage());
 			}
 			if (verbose)
 				e.printStackTrace();

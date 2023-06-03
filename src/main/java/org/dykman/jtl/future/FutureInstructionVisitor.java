@@ -111,9 +111,14 @@ public class FutureInstructionVisitor extends jtlBaseVisitor<FutureInstructionVa
 			k = visitKey(id);
 		}
 		ObjectKey ks = k.key;
-
-		FutureInstructionValue<JSON> v = visitValue(ctx.value());
-		return new FutureInstructionValue<JSON>(ks, v.inst);
+		ValueContext vc = ctx.value();
+		FutureInstruction<JSON> fi = null;
+		if(vc == null) {
+			fi = get(getSource(ctx), ks.label); 
+		} else  {
+			fi = visitValue(vc).inst;
+		}
+		return new FutureInstructionValue<JSON>(ks, fi);
 	}
 
 	@Override
