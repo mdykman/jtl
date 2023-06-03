@@ -11,15 +11,6 @@ fragment EMPTY_STR: '""';
 fragment DD: '$' '$';
 fragment DSTRBOD :  (DD | ESC | ~[$\'\"\\]+);
 
-//DSTRING : '"' ( DD | '\'' | DSTRBOD)* '"';
-
-
-
-
-
-
-//SSTR : '"' ->pushMode(MSTR);
-
 SSTRM : '"""' -> pushMode(MULTI);
 
 
@@ -49,4 +40,3 @@ SS  : ~["\\$\n]+
 	;
 
 START_BLOCK : '${' ->pushMode(DEFAULT_MODE);
-//JTLESC : 
