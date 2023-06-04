@@ -2686,6 +2686,39 @@ public class FutureInstructionFactory {
 		};
 	}
 
+	public static FutureInstruction<JSON> env(SourceInfo meta) {
+		return new AbstractFutureInstruction(meta) {
+
+			@Override
+			public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data)
+					throws ExecutionException {
+				FutureInstruction<JSON> arg1 = context.getdef("1");
+				if(arg1 != null) {
+					ListenableFuture<JSON> label = arg1.call(context,data);
+					return transform(label, new AsyncFunction<JSON, JSON>() {
+						@Override
+						public ListenableFuture<JSON> apply(JSON input) throws Exception {
+							String variable = System.getenv(input.stringValue());
+							return immediateCheckedFuture(context.builder().value(variable));
+						}
+					});
+				} else {
+					return transform(data, new AsyncFunction<JSON, JSON>() {
+						public ListenableFuture<JSON> apply(JSON input) throws Exception {
+							Map<String, String> vars = System.getenv();
+							JSONObject object = context.builder().object(input.getParent());
+							 Map<String, JSON> map = object.map();
+							 for(Map.Entry<String,String> ee: vars.entrySet()) {
+							 	object.put(ee.getKey(), context.builder().value(ee.getValue()));
+							 }
+							return immediateCheckedFuture(object);
+						}
+					});
+				}
+			}
+		};
+	}
+
 	public static FutureInstruction<JSON> stepChildren(SourceInfo meta) {
 		meta.name = "children";
 

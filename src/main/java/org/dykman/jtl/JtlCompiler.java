@@ -225,6 +225,7 @@ public class JtlCompiler {
 		context.define( "digest", digest(SourceInfo.internal("digest")));
 
 		// external data
+		context.define( "env", env(SourceInfo.internal("env")));
 		context.define( "cli", cli(SourceInfo.internal("cli")));
 		context.define( "exec", exec(SourceInfo.internal("exec")));
 		context.define( "file", file(SourceInfo.internal("file")));
