@@ -2703,17 +2703,13 @@ public class FutureInstructionFactory {
 						}
 					});
 				} else {
-					return transform(data, new AsyncFunction<JSON, JSON>() {
-						public ListenableFuture<JSON> apply(JSON input) throws Exception {
-							Map<String, String> vars = System.getenv();
-							JSONObject object = context.builder().object(input.getParent());
-							 Map<String, JSON> map = object.map();
-							 for(Map.Entry<String,String> ee: vars.entrySet()) {
-							 	object.put(ee.getKey(), context.builder().value(ee.getValue()));
-							 }
-							return immediateCheckedFuture(object);
-						}
-					});
+					Map<String, String> vars = System.getenv();
+					JSONObject object = context.builder().object(null);
+					Map<String, JSON> map = object.map();
+					for(Map.Entry<String,String> ee: vars.entrySet()) {
+						object.put(ee.getKey(), context.builder().value(ee.getValue()));
+					}
+					return immediateCheckedFuture(object);
 				}
 			}
 		};
