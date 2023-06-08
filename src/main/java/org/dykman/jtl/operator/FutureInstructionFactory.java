@@ -2360,8 +2360,67 @@ public class FutureInstructionFactory {
 		};
 	}
 
-	// rank: all
 	public static FutureInstruction<JSON> filter(SourceInfo meta) {
+		meta.name = "filter";
+		return new AbstractFutureInstruction(meta) {
+			@Override
+			public ListenableFuture<JSON> _call(final AsyncExecutionContext<JSON> context,
+				final ListenableFuture<JSON> data) throws ExecutionException {
+				FutureInstruction<JSON> fexp = context.getdef("1");
+				if(fexp != null) {
+					fexp = fexp.unwrap();
+				} 
+				final FutureInstruction<JSON> filterexp = fexp;
+				return transform(data, new AsyncFunction<JSON, JSON>() {
+					@Override
+					public ListenableFuture<JSON> apply(JSON input) throws Exception {
+						JSONType type = input.getType();
+						if (type == JSONType.ARRAY || type == JSONType.LIST) {
+							if(filterexp == null) {
+								Collection<JSON> jl = context.builder().collection();
+								for (JSON j : (JSONArray) input) {
+									if(j != null && j.getType() != JSONType.NULL) {
+										jl.add(j);
+									}
+								}
+								JSONArray aa = context.builder().array(input.getParent(),jl);
+								return immediateCheckedFuture(aa);
+							} else {
+								JSONArray theArray = (JSONArray) input;
+								if(theArray.size() == 0) {
+									return data;
+								}
+								List<ListenableFuture<JSON>> ffs = new ArrayList<>();
+								for (JSON j : theArray) {
+									ListenableFuture<JSON> jj = immediateCheckedFuture(j);
+									ListenableFuture<JSON> lf = filterexp.call(context,jj);
+									ffs.add(lf);
+								}
+								return transform(allAsList(ffs), new AsyncFunction<List<JSON>, JSON>() {
+									public ListenableFuture<JSON> apply(List<JSON> inner) throws Exception {
+										Collection<JSON> jl = context.builder().collection();
+										Iterator<JSON> originalIt = theArray.iterator();
+										for (JSON j : inner) {
+											JSON orig = originalIt.next();
+											if(j != null && j.isTrue()) {
+												jl.add(orig);
+											}
+										}
+										JSONArray aa = context.builder().array(input.getParent(),jl);
+										return immediateCheckedFuture(aa);
+									}
+								});
+							}
+						} else {
+							return data;
+						}
+					}
+				});
+			}
+		};
+	}
+
+	public static FutureInstruction<JSON> filter_hacky_old(SourceInfo meta) {
 		return new AbstractFutureInstruction(meta) {
 
 			KeyedAsyncFunction<JSON, JSON, JSON> function(JSON j, JSONBuilder builder) {
@@ -3370,25 +3429,27 @@ public class FutureInstructionFactory {
 										});
 							}
 						} else {
-							return transform(ai.call(context, data), new AsyncFunction<JSON, JSON>() {
+							if (ai != null && jd.getType() == JSONType.OBJECT) {
+								return transform(ai.call(context, data), new AsyncFunction<JSON, JSON>() {
 								@Override
-								public ListenableFuture<JSON> apply(JSON input) throws Exception {
-									if (input.getType() == JSONType.OBJECT) {
-										final JSONObject obj = context.builder().object(jd.getParent());
-										JSONObject amend = (JSONObject) input;
-										for (Pair<String, JSON> pp : (JSONObject) jd) {
-											if (!amend.containsKey(pp.f))
-												obj.put(pp.f, pp.s);
+									public ListenableFuture<JSON> apply(JSON input) throws Exception {
+										if (input.getType() == JSONType.OBJECT) {
+											final JSONObject obj = context.builder().object(jd.getParent());
+											JSONObject amend = (JSONObject) input;
+											for (Pair<String, JSON> pp : (JSONObject) jd) {
+												if (!amend.containsKey(pp.f))
+													obj.put(pp.f, pp.s);
+											}
+											for (Pair<String, JSON> pp : amend) {
+												if (pp.s.getType() != JSONType.NULL)
+													obj.put(pp.f, pp.s);
+											}
+											return immediateCheckedFuture(obj);
 										}
-										for (Pair<String, JSON> pp : amend) {
-											if (pp.s.getType() != JSONType.NULL)
-												obj.put(pp.f, pp.s);
-										}
-										return immediateCheckedFuture(obj);
+										return data;
 									}
-									return data;
-								}
-							});
+								});
+							}
 						}
 						return data;
 					}

@@ -2,7 +2,7 @@
 import java.nio.file.*
 
 group='org.dykman'
-version='0.9.50'
+version='0.9.52'
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -89,7 +89,6 @@ task cleanGenerateVersion {
 task generateVersion {
     outputs.upToDateWhen { false }
     File f = new File(versionPath)
-    println("generating version file for ${f.getPath()}")
     f.parentFile.mkdirs();
     f.withWriter { out ->
         out.println("""
@@ -100,7 +99,6 @@ public class JtlVersion {
 }
         """);
     }
-    println("generated version file for ${f.getPath()}. f.exists() = ${f.exists()}")
 }
 
 

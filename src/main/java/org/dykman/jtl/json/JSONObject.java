@@ -152,6 +152,9 @@ public class JSONObject extends AbstractJSON implements
 			logger.warn("cannot use a null key, ignore insert");
 		}
 		if(!dontclone) v = v.cloneJSON();
+		if(k == null) {
+			k = "(empty)";
+		}
 		hash ^= k.hashCode();
 		hash ^= v.hashCode();
 		v.setParent(this);

@@ -518,15 +518,13 @@ public class JtlMain {
 							logger.info("reading std input");
 							data = main.parse(System.in);
 						} catch(Exception e) {
-							throw new RuntimeException("failed to read stdin");
+							throw new RuntimeException("failed to read stdin. " + e.getLocalizedMessage());
 						}
 					} else {
 						File f = new File(argIt.next());
 						data = main.parse(f);
 					}
 				}
-
-				// catch
 
 				if (replMode) {
 					logger.info("starting console");

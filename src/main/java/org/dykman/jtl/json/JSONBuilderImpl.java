@@ -172,14 +172,6 @@ public class JSONBuilderImpl implements JSONBuilder {
 
 		} else if (o instanceof byte[]) {
 			return value(new String((byte[])o));
-//			JSONArray arr = array(null);
-//			for (Byte b : (byte[]) o) {
-//				int ii = b.intValue();
-//				arr.add(value((256 + ii) % 256));
-//			}
-//			return value(new String((byte[]o)));
-//			arr.lock();
-//			return arr;
 		} else {
 			return value(o.toString());
 		}

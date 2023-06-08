@@ -84,13 +84,13 @@ public class DataVisitor extends jsonBaseVisitor<DataValue<JSON>> {
 		if(sc!=null) return  new DataValue<JSON>(builder.value(visitString(sc).str));
 		
 		ParseTree pt = ctx.getChild(0);
-		String nodeText = pt.getText();
-		if(nodeText == null) nodeText = "null";
+		String nodeText = pt == null ? null : pt.getText();
+		if(nodeText == null) return new DataValue<JSON>(JSONBuilderImpl.NULL);
 		switch(nodeText) {
-		case "true": return new DataValue<JSON>(JSONBuilderImpl.TRUE);
-		case "false": return new DataValue<JSON>(JSONBuilderImpl.FALSE);
-		case "null": return new DataValue<JSON>(JSONBuilderImpl.NULL);
-		default: return new  DataValue<JSON>(builder.value(pt.getText()));
+			case "true":  return new DataValue<JSON>(JSONBuilderImpl.TRUE);
+			case "false": return new DataValue<JSON>(JSONBuilderImpl.FALSE);
+			case "null":  return new DataValue<JSON>(JSONBuilderImpl.NULL);
+			default: return new  DataValue<JSON>(builder.value(nodeText));
 		}
 	}
 	
