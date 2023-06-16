@@ -1,0 +1,123 @@
+
+      _
+
+       module
+       import
+
+      
+       try
+
+      // general
+       error
+       params
+       rand
+       switch - 2 args
+	   	  switch(expression, {
+			match1: expr1,
+			match2: expr2,
+			_:      defaultexpr
+		  })
+       reduce
+      
+      defined(string) - test if a symbol is defined in the context
+       call
+       thread
+       type - 0 args - return datatype of context data
+       json - 1 arg - parse string to json
+      
+      // debugging
+       trace
+       stack
+       log(string) - sends parameter to stderr, returns context data
+
+      // misc.
+       counter
+       digest
+       copy(number) - copy context data
+
+      // external data
+       env - 0 args, fetch environment variable as an object
+	       - 1 arg(string) , fetch one environment variable
+       cli - run external command 
+       exec - run external command in a background thread
+       file(filename) read json from a file
+       url(string)  attempt to read data via sprified url (ie. simple http get)
+       write(filename) - write context data to named file
+       mkdirs
+       fexists(filename) tests if file exists
+      
+      // http-specific
+      header
+      status
+
+      // string-oriented
+       split
+       join
+       substr
+       sprintf
+       upper
+       lower
+      
+
+      // list-oriented
+          0 args::
+       unique()
+       count()
+       sum() - assumes context is an array of numbers (real or int)
+       min() - assumes context is an array of numbers (real or int)
+       max() - assumes context is an array of numbers (real or int)
+       avg() - assumes context is an array of numbers (real or int)
+
+       each(expression) - evaluate expression against each element of the array
+       sort(expression) - forms a string from the expression for each item, sorts that string lexically and reoders the elements in that order
+       rsort(expression) - sort but backwards
+       filter(expression) - apply expression to each item, select those which evaluate to true
+       group(expression) - used on array, accepts 1 expression argument
+           expression is executed on each element and the elements are sorted in to an object with the expression result as key
+
+       append() - append argument to context data array
+
+       contains
+       pivot
+
+      // object-oriented
+       map(expression) - 1 expression argument
+          - if context data is an object, the expression is run against each value in the object, returning the object with keys intact and new values
+         - if context data is an array, attemps map against each object in the array
+       collate() 0 args - expects an array of object in context data, returns a single object with each of the members concatenated
+       omap 
+       amend - modify existing objects  - if expression is null, the value is deleted
+         - 1 arg (expression objec) add or modify or delete multiple object members
+           .../amend({
+                   field1: expr,
+                   field2: expr,
+                })
+         - 2 args (string,expression) - add, modify  or delete a single object member
+       keys
+       rekey
+
+
+       ## type handlers 0,1 arg
+       number - no args: return true if context data is numeric type (long or double)
+               1 args: attempt to coerse the type
+                  parse as long, if fail parse as double, else null
+          123/number() :: true
+         number("123") :: 123
+          
+         "123"/number(.)  :: 123
+       array - no args: return true if context data is an array 
+               1 arg: if param is an array (or a list). return as an array
+                  other input is wrapped as an array of 1 element
+       int - 
+       real -  
+       string - no args: return true if context data is a string
+                1 arg: string value of argument
+       boolean - no args: return true if context data is numeric type (long or double)
+                 1 arg: coerse type to boolean.  0, empty string, empty array, empty class eval to false, all else are true
+
+
+      // 0 args: boolean type test only
+       nil - test context data for null
+       value - test for non aggragate type (not array or object)
+       object - test for object
+
