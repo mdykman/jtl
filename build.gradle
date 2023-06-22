@@ -2,7 +2,7 @@
 import java.nio.file.*
 
 group='org.dykman'
-version='0.9.52'
+version='0.9.53'
 
 apply plugin: 'java'
 apply plugin: 'idea'

@@ -4,5 +4,9 @@
 	},
 	fA: "fA param 1 = " + $1,
 	fB: fA('fb'),
-	fC: api2.fA($1,$2)
+	fC: api2.fA($1,$2),
+	_: {
+		internal: fB(),
+		imported: fC("one","two")
+	}
 }

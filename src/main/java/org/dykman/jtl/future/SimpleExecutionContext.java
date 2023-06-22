@@ -1,7 +1,7 @@
 package org.dykman.jtl.future;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
-
+import static com.google.common.util.concurrent.Futures.immediateCheckedFuture;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import org.dykman.jtl.json.JSON;
 import org.dykman.jtl.json.JSONBuilder;
 import org.dykman.jtl.json.JSONBuilderImpl;
 import org.dykman.jtl.operator.FutureInstruction;
+import org.dykman.jtl.operator.AbstractFutureInstruction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -282,38 +283,10 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 				include, debug);
 		
 		r.setNamespace(getNamespace());
-
-		// if(fc && data!=null)
-		// r.define("_",InstructionFutureFactory.value(data,source));
-		// System.out.println("create context from parent " +
-		// System.identityHashCode(this) + " - " + System.identityHashCode(r));
 		return r;
 	}
 
 	protected String namespace = null;
-/*
-	// @Override
-	private Pair<String, FutureInstruction<JSON>> getdef(String ns, String name) {
-		FutureInstruction<JSON> r = null;
-		Pair<String, FutureInstruction<JSON>> rr = null;
-		if (ns != null) {
-			AsyncExecutionContext<JSON> named = getNamedContext(ns);
-			if (named != null) {
-				rr = named.getDefInternal(null, name);
-				if (rr != null) {
-					rr = new Pair<>(ns, rr.s);
-				}
-			}
-		}
-		if (rr == null) {
-			FutureInstruction<JSON> def = getdef(name);
-			if (def != null) {
-				rr = new Pair<>(null, def);
-			}
-		}
-		return rr;
-	}
-*/
 	
 	public Pair<String, FutureInstruction<JSON>> getNamespacedDefinition(String ns,String name) {
 		AsyncExecutionContext<JSON> named = null;
@@ -327,16 +300,6 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 			}
 			base = base.getParent();
 		}
-		/*
-		if(named!=null) {
-			FutureInstruction<JSON> fi = named.getdef(name);
-			if(fi == null && parent != null) {
-				named = parent.getNamedContext(ns);
-				if(named!=null)  fi = named.getdef(name);
-			}
-			if(fi!=null) return new Pair<>(ns, fi);
-		}
-		*/
 		return null;
 	}
 	@Override
@@ -367,43 +330,18 @@ public class SimpleExecutionContext implements AsyncExecutionContext<JSON> {
 	}
 	
 	public FutureInstruction<JSON> getdef(String name) {
+		if(name == null) {
+			return new AbstractFutureInstruction(null) {
+				public ListenableFuture<JSON> _call(AsyncExecutionContext<JSON> context, ListenableFuture<JSON> data) {
+					return immediateCheckedFuture(JSONBuilderImpl.NULL);
+				}
+			};
+		}
 		Pair<String,FutureInstruction<JSON>> pp = getDefPair(name);
 		if(pp !=null) return pp.s;
 		return null;
 	}
 	
-/*
-	// @Override
-	public Pair<String, FutureInstruction<JSON>> getDefInternal(String currentNamespace, String name) {
-		System.out.println("context seeking " + name + " in " + currentNamespace);
-		// System.identityHashCode(this));
-
-//		FutureInstruction<JSON> r = functions.get(name);
-		// r = functions.get(name);
-//		if (r != null)
-//			return new Pair<>(null, r);
-
-		String[] parts = name.split("[.]", 2);
-		Pair<String, FutureInstruction<JSON>> rr = null;
-		if (parts.length > 1) {
-			rr = getdef(parts[0], parts[1]);
-		} else {
-			SimpleExecutionContext sec = this;
-			if (currentNamespace != null) {
-				rr = getdef(currentNamespace, name);
-			}
-			if (rr == null) {
-				rr = getdef(null, name);
-				if(rr == null && parent != null && !(functionContext && SimpleExecutionContext.isSpecial(name))) {
-					rr = parent.getDefInternal(null, name);
-				}
-			}
-		}
-//		if (rr != null)
-//			define(name, rr.s);
-		return rr;
-	}
-*/
 	public void setExecutionService(ListeningExecutorService s) {
 		executorService = s;
 	}
